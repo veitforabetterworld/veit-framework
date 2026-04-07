@@ -1,0 +1,23 @@
+{
+  "name": "@veit/react-dialog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Veit modal dialogs (portal, history sync, a11y) with Tailwind-oriented class names.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "peerDependencies": {
+    "lucide-react": ">=0.400.0",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@veit/react-authz",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Headless permission provider and helpers for React apps.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.7.2"
+  }
+}

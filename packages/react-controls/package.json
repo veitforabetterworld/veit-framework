@@ -1,0 +1,23 @@
+{
+  "name": "@veit/react-controls",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Veit small control primitives (switch, settings row) with Tailwind classes.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "dependencies": {
+    "@veit/react-upload": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.7.2"
+  }
+}

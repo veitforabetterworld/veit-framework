@@ -1,4 +1,5 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { Trash2 } from 'lucide-react';
 import { VeitConfirmDialog } from '@veit/react-dialog';
 
 export type VeitDeleteConfirmConfig = {
@@ -57,7 +58,7 @@ export function VeitDeleteButton({
         {...rest}
         type="button"
       >
-        {icon ?? <span aria-hidden>🗑</span>}
+        {icon ?? <Trash2 className="h-4 w-4 shrink-0" aria-hidden />}
         {children}
       </button>
       {deleteConfirm ? (

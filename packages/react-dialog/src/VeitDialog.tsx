@@ -106,6 +106,11 @@ export type VeitDialogProps = {
   children: ReactNode;
   footer?: ReactNode | ((ctx: VeitDialogFooterContext) => ReactNode);
   closeAriaLabel: string;
+  /**
+   * Optional: `aria-label` nur für die Vollflächen-Backdrop-Schicht (Klick außerhalb).
+   * Standard: gleich {@link closeAriaLabel} (auch für den X-Button).
+   */
+  backdropDismissLabel?: string;
   zIndexBase?: number;
   blockBackdropClose?: boolean;
   /** Disables Escape and backdrop close (e.g. while saving). */
@@ -166,6 +171,7 @@ export function VeitDialog({
   children,
   footer,
   closeAriaLabel,
+  backdropDismissLabel,
   zIndexBase = 200,
   blockBackdropClose = false,
   disabled = false,
@@ -182,6 +188,7 @@ export function VeitDialog({
   historyStateKey = VEIT_DIALOG_DEFAULT_HISTORY_KEY,
   bodyScrollable = true,
 }: VeitDialogProps) {
+  const backdropAriaLabel = backdropDismissLabel ?? closeAriaLabel;
   const autoTitleId = useId();
   const autoDescId = useId();
   const titleId = autoTitleId;
@@ -282,7 +289,7 @@ export function VeitDialog({
         type="button"
         className={`fixed inset-0 ${backdropClassName ?? 'bg-black/50'} ${backdropBlur ? 'backdrop-blur-[2px]' : ''}`.trim()}
         style={{ zIndex: zBack }}
-        aria-label={closeAriaLabel}
+        aria-label={backdropAriaLabel}
         disabled={inactive}
         onClick={() => {
           if (!inactive) dismissFromOverlay();

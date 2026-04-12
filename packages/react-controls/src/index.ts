@@ -4,9 +4,3 @@ export { VeitDeleteButton, type VeitDeleteButtonProps } from './VeitDeleteButton
 export { VeitSkipToMain } from './VeitSkipToMain.js';
 export { VeitBackButton, type VeitBackButtonProps } from './VeitBackButton.js';
 export { VeitPersonListRow, VeitPersonAvatarThumb } from './VeitPersonListRow.js';
-export { VeitAccessMembersSection } from './VeitAccessMembersSection.js';
-export {
-  VeitPermissionModeSection,
-  type VeitPermissionModeOption,
-  type VeitPermissionModeSectionProps,
-} from './VeitPermissionModeSection.js';

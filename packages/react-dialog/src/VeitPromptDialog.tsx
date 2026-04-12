@@ -1,54 +1,108 @@
-import { useEffect, useId, useState } from 'react';
-import { VeitDialog, VeitDialogFooter } from './VeitDialog.js';
+import type { ReactNode } from 'react';
+import { forwardRef, useEffect, useId, useRef, useState } from 'react';
+import { VeitDialog, VeitDialogFooter, useVeitDialogDismiss } from './VeitDialog.js';
 
 export type VeitPromptDialogProps = {
   open: boolean;
   onClose: () => void;
-  title: string;
-  label?: string;
+  title: ReactNode;
   placeholder?: string;
+  /** Initialer Text beim Öffnen (Standard: leer). */
   initialValue?: string;
   submitLabel: string;
   cancelLabel: string;
-  zIndexBase?: number;
-  backdropDismissLabel: string;
-  inputRequired?: boolean;
+  /**
+   * Getrimmter Wert. Bei Fehler `throw`en, damit der Dialog offen bleibt;
+   * bei Erfolg schließt die Komponente nach dem Aufruf.
+   */
   onSubmit: (value: string) => void | Promise<void>;
+  closeAriaLabel?: string;
+  backdropDismissLabel?: string;
+  zIndexBase?: number;
+  disabled?: boolean;
+  blockBackdropClose?: boolean;
 };
+
+type PromptFieldsProps = {
+  id: string;
+  title: ReactNode;
+  submitLabel: string;
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  disabled: boolean;
+  canSubmit: boolean;
+  onSubmitTrimmed: () => Promise<void>;
+};
+
+const PromptFields = forwardRef<HTMLInputElement, PromptFieldsProps>(function PromptFields(
+  { id, title, submitLabel, value, onChange, placeholder, disabled, canSubmit, onSubmitTrimmed },
+  ref,
+) {
+  const dismiss = useVeitDialogDismiss();
+
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="sr-only">
+        {typeof title === 'string' ? title : submitLabel}
+      </label>
+      <input
+        ref={ref}
+        id={id}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' || !canSubmit || disabled) return;
+          e.preventDefault();
+          void (async () => {
+            try {
+              await onSubmitTrimmed();
+              dismiss();
+            } catch {
+              /* Fehler im Aufrufer */
+            }
+          })();
+        }}
+        placeholder={placeholder}
+        disabled={disabled}
+        autoComplete="off"
+        className="input w-full"
+      />
+    </div>
+  );
+});
 
 export function VeitPromptDialog({
   open,
   onClose,
   title,
-  label,
   placeholder,
   initialValue = '',
   submitLabel,
   cancelLabel,
-  zIndexBase = 200,
-  backdropDismissLabel,
-  inputRequired = true,
   onSubmit,
+  closeAriaLabel,
+  backdropDismissLabel,
+  zIndexBase = 240,
+  disabled = false,
+  blockBackdropClose = false,
 }: VeitPromptDialogProps) {
-  const inputId = useId();
+  const closeLabel = closeAriaLabel ?? cancelLabel;
   const [value, setValue] = useState(initialValue);
-  const [busy, setBusy] = useState(false);
+  const fieldId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const canSubmit = value.trim().length > 0;
 
   useEffect(() => {
-    if (open) setValue(initialValue);
+    if (!open) return;
+    setValue(initialValue);
+    queueMicrotask(() => inputRef.current?.focus());
   }, [open, initialValue]);
 
-  const inactive = busy;
-  const canSubmit = !inputRequired || value.trim().length > 0;
-
-  const submit = async () => {
-    if (!canSubmit) return;
-    setBusy(true);
-    try {
-      await onSubmit(value.trim());
-    } finally {
-      setBusy(false);
-    }
+  const submitTrimmed = async () => {
+    if (!canSubmit || disabled) return;
+    await onSubmit(value.trim());
   };
 
   return (
@@ -56,59 +110,49 @@ export function VeitPromptDialog({
       open={open}
       onClose={onClose}
       title={title}
-      closeAriaLabel={backdropDismissLabel}
+      closeAriaLabel={closeLabel}
+      backdropDismissLabel={backdropDismissLabel ?? closeLabel}
       zIndexBase={zIndexBase}
-      disabled={inactive}
+      disabled={disabled}
+      blockBackdropClose={blockBackdropClose}
       variant="centered"
       size="sm"
-      backdropBlur={false}
-      backdropClassName="bg-black/40"
-      headerClassName="px-4 py-3 sm:px-4"
-      bodyClassName="!px-4 !py-3 sm:!px-4 sm:!py-3"
       footer={({ dismiss }) => (
         <VeitDialogFooter>
-          <button
-            type="button"
-            className="btn-secondary min-h-[2.75rem] w-full sm:w-auto"
-            disabled={inactive}
-            onClick={dismiss}
-          >
+          <button type="button" className="btn-secondary min-h-[44px]" disabled={disabled} onClick={dismiss}>
             {cancelLabel}
           </button>
           <button
             type="button"
-            className="btn-primary min-h-[2.75rem] w-full sm:w-auto"
-            disabled={inactive || !canSubmit}
-            onClick={() => void submit()}
+            className="btn-primary min-h-[44px]"
+            disabled={disabled || !canSubmit}
+            onClick={async () => {
+              if (!canSubmit || disabled) return;
+              try {
+                await submitTrimmed();
+                dismiss();
+              } catch {
+                /* Fehler im Aufrufer */
+              }
+            }}
           >
-            {busy ? '…' : submitLabel}
+            {submitLabel}
           </button>
         </VeitDialogFooter>
       )}
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit();
-        }}
-      >
-        {label ? (
-          <label htmlFor={inputId} className="label mb-1 block">
-            {label}
-          </label>
-        ) : null}
-        <input
-          id={inputId}
-          type="text"
-          className="input min-h-[2.75rem] w-full text-base sm:text-sm"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={placeholder}
-          disabled={inactive}
-          autoComplete="off"
-          autoFocus
-        />
-      </form>
+      <PromptFields
+        ref={inputRef}
+        id={fieldId}
+        title={title}
+        submitLabel={submitLabel}
+        value={value}
+        onChange={setValue}
+        placeholder={placeholder}
+        disabled={disabled}
+        canSubmit={canSubmit}
+        onSubmitTrimmed={submitTrimmed}
+      />
     </VeitDialog>
   );
 }

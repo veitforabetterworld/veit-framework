@@ -1,9 +1,9 @@
 {
-  "name": "@veit/react-controls",
+  "name": "@veit/react-auth-group",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Veit small control primitives (switch, settings row) with Tailwind classes.",
+  "description": "Auth-Gruppen / Personenmengen UI (Modus + explizite Mitglieder + Personen-Picker).",
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -11,12 +11,15 @@
     }
   },
   "peerDependencies": {
+    "@veit/react-controls": "workspace:*",
     "@veit/react-dialog": "workspace:*",
-    "react": ">=18"
+    "lucide-react": ">=0.400.0",
+    "react": ">=18",
+    "react-dom": ">=18"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
-    "@veit/react-dialog": "workspace:*",
+    "@types/react-dom": "^18.2.0",
     "typescript": "^5.7.2"
   }
 }

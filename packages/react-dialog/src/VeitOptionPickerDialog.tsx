@@ -1,91 +1,105 @@
-import { VeitDialog, useVeitDialogDismiss } from './VeitDialog.js';
+import { useId, useMemo, type ReactNode } from 'react';
+import { useVeitDialogDismiss, VeitDialog, VeitDialogFooter } from './VeitDialog.js';
 
 export type VeitOptionPickerItem<T extends string | number = number> = {
   value: T;
   label: string;
-  swatchColor?: string | null;
+  swatchColor?: string;
 };
 
 export type VeitOptionPickerDialogProps<T extends string | number = number> = {
   open: boolean;
   onClose: () => void;
-  title: string;
+  title: ReactNode;
   items: VeitOptionPickerItem<T>[];
-  showSwatch: boolean;
-  swatchShape?: 'circle' | 'rounded';
   value: T | null;
   onSelect: (value: T | null) => void;
+  showSwatch?: boolean;
+  swatchShape?: 'circle' | 'rounded';
   allowNone?: boolean;
   noneLabel?: string;
-  disabled?: boolean;
+  closeAriaLabel: string;
+  backdropDismissLabel?: string;
   zIndexBase?: number;
-  backdropDismissLabel: string;
+  disabled?: boolean;
 };
 
-function swatchClass(shape: 'circle' | 'rounded', filled: boolean): string {
-  const base = 'h-6 w-6 shrink-0 border border-border';
-  const shapeCls = shape === 'circle' ? 'rounded-full' : 'rounded-lg';
-  return `${base} ${shapeCls} ${filled ? '' : 'bg-transparent'}`;
+function swatchClass(shape: 'circle' | 'rounded'): string {
+  return shape === 'circle' ? 'rounded-full' : 'rounded-lg';
 }
 
-function VeitOptionPickerList<T extends string | number = number>({
-  items,
-  showSwatch,
-  swatchShape,
+function OptionPickerList<T extends string | number>({
+  rows,
   value,
   onSelect,
-  allowNone,
+  showSwatch,
+  swatchShape,
   noneLabel,
+  listId,
   disabled,
-}: Pick<
-  VeitOptionPickerDialogProps<T>,
-  'items' | 'showSwatch' | 'value' | 'onSelect' | 'allowNone' | 'noneLabel' | 'disabled'
-> & { swatchShape: 'circle' | 'rounded' }) {
+}: {
+  rows: { key: string; kind: 'none' | 'item'; item?: VeitOptionPickerItem<T> }[];
+  value: T | null;
+  onSelect: (value: T | null) => void;
+  showSwatch: boolean;
+  swatchShape: 'circle' | 'rounded';
+  noneLabel: string;
+  listId: string;
+  disabled: boolean;
+}) {
   const dismiss = useVeitDialogDismiss();
-  const rowBtn = 'flex w-full min-h-[44px] touch-manipulation items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-muted';
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
-      {allowNone && (
-        <button
-          type="button"
-          disabled={disabled}
-          className={`${rowBtn} ${value === null ? 'bg-muted/60' : ''}`}
-          onClick={() => {
-            onSelect(null);
-            dismiss();
-          }}
-        >
-          {showSwatch && <span className={swatchClass(swatchShape, false)} aria-hidden />}
-          <span className="truncate">{noneLabel}</span>
-        </button>
-      )}
-      {items.map((item) => {
-        const selected = value !== null && item.value === value;
-        const color = item.swatchColor;
-        const hasFill = showSwatch && color != null && color !== '';
+    <ul id={listId} className="max-h-[min(360px,55vh)] space-y-1 overflow-y-auto p-0.5" role="listbox">
+      {rows.map((row) => {
+        if (row.kind === 'none') {
+          const selected = value === null;
+          return (
+            <li key="none" role="option" aria-selected={selected}>
+              <button
+                type="button"
+                disabled={disabled}
+                className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition hover:bg-muted/50 ${
+                  selected ? 'border-primary/40 bg-primary/5' : 'border-transparent'
+                }`.trim()}
+                onClick={() => {
+                  onSelect(null);
+                  dismiss();
+                }}
+              >
+                <span className="font-medium">{noneLabel}</span>
+              </button>
+            </li>
+          );
+        }
+        const it = row.item!;
+        const selected = it.value === value;
+        const shape = swatchClass(swatchShape);
         return (
-          <button
-            key={String(item.value)}
-            type="button"
-            disabled={disabled}
-            className={`${rowBtn} ${selected ? 'bg-muted/60' : ''}`}
-            onClick={() => {
-              onSelect(item.value);
-              dismiss();
-            }}
-          >
-            {showSwatch && (
-              <span
-                className={swatchClass(swatchShape, hasFill)}
-                style={hasFill ? { backgroundColor: color as string } : undefined}
-                aria-hidden
-              />
-            )}
-            <span className="min-w-0 truncate">{item.label}</span>
-          </button>
+          <li key={String(it.value)} role="option" aria-selected={selected}>
+            <button
+              type="button"
+              disabled={disabled}
+              className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition hover:bg-muted/50 ${
+                selected ? 'border-primary/40 bg-primary/5' : 'border-transparent'
+              }`.trim()}
+              onClick={() => {
+                onSelect(it.value);
+                dismiss();
+              }}
+            >
+              {showSwatch ? (
+                <span
+                  className={`h-9 w-9 shrink-0 border border-border shadow-sm ${shape}`}
+                  style={{ backgroundColor: it.swatchColor ?? '#6366f1' }}
+                  aria-hidden
+                />
+              ) : null}
+              <span className="min-w-0 flex-1 truncate font-medium">{it.label}</span>
+            </button>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }
 
@@ -94,41 +108,58 @@ export function VeitOptionPickerDialog<T extends string | number = number>({
   onClose,
   title,
   items,
-  showSwatch,
-  swatchShape = 'circle',
   value,
   onSelect,
+  showSwatch = false,
+  swatchShape = 'rounded',
   allowNone = false,
   noneLabel = '—',
-  disabled,
-  zIndexBase = 200,
+  closeAriaLabel,
   backdropDismissLabel,
+  zIndexBase = 220,
+  disabled = false,
 }: VeitOptionPickerDialogProps<T>) {
+  const listId = useId();
+
+  const rows = useMemo(() => {
+    const out: { key: string; kind: 'none' | 'item'; item?: VeitOptionPickerItem<T> }[] = [];
+    if (allowNone) {
+      out.push({ key: 'none', kind: 'none' });
+    }
+    for (const it of items) {
+      out.push({ key: String(it.value), kind: 'item', item: it });
+    }
+    return out;
+  }, [items, allowNone]);
+
   return (
     <VeitDialog
       open={open}
       onClose={onClose}
       title={title}
-      titleClassName="text-xs font-medium text-muted-foreground"
-      closeAriaLabel={backdropDismissLabel}
+      closeAriaLabel={closeAriaLabel}
+      backdropDismissLabel={backdropDismissLabel ?? closeAriaLabel}
       zIndexBase={zIndexBase}
       disabled={disabled}
       variant="centered"
-      size="sm"
-      className="!max-w-[min(320px,90vw)] max-h-[min(60vh,28rem)]"
-      backdropBlur={false}
-      backdropClassName="bg-black/40"
-      headerClassName="px-3 py-2.5 sm:px-3"
-      bodyClassName="!px-0 !py-1 sm:!px-0 sm:!py-1"
+      size="md"
+      bodyScrollable
+      footer={({ dismiss }) => (
+        <VeitDialogFooter>
+          <button type="button" className="btn-secondary min-h-[44px]" disabled={disabled} onClick={dismiss}>
+            {closeAriaLabel}
+          </button>
+        </VeitDialogFooter>
+      )}
     >
-      <VeitOptionPickerList
-        items={items}
-        showSwatch={showSwatch}
-        swatchShape={swatchShape}
+      <OptionPickerList
+        rows={rows}
         value={value}
         onSelect={onSelect}
-        allowNone={allowNone}
+        showSwatch={showSwatch}
+        swatchShape={swatchShape}
         noneLabel={noneLabel}
+        listId={listId}
         disabled={disabled}
       />
     </VeitDialog>

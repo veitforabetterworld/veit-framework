@@ -13,9 +13,6 @@
   "peerDependencies": {
     "react": ">=18"
   },
-  "dependencies": {
-    "@veit/react-upload": "workspace:*"
-  },
   "devDependencies": {
     "@types/react": "^18.2.0",
     "typescript": "^5.7.2"

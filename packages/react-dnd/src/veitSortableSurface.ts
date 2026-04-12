@@ -1,3 +1,4 @@
+import type { DraggableAttributes } from '@dnd-kit/core';
 import { VEIT_DRAG_SURFACE_TOUCH_CLASS } from './constants.js';
 
 /**
@@ -10,7 +11,8 @@ export function veitSortableSurfaceClassName(dragDisabled: boolean): string {
 }
 
 export type VeitSortableDragParts = {
-  attributes: Record<string, unknown>;
+  attributes: DraggableAttributes;
+  /** Listener-Map von `useSortable` / `useDraggable` (kein stabiler Export-Typ in allen @dnd-kit-Versionen). */
   listeners?: Record<string, unknown> | undefined;
 };
 
@@ -22,7 +24,8 @@ export function veitSortableDragBindings(
   sortableDisabled: boolean
 ): Record<string, unknown> {
   if (sortableDisabled || !dnd) return {};
-  return { ...dnd.attributes, ...(dnd.listeners ?? {}) };
+  /** Explizite Einordnung: @dnd-kit `DraggableAttributes` hat keinen Index-Signatur-Index. */
+  return { ...dnd.attributes, ...(dnd.listeners ?? {}) } as Record<string, unknown>;
 }
 
 /** For buttons/links beside the drag surface: prevents a drag from starting from that control. */

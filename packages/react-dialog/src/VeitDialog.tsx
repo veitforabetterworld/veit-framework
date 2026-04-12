@@ -257,11 +257,18 @@ export function VeitDialog({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !disabled) dismissFromOverlay();
+      if (e.key !== 'Escape' || disabled) return;
+      // Nur der oberste Dialog (letzter push auf dialogHistoryStack) darf Escape auswerten —
+      // sonst feuern alle offenen Dialoge und navigateHistoryToClose() ruft mehrfach history.back().
+      if (!isTopDialogHistoryEntry(stableClose)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      dismissFromOverlay();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, disabled, dismissFromOverlay]);
+    // Capture: vor Bubble-Listenern (z. B. Karten-UI), damit Escape nicht „durchrutscht“.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [open, disabled, dismissFromOverlay, stableClose]);
 
   if (!open || !mounted) return null;
 

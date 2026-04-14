@@ -1,19 +1,8 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Trash2 } from 'lucide-react';
-import { VeitConfirmDialog } from '@veit/react-dialog';
+import { VeitConfirmDialog, type VeitDeleteConfirmConfig } from '@veit/react-dialog';
 
-export type VeitDeleteConfirmConfig = {
-  title: ReactNode;
-  message: ReactNode;
-  confirmLabel: string;
-  cancelLabel: string;
-  destructive?: boolean;
-  closeAriaLabel?: string;
-  backdropDismissLabel?: string;
-  zIndexBase?: number;
-  disabled?: boolean;
-  blockBackdropClose?: boolean;
-};
+export type { VeitDeleteConfirmConfig };
 
 export type VeitDeleteButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
   children: ReactNode;
@@ -75,13 +64,7 @@ export function VeitDeleteButton({
           zIndexBase={deleteConfirm.zIndexBase}
           disabled={disabled ?? deleteConfirm.disabled}
           blockBackdropClose={deleteConfirm.blockBackdropClose}
-          onConfirm={async () => {
-            try {
-              await runAction();
-            } finally {
-              setConfirmOpen(false);
-            }
-          }}
+          onConfirm={runAction}
         />
       ) : null}
     </>

@@ -42,19 +42,74 @@ let dialogPopStateAttached = false;
 
 const MAX_DIALOG_HISTORY_CHAIN = 48;
 
+/** In der Browser-Konsole: `localStorage.setItem('VEIT_DIALOG_HISTORY_DEBUG','1')` dann Seite neu laden. */
+export function veitDialogHistoryDebugEnabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem('VEIT_DIALOG_HISTORY_DEBUG') === '1';
+  } catch {
+    return false;
+  }
+}
+
+function veitDialogHistorySnapshot(): Record<string, unknown> {
+  if (typeof window === 'undefined') {
+    return { href: '', historyLength: -1, stateKeys: [] as string[] };
+  }
+  const s = window.history.state;
+  const stateKeys =
+    s != null && typeof s === 'object' && !Array.isArray(s) ? Object.keys(s as Record<string, unknown>) : [];
+  return {
+    href: window.location.href,
+    historyLength: window.history.length,
+    stateKeys,
+  };
+}
+
+export function veitDialogHistoryLog(
+  phase: string,
+  detail: Record<string, unknown> & { instanceId?: string; historyStateKey?: string; historyStackMode?: string },
+) {
+  if (!veitDialogHistoryDebugEnabled()) return;
+  console.log('[VeitDialog:history]', phase, {
+    ...detail,
+    stackLen: dialogHistoryStack.length,
+    ...veitDialogHistorySnapshot(),
+  });
+}
+
 function attachGlobalDialogPopState() {
   if (dialogPopStateAttached || typeof window === 'undefined') return;
   dialogPopStateAttached = true;
   window.addEventListener('popstate', () => {
+    const beforeLen = dialogHistoryStack.length;
     const close = dialogHistoryStack.pop();
+    veitDialogHistoryLog('popstate', {
+      stackLenBeforePop: beforeLen,
+      hadCloseHandler: Boolean(close),
+    });
     close?.();
   });
+}
+
+/**
+ * Neuen History-Eintrag für einen Dialog bauen: bisherigen `history.state` flach übernehmen
+ * (z. B. React Router), damit `history.back()` beim Schließen nicht die vorherige Ebene
+ * „leer“ wiederherstellt und z. B. `?card=` / `?event=` verloren geht.
+ */
+function buildDialogHistoryStateEntry(historyStateKey: string): unknown {
+  const raw = typeof window !== 'undefined' ? window.history.state : null;
+  if (raw != null && typeof raw === 'object' && !Array.isArray(raw)) {
+    return { ...(raw as Record<string, unknown>), [historyStateKey]: true };
+  }
+  return { [historyStateKey]: true };
 }
 
 function dialogHistoryPush(close: HistoryCloseFn, historyStateKey: string): void {
   attachGlobalDialogPopState();
   dialogHistoryStack.push(close);
-  window.history.pushState({ [historyStateKey]: true }, '', window.location.href);
+  window.history.pushState(buildDialogHistoryStateEntry(historyStateKey), '', window.location.href);
+  veitDialogHistoryLog('pushState', { historyStateKey, stackLenAfterPush: dialogHistoryStack.length });
 }
 
 function dialogHistoryRemove(close: HistoryCloseFn): void {
@@ -76,12 +131,18 @@ function navigateHistoryToClose(close: HistoryCloseFn): void {
   let guard = 0;
   const step = () => {
     if (++guard > MAX_DIALOG_HISTORY_CHAIN) {
+      veitDialogHistoryLog('navigateHistoryToClose.abortGuard', { guard });
       dialogHistoryRemove(close);
       return;
     }
     const idx = dialogHistoryStack.lastIndexOf(close);
-    if (idx === -1) return;
-    if (isTopDialogHistoryEntry(close)) {
+    if (idx === -1) {
+      veitDialogHistoryLog('navigateHistoryToClose.skipNotOnStack', { guard });
+      return;
+    }
+    const top = isTopDialogHistoryEntry(close);
+    veitDialogHistoryLog('navigateHistoryToClose.historyBack', { guard, idx, isTop: top });
+    if (top) {
       window.history.back();
       return;
     }
@@ -135,6 +196,12 @@ export type VeitDialogProps = {
    * (e.g. time wheels) so touch gestures do not stick to the dialog body.
    */
   bodyScrollable?: boolean;
+  /**
+   * `internal` (default): eigene History-Ebene per `pushState` für Zurück/Stapel (wie bisher).
+   * `none`: kein zusätzlicher History-Eintrag — für Overlays, deren Zustand bereits über die URL
+   * (z. B. React Router `?event=` / `?card=`) geführt wird, damit nicht doppelt geschichtet wird.
+   */
+  historyStackMode?: 'internal' | 'none';
 };
 
 export function VeitDialogCloseButton({
@@ -187,6 +254,7 @@ export function VeitDialog({
   titleClassName = '',
   historyStateKey = VEIT_DIALOG_DEFAULT_HISTORY_KEY,
   bodyScrollable = true,
+  historyStackMode = 'internal',
 }: VeitDialogProps) {
   const backdropAriaLabel = backdropDismissLabel ?? closeAriaLabel;
   const autoTitleId = useId();
@@ -208,7 +276,16 @@ export function VeitDialog({
   }
   const stableClose = stableCloseRef.current;
 
+  const debugInstanceIdRef = useRef(`dlg-${Math.random().toString(36).slice(2, 9)}`);
+
   const historyPathKeyWhenOpenedRef = useRef<string | null>(null);
+
+  /**
+   * `performDismiss` ruft `navigateHistoryToClose` → `history.back()`. React kann im selben Commit
+   * den `useLayoutEffect`-Cleanup des noch geöffneten Dialogs ausführen, bevor `popstate` den Stack
+   * geleert hat — dann würde das Cleanup ein zweites `history.back()` auslösen (z. B. `?card=` weg).
+   */
+  const performDismissHistoryBackPendingRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -216,33 +293,84 @@ export function VeitDialog({
 
   useLayoutEffect(() => {
     if (!open || typeof window === 'undefined') return;
-    dialogHistoryPush(stableClose, historyStateKey);
-    historyPathKeyWhenOpenedRef.current = `${window.location.origin}${window.location.pathname}`;
+    const useInternalStack = historyStackMode !== 'none';
+    if (useInternalStack) {
+      veitDialogHistoryLog('effect.mountPush', {
+        instanceId: debugInstanceIdRef.current,
+        historyStateKey,
+        historyStackMode,
+        open,
+      });
+      dialogHistoryPush(stableClose, historyStateKey);
+      historyPathKeyWhenOpenedRef.current = `${window.location.origin}${window.location.pathname}`;
+    } else {
+      historyPathKeyWhenOpenedRef.current = null;
+    }
     return () => {
+      if (!useInternalStack) return;
       const pathKeyWhenOpened = historyPathKeyWhenOpenedRef.current;
       historyPathKeyWhenOpenedRef.current = null;
       if (typeof window === 'undefined') return;
       const pathKeyNow = `${window.location.origin}${window.location.pathname}`;
+      const onStack = dialogHistoryStack.lastIndexOf(stableClose);
+      veitDialogHistoryLog('effect.cleanup', {
+        instanceId: debugInstanceIdRef.current,
+        historyStateKey,
+        historyStackMode,
+        pathKeyWhenOpened,
+        pathKeyNow,
+        pathMismatch: pathKeyWhenOpened !== null && pathKeyNow !== pathKeyWhenOpened,
+        onStackIdx: onStack,
+      });
       if (pathKeyWhenOpened !== null && pathKeyNow !== pathKeyWhenOpened) {
         dialogHistoryRemove(stableClose);
+        veitDialogHistoryLog('effect.cleanup.dialogHistoryRemoveOnly', { instanceId: debugInstanceIdRef.current });
         return;
       }
-      if (dialogHistoryStack.lastIndexOf(stableClose) === -1) return;
+      if (onStack === -1) {
+        veitDialogHistoryLog('effect.cleanup.skipNavigateNotOnStack', { instanceId: debugInstanceIdRef.current });
+        return;
+      }
+      if (performDismissHistoryBackPendingRef.current) {
+        veitDialogHistoryLog('effect.cleanup.skipNavigatePerformDismissPending', {
+          instanceId: debugInstanceIdRef.current,
+        });
+        return;
+      }
+      veitDialogHistoryLog('effect.cleanup.navigateHistoryToClose', { instanceId: debugInstanceIdRef.current });
       navigateHistoryToClose(stableClose);
     };
-  }, [open, historyStateKey, stableClose]);
+  }, [open, historyStateKey, stableClose, historyStackMode]);
 
   const performDismiss = useCallback(() => {
+    veitDialogHistoryLog('performDismiss.enter', {
+      instanceId: debugInstanceIdRef.current,
+      historyStateKey,
+      historyStackMode,
+    });
     if (typeof window === 'undefined') {
       onClose();
       return;
     }
     if (dialogHistoryStack.lastIndexOf(stableClose) === -1) {
+      veitDialogHistoryLog('performDismiss.onCloseNotOnStack', { instanceId: debugInstanceIdRef.current });
       onClose();
       return;
     }
-    navigateHistoryToClose(stableClose);
-  }, [onClose, stableClose]);
+    veitDialogHistoryLog('performDismiss.navigateHistoryToClose', { instanceId: debugInstanceIdRef.current });
+    performDismissHistoryBackPendingRef.current = true;
+    try {
+      navigateHistoryToClose(stableClose);
+    } finally {
+      // Nach Layout-Cleanup desselben Frames (siehe effect.cleanup), damit verschachtelte
+      // `history.back()`-Ketten den Ref noch gesetzt lassen.
+      queueMicrotask(() => {
+        queueMicrotask(() => {
+          performDismissHistoryBackPendingRef.current = false;
+        });
+      });
+    }
+  }, [onClose, stableClose, historyStateKey, historyStackMode]);
 
   const dismissFromOverlay = useCallback(() => {
     if (disabled || blockBackdropClose) return;
@@ -258,9 +386,12 @@ export function VeitDialog({
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || disabled) return;
-      // Nur der oberste Dialog (letzter push auf dialogHistoryStack) darf Escape auswerten —
-      // sonst feuern alle offenen Dialoge und navigateHistoryToClose() ruft mehrfach history.back().
-      if (!isTopDialogHistoryEntry(stableClose)) return;
+      const onStack = dialogHistoryStack.lastIndexOf(stableClose) !== -1;
+      const allowEscape =
+        historyStackMode === 'none'
+          ? !onStack && dialogHistoryStack.length === 0
+          : isTopDialogHistoryEntry(stableClose);
+      if (!allowEscape) return;
       e.preventDefault();
       e.stopImmediatePropagation();
       dismissFromOverlay();
@@ -268,7 +399,7 @@ export function VeitDialog({
     // Capture: vor Bubble-Listenern (z. B. Karten-UI), damit Escape nicht „durchrutscht“.
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [open, disabled, dismissFromOverlay, stableClose]);
+  }, [open, disabled, dismissFromOverlay, stableClose, historyStackMode]);
 
   if (!open || !mounted) return null;
 

@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { VeitDialog, VeitDialogFooter } from './VeitDialog.js';
+import { type ReactNode } from 'react';
+import { VeitDialog, VeitDialogFooter, veitDialogHistoryLog } from './VeitDialog.js';
 
 export type VeitConfirmDialogProps = {
   open: boolean;
@@ -35,6 +35,7 @@ export function VeitConfirmDialog({
   blockBackdropClose = false,
 }: VeitConfirmDialogProps) {
   const closeLabel = closeAriaLabel ?? cancelLabel;
+
   return (
     <VeitDialog
       open={open}
@@ -59,8 +60,21 @@ export function VeitConfirmDialog({
             }`.trim()}
             disabled={disabled}
             onClick={async () => {
-              await onConfirm();
+              const labelHint = typeof confirmLabel === 'string' ? confirmLabel : '(confirmLabel)';
+              veitDialogHistoryLog('VeitConfirmDialog.confirm.click.beforeDismiss', { labelHint });
+              // Zuerst History/UI des Bestätigungsdialogs schließen. Wenn `onConfirm` zuerst lief und z. B.
+              // die Zeile mit diesem Button per setState entfernt, unmountet der Dialog ohne dismiss — dann
+              // feuert VeitDialog-Cleanup zusätzlich history.back(), und ein späteres dismiss() erzeugt ein
+              // zweites Zurück (z. B. ?card= fällt weg).
               dismiss();
+              veitDialogHistoryLog('VeitConfirmDialog.confirm.afterDismissBeforeOnConfirm', { labelHint });
+              try {
+                await onConfirm();
+                veitDialogHistoryLog('VeitConfirmDialog.confirm.afterOnConfirm', { labelHint });
+              } catch {
+                veitDialogHistoryLog('VeitConfirmDialog.confirm.onConfirmThrow', { labelHint });
+                return;
+              }
             }}
           >
             {confirmLabel}

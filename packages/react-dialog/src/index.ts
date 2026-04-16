@@ -1,6 +1,8 @@
 export {
   VEIT_DIALOG_DEFAULT_HISTORY_KEY,
+  VEIT_DIALOG_Z_STACK_STEP,
   useVeitDialogDismiss,
+  useVeitDialogNestedZIndexBase,
   veitDialogHistoryDebugEnabled,
   veitDialogHistoryLog,
   VeitDialog,

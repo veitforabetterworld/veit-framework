@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { forwardRef, useEffect, useId, useRef, useState } from 'react';
-import { VeitDialog, VeitDialogFooter, useVeitDialogDismiss } from './VeitDialog.js';
+import { VeitDialog, VeitDialogFooter, useVeitDialogDismiss, useVeitDialogNestedZIndexBase } from './VeitDialog.js';
 
 export type VeitPromptDialogProps = {
   open: boolean;
@@ -84,11 +84,13 @@ export function VeitPromptDialog({
   onSubmit,
   closeAriaLabel,
   backdropDismissLabel,
-  zIndexBase = 240,
+  zIndexBase: zIndexBaseProp,
   disabled = false,
   blockBackdropClose = false,
 }: VeitPromptDialogProps) {
   const closeLabel = closeAriaLabel ?? cancelLabel;
+  const nestedZ = useVeitDialogNestedZIndexBase();
+  const zIndexBase = zIndexBaseProp ?? nestedZ ?? 240;
   const [value, setValue] = useState(initialValue);
   const fieldId = useId();
   const inputRef = useRef<HTMLInputElement>(null);

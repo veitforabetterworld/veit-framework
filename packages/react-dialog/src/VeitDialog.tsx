@@ -24,6 +24,23 @@ export const VEIT_DIALOG_DEFAULT_HISTORY_KEY = 'veit_dialog';
 const VeitDialogDismissContext = createContext<(() => void) | null>(null);
 
 /**
+ * Abstand zwischen übereinanderliegenden Dialog-Ebenen: Backdrop des Kindes liegt über Panel des Parents
+ * ({@link VeitDialog} nutzt `zIndexBase` für Backdrop und `zIndexBase + 5` für die Panel-Schicht).
+ */
+export const VEIT_DIALOG_Z_STACK_STEP = 50;
+
+const VeitDialogZStackContext = createContext<number | null>(null);
+
+/**
+ * Empfohlener `zIndexBase` für einen weiteren `VeitDialog` / Portal, der **innerhalb** eines geöffneten
+ * `VeitDialog` (oder dessen `children`-Portalen) gerendert wird. Außerhalb eines Eltern-Dialogs: `undefined`.
+ */
+export function useVeitDialogNestedZIndexBase(): number | undefined {
+  const v = useContext(VeitDialogZStackContext);
+  return v ?? undefined;
+}
+
+/**
  * Use in custom `footer` or body actions so „Abbrechen“ dasselbe Verhalten wie X/Backdrop hat
  * (`history.back()` inkl. überlagerter Dialoge).
  * Must be called from a component rendered inside `VeitDialog`.
@@ -172,6 +189,10 @@ export type VeitDialogProps = {
    * Standard: gleich {@link closeAriaLabel} (auch für den X-Button).
    */
   backdropDismissLabel?: string;
+  /**
+   * Z-Index der Backdrop-Schicht; Panel liegt bei `zIndexBase + 5`.
+   * Weglassen: übernimmt automatisch einen Wert über dem **direkt** umgebenden `VeitDialog` (Verschachtelung).
+   */
   zIndexBase?: number;
   blockBackdropClose?: boolean;
   /** Disables Escape and backdrop close (e.g. while saving). */
@@ -239,7 +260,7 @@ export function VeitDialog({
   footer,
   closeAriaLabel,
   backdropDismissLabel,
-  zIndexBase = 200,
+  zIndexBase: zIndexBaseProp,
   blockBackdropClose = false,
   disabled = false,
   size = 'md',
@@ -263,6 +284,10 @@ export function VeitDialog({
   const headerDescriptionId = description != null ? autoDescId : undefined;
   const describedBy = [ariaDescribedBy, headerDescriptionId].filter(Boolean).join(' ') || undefined;
   const [mounted, setMounted] = useState(false);
+
+  const parentNestedZ = useContext(VeitDialogZStackContext);
+  const resolvedZIndexBase = zIndexBaseProp ?? parentNestedZ ?? 200;
+  const nestedZForChildren = resolvedZIndexBase + VEIT_DIALOG_Z_STACK_STEP;
 
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -406,8 +431,8 @@ export function VeitDialog({
   const footerNode =
     typeof footer === 'function' ? footer({ dismiss: dismissFromCloseButton }) : footer;
 
-  const zBack = zIndexBase;
-  const zLayer = zIndexBase + 5;
+  const zBack = resolvedZIndexBase;
+  const zLayer = resolvedZIndexBase + 5;
   const inactive = disabled || blockBackdropClose;
 
   const overlayAlign =
@@ -421,7 +446,8 @@ export function VeitDialog({
       : `max-h-[min(92dvh,720px)] w-full ${sizeMax[size]} overflow-hidden rounded-t-[1.25rem] border border-border/80 bg-surface text-foreground shadow-2xl sm:rounded-2xl`;
 
   const node = (
-    <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
+    <VeitDialogZStackContext.Provider value={nestedZForChildren}>
+      <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
       <>
       <button
         type="button"
@@ -485,6 +511,7 @@ export function VeitDialog({
       </div>
       </>
     </VeitDialogDismissContext.Provider>
+    </VeitDialogZStackContext.Provider>
   );
 
   return createPortal(node, document.body);

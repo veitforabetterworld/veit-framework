@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { VeitPersonListRowProfile } from '@veit/react-controls';
-import { VeitDialog, VeitDialogFooter } from '@veit/react-dialog';
+import { useVeitDialogNestedZIndexBase, VeitDialog, VeitDialogFooter } from '@veit/react-dialog';
 
 import type { VeitPersonRef } from './types.js';
 
@@ -95,11 +95,13 @@ export function VeitPersonPickerDialog({
   excludeUserIds,
   loadCandidates,
   onConfirm,
-  zIndexBase = 260,
+  zIndexBase: zIndexBaseProp,
   personRowLabels,
   renderPersonRow = defaultRow,
 }: VeitPersonPickerDialogProps) {
   const listId = useId();
+  const nestedZ = useVeitDialogNestedZIndexBase();
+  const zIndexBase = zIndexBaseProp ?? nestedZ ?? 260;
   const radioName = `veit-person-picker-${listId}`;
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);

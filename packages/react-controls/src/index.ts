@@ -1,5 +1,15 @@
 export { VeitSwitch, type VeitSwitchProps } from './VeitSwitch.js';
 export { VeitSettingsToggleRow, type VeitSettingsToggleRowProps } from './VeitSettingsToggleRow.js';
+export {
+  VeitDataTable,
+  type VeitDataTableColumn,
+  type VeitDataTableLabels,
+  type VeitDataTablePagination,
+  type VeitDataTablePaginationLabels,
+  type VeitDataTableProps,
+} from './VeitDataTable.js';
+export { VeitDataTableHeaderCell, type VeitDataTableHeaderCellProps } from './VeitDataTableHeaderCell.js';
+export { veitTableHeaderIconBtn, veitTableHeaderIconBtnActive } from './veitTableStyles.js';
 export { VeitDeleteButton, type VeitDeleteButtonProps } from './VeitDeleteButton.js';
 export type { VeitDeleteConfirmConfig } from '@veit/react-dialog';
 export { VeitSkipToMain } from './VeitSkipToMain.js';

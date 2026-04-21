@@ -287,13 +287,13 @@ function SortableRowShellFixed({
   );
 }
 
-function InlineReorderableList<T extends { id: string | number }>({
+function InlineReorderableList({
   sortableIds,
-  disabled,
+  disabled: _disabled,
   dragLabel: _dragLabel,
   dragOverlayZIndex,
   onDragEnd,
-  activeSortId,
+  activeSortId: _activeSortId,
   setActiveSortId,
   overlayItem,
   children,

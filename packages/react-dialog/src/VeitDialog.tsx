@@ -223,6 +223,17 @@ export type VeitDialogProps = {
    * (z. B. React Router `?event=` / `?card=`) geführt wird, damit nicht doppelt geschichtet wird.
    */
   historyStackMode?: 'internal' | 'none';
+  /**
+   * `modal` (default): zentriert oder responsives Sheet mit Vollbild-Backdrop.
+   * `bottom`: Panel unten ohne Backdrop — Hintergrund (z. B. Karte) bleibt bedienbar.
+   * Dann werden `variant` / `size` für die Panel-Form ignoriert (volle Breite).
+   */
+  presentation?: 'modal' | 'bottom';
+  /**
+   * Nur `presentation="bottom"`: Ziel für `createPortal`. Standard `document.body` mit `fixed`.
+   * Bei z. B. `position: relative`-Rahmen (eingebettete Karte) Element übergeben → Sheet mit `absolute`.
+   */
+  bottomDockRoot?: HTMLElement | null;
 };
 
 export function VeitDialogCloseButton({
@@ -276,6 +287,8 @@ export function VeitDialog({
   historyStateKey = VEIT_DIALOG_DEFAULT_HISTORY_KEY,
   bodyScrollable = true,
   historyStackMode = 'internal',
+  presentation = 'modal',
+  bottomDockRoot = null,
 }: VeitDialogProps) {
   const backdropAriaLabel = backdropDismissLabel ?? closeAriaLabel;
   const autoTitleId = useId();
@@ -435,6 +448,80 @@ export function VeitDialog({
   const zLayer = resolvedZIndexBase + 5;
   const inactive = disabled || blockBackdropClose;
 
+  const portalTarget =
+    typeof document === 'undefined'
+      ? null
+      : presentation === 'bottom'
+        ? bottomDockRoot ?? document.body
+        : document.body;
+
+  if (portalTarget == null) return null;
+
+  const titleBlock = (
+    <div className="min-w-0 flex-1">
+      <div
+        id={titleId}
+        className={
+          titleClassName.trim() ||
+          'text-lg font-semibold tracking-tight text-foreground sm:text-xl'
+        }
+      >
+        {title}
+      </div>
+      {description != null ? (
+        <div id={headerDescriptionId} className="mt-1.5 text-sm text-muted-foreground">
+          {description}
+        </div>
+      ) : null}
+    </div>
+  );
+
+  if (presentation === 'bottom') {
+    const dockUsesFixed = portalTarget === document.body;
+    const posClass = dockUsesFixed ? 'fixed bottom-0 left-0 right-0' : 'absolute bottom-0 left-0 right-0';
+    const bottomShellClass =
+      `flex flex-col w-full max-h-[min(92dvh,720px)] overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-[0_-4px_20px_rgba(0,0,0,0.12)] ${className}`.trim();
+
+    const node = (
+      <VeitDialogZStackContext.Provider value={nestedZForChildren}>
+        <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
+          <div
+            role={role}
+            aria-modal="false"
+            aria-labelledby={titleId}
+            aria-describedby={describedBy}
+            className={`${posClass} flex flex-col ${bottomShellClass}`}
+            style={{ zIndex: zLayer }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className={`flex shrink-0 items-start justify-between gap-3 border-b border-border/60 bg-background px-5 pb-4 pt-3 sm:px-6 ${headerClassName}`.trim()}
+            >
+              {titleBlock}
+              {showCloseButton ? (
+                <VeitDialogCloseButton onClick={dismissFromCloseButton} label={closeAriaLabel} disabled={disabled} />
+              ) : null}
+            </div>
+            <div
+              className={`min-h-0 flex-1 bg-background px-5 py-4 sm:px-6 sm:py-5 ${
+                bodyScrollable ? 'overflow-y-auto' : 'overflow-x-hidden overflow-y-hidden'
+              } ${bodyClassName}`.trim()}
+            >
+              {children}
+            </div>
+            {footerNode != null ? (
+              <div className="shrink-0 border-t border-border/50 bg-background px-5 py-4 sm:px-6 sm:py-5">
+                {footerNode}
+              </div>
+            ) : null}
+          </div>
+        </VeitDialogDismissContext.Provider>
+      </VeitDialogZStackContext.Provider>
+    );
+
+    return createPortal(node, portalTarget);
+  }
+
   const overlayAlign =
     variant === 'centered'
       ? 'items-center justify-center p-4'
@@ -448,73 +535,58 @@ export function VeitDialog({
   const node = (
     <VeitDialogZStackContext.Provider value={nestedZForChildren}>
       <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
-      <>
-      <button
-        type="button"
-        className={`fixed inset-0 ${backdropClassName ?? 'bg-black/50'} ${backdropBlur ? 'backdrop-blur-[2px]' : ''}`.trim()}
-        style={{ zIndex: zBack }}
-        aria-label={backdropAriaLabel}
-        disabled={inactive}
-        onClick={() => {
-          if (!inactive) dismissFromOverlay();
-        }}
-      />
-      <div
-        className={`pointer-events-none fixed inset-0 flex ${overlayAlign}`}
-        style={{ zIndex: zLayer }}
-        role="presentation"
-      >
-        <div
-          role={role}
-          aria-modal="true"
-          aria-labelledby={titleId}
-          aria-describedby={describedBy}
-          className={`pointer-events-auto flex flex-col ${panelShape} ${className}`.trim()}
-          onClick={(e) => e.stopPropagation()}
-        >
+        <>
+          <button
+            type="button"
+            className={`fixed inset-0 ${backdropClassName ?? 'bg-black/50'} ${backdropBlur ? 'backdrop-blur-[2px]' : ''}`.trim()}
+            style={{ zIndex: zBack }}
+            aria-label={backdropAriaLabel}
+            disabled={inactive}
+            onClick={() => {
+              if (!inactive) dismissFromOverlay();
+            }}
+          />
           <div
-            className={`flex shrink-0 items-start justify-between gap-3 border-b border-border/60 bg-surface px-5 pb-4 pt-5 sm:px-6 ${headerClassName}`.trim()}
+            className={`pointer-events-none fixed inset-0 flex ${overlayAlign}`}
+            style={{ zIndex: zLayer }}
+            role="presentation"
           >
-            <div className="min-w-0 flex-1">
+            <div
+              role={role}
+              aria-modal="true"
+              aria-labelledby={titleId}
+              aria-describedby={describedBy}
+              className={`pointer-events-auto flex flex-col ${panelShape} ${className}`.trim()}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div
-                id={titleId}
-                className={
-                  titleClassName.trim() ||
-                  'text-lg font-semibold tracking-tight text-foreground sm:text-xl'
-                }
+                className={`flex shrink-0 items-start justify-between gap-3 border-b border-border/60 bg-surface px-5 pb-4 pt-5 sm:px-6 ${headerClassName}`.trim()}
               >
-                {title}
+                {titleBlock}
+                {showCloseButton ? (
+                  <VeitDialogCloseButton onClick={dismissFromCloseButton} label={closeAriaLabel} disabled={disabled} />
+                ) : null}
               </div>
-              {description != null ? (
-                <div id={headerDescriptionId} className="mt-1.5 text-sm text-muted-foreground">
-                  {description}
+              <div
+                className={`min-h-0 flex-1 bg-surface px-5 py-4 sm:px-6 sm:py-5 ${
+                  bodyScrollable ? 'overflow-y-auto' : 'overflow-x-hidden overflow-y-hidden'
+                } ${bodyClassName}`.trim()}
+              >
+                {children}
+              </div>
+              {footerNode != null ? (
+                <div className="shrink-0 border-t border-border/50 bg-surface px-5 py-4 sm:px-6 sm:py-5">
+                  {footerNode}
                 </div>
               ) : null}
             </div>
-            {showCloseButton ? (
-              <VeitDialogCloseButton onClick={dismissFromCloseButton} label={closeAriaLabel} disabled={disabled} />
-            ) : null}
           </div>
-          <div
-            className={`min-h-0 flex-1 bg-surface px-5 py-4 sm:px-6 sm:py-5 ${
-              bodyScrollable ? 'overflow-y-auto' : 'overflow-x-hidden overflow-y-hidden'
-            } ${bodyClassName}`.trim()}
-          >
-            {children}
-          </div>
-          {footerNode != null ? (
-            <div className="shrink-0 border-t border-border/50 bg-surface px-5 py-4 sm:px-6 sm:py-5">
-              {footerNode}
-            </div>
-          ) : null}
-        </div>
-      </div>
-      </>
-    </VeitDialogDismissContext.Provider>
+        </>
+      </VeitDialogDismissContext.Provider>
     </VeitDialogZStackContext.Provider>
   );
 
-  return createPortal(node, document.body);
+  return createPortal(node, portalTarget);
 }
 
 export function VeitDialogFooter({

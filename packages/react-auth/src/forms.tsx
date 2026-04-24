@@ -125,11 +125,32 @@ export function LoginForm<User>({
           <>
             <div>
               <label htmlFor="login-email" className="label">{t('account.email')}</label>
-              <input id="login-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="input" />
+              <input
+                id="login-email"
+                type="text"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="username"
+                className="input"
+              />
             </div>
             <div>
               <label htmlFor="login-password" className="label">{t('account.password')}</label>
-              <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete="current-password" className="input" />
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={1}
+                autoComplete="current-password"
+                className="input"
+              />
             </div>
           </>
         ) : (

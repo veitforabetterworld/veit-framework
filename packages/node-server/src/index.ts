@@ -13,6 +13,11 @@ export type CreateAppOptions = {
   logger?: boolean | { level?: string };
   /** Hinter Nginx/Proxy: `X-Forwarded-*` für Host/Proto (z. B. öffentliche URLs aus dem Request). Standard: true. */
   trustProxy?: boolean | string | number;
+  /**
+   * Fastify `bodyLimit`: maximale Größe des Request-Bodys in Bytes (JSON-RPC, Webhooks, …).
+   * Unset = Fastify-Standard (1 MiB).
+   */
+  bodyLimit?: number;
 };
 
 /**
@@ -26,6 +31,7 @@ export async function createApp(options?: CreateAppOptions): Promise<FastifyInst
     // Avoid per-request noise; errors are still logged via error handlers.
     disableRequestLogging: true,
     trustProxy: options?.trustProxy ?? true,
+    ...(options?.bodyLimit !== undefined ? { bodyLimit: options.bodyLimit } : {}),
   });
   const raw = process.env.CORS_ORIGINS;
   const origin = raw

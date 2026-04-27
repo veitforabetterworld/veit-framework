@@ -30,12 +30,15 @@ export function LoginForm<User>({
   onSendMfaEmailCode,
   renderLogo,
   renderSkipToMain,
+  renderFooter,
 }: {
   t: TFunction;
   parseError: (error: unknown) => string;
   onSendMfaEmailCode?: (token: string) => Promise<string | null>;
   renderLogo?: () => React.ReactNode;
   renderSkipToMain?: () => React.ReactNode;
+  /** Unter dem Formular (z. B. Links zu Registrierung / Passwort vergessen), innerhalb der Auth-Karte sichtbar. */
+  renderFooter?: () => React.ReactNode;
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -172,6 +175,7 @@ export function LoginForm<User>({
         )}
         <button type="submit" disabled={submitting} className="w-full btn-primary py-2.5">{mfaStep ? t('auth.mfa_verify') : t('auth.login')}</button>
       </form>
+      {renderFooter?.()}
     </AuthFrame>
   );
 }
@@ -182,12 +186,14 @@ export function RegisterForm<User>({
   renderLogo,
   renderSkipToMain,
   renderPrivacyConsent,
+  renderFooter,
 }: {
   t: TFunction;
   parseError: (error: unknown) => string;
   renderLogo?: () => React.ReactNode;
   renderSkipToMain?: () => React.ReactNode;
   renderPrivacyConsent: (checked: boolean, onCheckedChange: (next: boolean) => void) => React.ReactNode;
+  renderFooter?: () => React.ReactNode;
 }) {
   const { register } = useAuth<User>();
   const blockGuestPage = useRedirectIfAuthenticated<User>();
@@ -238,6 +244,7 @@ export function RegisterForm<User>({
           </form>
         </>
       )}
+      {renderFooter?.()}
     </AuthFrame>
   );
 }

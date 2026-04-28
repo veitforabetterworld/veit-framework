@@ -255,12 +255,14 @@ export function ForgotPasswordForm<User>({
   onRequestReset,
   renderLogo,
   renderSkipToMain,
+  renderFooter,
 }: {
   t: TFunction;
   parseError: (error: unknown) => string;
   onRequestReset: (email: string) => Promise<void>;
   renderLogo?: () => React.ReactNode;
   renderSkipToMain?: () => React.ReactNode;
+  renderFooter?: () => React.ReactNode;
 }) {
   const blockGuestPage = useRedirectIfAuthenticated<User>();
   const [email, setEmail] = useState('');
@@ -297,6 +299,7 @@ export function ForgotPasswordForm<User>({
           <button type="submit" disabled={submitting} className="w-full btn-primary py-2.5">{t('auth.send_reset_link')}</button>
         </form>
       )}
+      {renderFooter?.()}
     </AuthFrame>
   );
 }

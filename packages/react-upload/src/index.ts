@@ -1,9 +1,14 @@
 export {
-  VeitThumbnailImageLightbox,
-  type VeitThumbnailImageLightboxProps,
-  type VeitThumbnailImageLightboxMode,
-} from './VeitThumbnailImageLightbox.js';
-export { VeitImageUploadInput, type VeitImageUploadInputProps } from './VeitImageUploadInput.tsx';
+  VeitImagePicker,
+  type VeitImagePickerProps,
+  type VeitImagePickerViewProps,
+  type VeitImagePickerEditableProps,
+  type VeitImagePickerShape,
+  type VeitImagePickerSourceMode,
+  type VeitImagePickerI18n,
+} from './VeitImagePicker.js';
+export { VeitImageUploadInput, type VeitImageUploadInputProps } from './VeitImageUploadInput.js';
+export { normalizeImageForUpload } from './normalizeImageForUpload.js';
 
 export async function uploadImageViaFormData(
   file: File,

@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
-import { VeitThumbnailImageLightbox } from '@veit/react-upload';
+import { VeitImagePicker } from '@veit/react-upload';
 
 import { veitPersonAvatarInitial } from './personDisplay.js';
 
 const THUMB: Record<'sm' | 'md', string> = {
-  sm: 'flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted text-xs font-medium text-muted-foreground',
-  md: 'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted text-sm font-medium text-muted-foreground',
+  sm: 'h-8 w-8 shrink-0 text-xs font-medium',
+  md: 'h-10 w-10 shrink-0 text-sm font-medium',
 };
 
 export function VeitPersonAvatarThumb({
@@ -26,15 +26,16 @@ export function VeitPersonAvatarThumb({
   closeAriaLabel: string;
 }) {
   return (
-    <VeitThumbnailImageLightbox
+    <VeitImagePicker
       src={src}
       alt={alt}
       mode="view"
       className={className}
+      shape="circle"
+      avatarLetter={initial}
       thumbnailClassName={THUMB[size]}
-      placeholder={<span aria-hidden>{initial}</span>}
       openPreviewAriaLabel={previewAriaLabel}
-      closeAriaLabel={closeAriaLabel}
+      lightboxCloseAriaLabel={closeAriaLabel}
     />
   );
 }

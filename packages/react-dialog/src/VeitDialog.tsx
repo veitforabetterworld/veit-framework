@@ -18,6 +18,12 @@ const sizeMax: Record<'sm' | 'md' | 'lg', string> = {
   lg: 'max-w-xl',
 };
 
+/** Kein festes px-Deckel: wächst mit dem Inhalt bis knapp unter die sichtbare Viewport-Höhe, dann erst Scroll. */
+const DIALOG_PANEL_MAX_H =
+  'max-h-[min(96dvh,calc(100svh-2rem))]';
+
+const DIALOG_BOTTOM_DOCK_MAX_H = 'max-h-[min(96dvh,calc(100svh-1rem))]';
+
 /** Default `history.pushState` marker property for dialog entries. */
 export const VEIT_DIALOG_DEFAULT_HISTORY_KEY = 'veit_dialog';
 
@@ -213,8 +219,8 @@ export type VeitDialogProps = {
    */
   historyStateKey?: string;
   /**
-   * `false`: body does not scroll (`overflow-y-auto` omitted). Use when inner regions handle scroll
-   * (e.g. time wheels) so touch gestures do not stick to the dialog body.
+   * `false`: Body fest ohne vertikales Scroll (z. B. Zeiträder). Wenn `true`: vertikales Scrollen nur,
+   * wenn Inhalt wirklich höher als der Body — kein dauerhaftes `overflow-y:auto` (vermeidet Geister-Scrollbalken).
    */
   bodyScrollable?: boolean;
   /**
@@ -297,6 +303,8 @@ export function VeitDialog({
   const headerDescriptionId = description != null ? autoDescId : undefined;
   const describedBy = [ariaDescribedBy, headerDescriptionId].filter(Boolean).join(' ') || undefined;
   const [mounted, setMounted] = useState(false);
+  /** Dialog-Body: `overflow-y` nur bei echtem Überlauf — vermeidet „Geister“-Scrollbalken (Subpixel/Flex). */
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
 
   const parentNestedZ = useContext(VeitDialogZStackContext);
   const resolvedZIndexBase = zIndexBaseProp ?? parentNestedZ ?? 200;
@@ -439,6 +447,42 @@ export function VeitDialog({
     return () => window.removeEventListener('keydown', onKey, true);
   }, [open, disabled, dismissFromOverlay, stableClose, historyStackMode]);
 
+  useLayoutEffect(() => {
+    if (!open || !mounted || !bodyScrollable || typeof window === 'undefined') return;
+    const el = bodyScrollRef.current;
+    if (!el) return;
+
+    const padPx = 2;
+    const sync = () => {
+      const needs = el.scrollHeight > el.clientHeight + padPx;
+      el.style.overflowY = needs ? 'auto' : 'hidden';
+      el.style.overflowX = 'hidden';
+    };
+
+    sync();
+
+    const ro = new ResizeObserver(() => {
+      queueMicrotask(sync);
+    });
+    ro.observe(el);
+    for (const c of el.children) {
+      ro.observe(c);
+    }
+    const mo = new MutationObserver(() => {
+      queueMicrotask(sync);
+    });
+    mo.observe(el, { subtree: true, childList: true, characterData: true, attributes: true });
+    window.addEventListener('resize', sync);
+
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      window.removeEventListener('resize', sync);
+      el.style.overflowY = '';
+      el.style.overflowX = '';
+    };
+  }, [open, mounted, bodyScrollable, presentation]);
+
   if (!open || !mounted) return null;
 
   const footerNode =
@@ -480,7 +524,7 @@ export function VeitDialog({
     const dockUsesFixed = portalTarget === document.body;
     const posClass = dockUsesFixed ? 'fixed bottom-0 left-0 right-0' : 'absolute bottom-0 left-0 right-0';
     const bottomShellClass =
-      `flex flex-col w-full max-h-[min(92dvh,720px)] overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-[0_-4px_20px_rgba(0,0,0,0.12)] ${className}`.trim();
+      `flex flex-col w-full ${DIALOG_BOTTOM_DOCK_MAX_H} overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-[0_-4px_20px_rgba(0,0,0,0.12)] ${className}`.trim();
 
     const node = (
       <VeitDialogZStackContext.Provider value={nestedZForChildren}>
@@ -503,9 +547,8 @@ export function VeitDialog({
               ) : null}
             </div>
             <div
-              className={`min-h-0 flex-1 bg-background px-5 py-4 sm:px-6 sm:py-5 ${
-                bodyScrollable ? 'overflow-y-auto' : 'overflow-x-hidden overflow-y-hidden'
-              } ${bodyClassName}`.trim()}
+              ref={bodyScrollable ? bodyScrollRef : undefined}
+              className={`min-h-0 grow-0 shrink overflow-x-hidden overflow-y-hidden bg-background px-5 py-4 sm:px-6 sm:py-5 ${bodyClassName}`.trim()}
             >
               {children}
             </div>
@@ -529,8 +572,8 @@ export function VeitDialog({
 
   const panelShape =
     variant === 'centered'
-      ? `max-h-[min(88vh,720px)] w-full ${sizeMax[size]} overflow-hidden rounded-2xl border border-border/80 bg-surface text-foreground shadow-2xl`
-      : `max-h-[min(92dvh,720px)] w-full ${sizeMax[size]} overflow-hidden rounded-t-[1.25rem] border border-border/80 bg-surface text-foreground shadow-2xl sm:rounded-2xl`;
+      ? `${DIALOG_PANEL_MAX_H} w-full ${sizeMax[size]} overflow-hidden rounded-2xl border border-border/80 bg-surface text-foreground shadow-2xl`
+      : `${DIALOG_PANEL_MAX_H} w-full ${sizeMax[size]} overflow-hidden rounded-t-[1.25rem] border border-border/80 bg-surface text-foreground shadow-2xl sm:rounded-2xl`;
 
   const node = (
     <VeitDialogZStackContext.Provider value={nestedZForChildren}>
@@ -568,9 +611,8 @@ export function VeitDialog({
                 ) : null}
               </div>
               <div
-                className={`min-h-0 flex-1 bg-surface px-5 py-4 sm:px-6 sm:py-5 ${
-                  bodyScrollable ? 'overflow-y-auto' : 'overflow-x-hidden overflow-y-hidden'
-                } ${bodyClassName}`.trim()}
+                ref={bodyScrollable ? bodyScrollRef : undefined}
+                className={`min-h-0 grow-0 shrink overflow-x-hidden overflow-y-hidden bg-surface px-5 py-4 sm:px-6 sm:py-5 ${bodyClassName}`.trim()}
               >
                 {children}
               </div>

@@ -40,3 +40,17 @@ export {
   type VeitInlineEditableListTextProps,
   type VeitInlineEditableListTextToggleProps,
 } from './VeitInlineEditableList.js';
+export {
+  VeitHandwritingTextarea,
+  VeitSmartHandwritingTextarea,
+  veitBrowserHandwritingRecognizer,
+  createVeitBackendHandwritingRecognizer,
+  type VeitHandwritingFallbackPolicy,
+  type VeitBackendHandwritingTransport,
+  type VeitHandwritingRecognitionMode,
+  type VeitHandwritingRecognitionResult,
+  type VeitHandwritingRecognizeRequest,
+  type VeitHandwritingRecognizer,
+  type VeitHandwritingStroke,
+  type VeitHandwritingPoint,
+} from './VeitHandwritingInput.js';

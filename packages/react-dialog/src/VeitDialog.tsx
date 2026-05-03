@@ -91,7 +91,7 @@ function veitDialogHistorySnapshot(): Record<string, unknown> {
 
 export function veitDialogHistoryLog(
   phase: string,
-  detail: Record<string, unknown> & { instanceId?: string; historyStateKey?: string; historyStackMode?: string },
+  detail: Record<string, unknown> & { instanceId?: string; historyStateKey?: string },
 ) {
   if (!veitDialogHistoryDebugEnabled()) return;
   console.log('[VeitDialog:history]', phase, {
@@ -224,12 +224,6 @@ export type VeitDialogProps = {
    */
   bodyScrollable?: boolean;
   /**
-   * `internal` (default): eigene History-Ebene per `pushState` für Zurück/Stapel (wie bisher).
-   * `none`: kein zusätzlicher History-Eintrag — für Overlays, deren Zustand bereits über die URL
-   * (z. B. React Router `?event=` / `?card=`) geführt wird, damit nicht doppelt geschichtet wird.
-   */
-  historyStackMode?: 'internal' | 'none';
-  /**
    * `modal` (default): zentriert oder responsives Sheet mit Vollbild-Backdrop.
    * `bottom`: Panel unten ohne Backdrop — Hintergrund (z. B. Karte) bleibt bedienbar.
    * Dann werden `variant` / `size` für die Panel-Form ignoriert (volle Breite).
@@ -292,7 +286,6 @@ export function VeitDialog({
   titleClassName = '',
   historyStateKey = VEIT_DIALOG_DEFAULT_HISTORY_KEY,
   bodyScrollable = true,
-  historyStackMode = 'internal',
   presentation = 'modal',
   bottomDockRoot = null,
 }: VeitDialogProps) {
@@ -339,21 +332,14 @@ export function VeitDialog({
 
   useLayoutEffect(() => {
     if (!open || typeof window === 'undefined') return;
-    const useInternalStack = historyStackMode !== 'none';
-    if (useInternalStack) {
-      veitDialogHistoryLog('effect.mountPush', {
-        instanceId: debugInstanceIdRef.current,
-        historyStateKey,
-        historyStackMode,
-        open,
-      });
-      dialogHistoryPush(stableClose, historyStateKey);
-      historyPathKeyWhenOpenedRef.current = `${window.location.origin}${window.location.pathname}`;
-    } else {
-      historyPathKeyWhenOpenedRef.current = null;
-    }
+    veitDialogHistoryLog('effect.mountPush', {
+      instanceId: debugInstanceIdRef.current,
+      historyStateKey,
+      open,
+    });
+    dialogHistoryPush(stableClose, historyStateKey);
+    historyPathKeyWhenOpenedRef.current = `${window.location.origin}${window.location.pathname}`;
     return () => {
-      if (!useInternalStack) return;
       const pathKeyWhenOpened = historyPathKeyWhenOpenedRef.current;
       historyPathKeyWhenOpenedRef.current = null;
       if (typeof window === 'undefined') return;
@@ -362,7 +348,6 @@ export function VeitDialog({
       veitDialogHistoryLog('effect.cleanup', {
         instanceId: debugInstanceIdRef.current,
         historyStateKey,
-        historyStackMode,
         pathKeyWhenOpened,
         pathKeyNow,
         pathMismatch: pathKeyWhenOpened !== null && pathKeyNow !== pathKeyWhenOpened,
@@ -386,13 +371,12 @@ export function VeitDialog({
       veitDialogHistoryLog('effect.cleanup.navigateHistoryToClose', { instanceId: debugInstanceIdRef.current });
       navigateHistoryToClose(stableClose);
     };
-  }, [open, historyStateKey, stableClose, historyStackMode]);
+  }, [open, historyStateKey, stableClose]);
 
   const performDismiss = useCallback(() => {
     veitDialogHistoryLog('performDismiss.enter', {
       instanceId: debugInstanceIdRef.current,
       historyStateKey,
-      historyStackMode,
     });
     if (typeof window === 'undefined') {
       onClose();
@@ -416,7 +400,7 @@ export function VeitDialog({
         });
       });
     }
-  }, [onClose, stableClose, historyStateKey, historyStackMode]);
+  }, [onClose, stableClose, historyStateKey]);
 
   const dismissFromOverlay = useCallback(() => {
     if (disabled || blockBackdropClose) return;
@@ -432,12 +416,7 @@ export function VeitDialog({
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || disabled) return;
-      const onStack = dialogHistoryStack.lastIndexOf(stableClose) !== -1;
-      const allowEscape =
-        historyStackMode === 'none'
-          ? !onStack && dialogHistoryStack.length === 0
-          : isTopDialogHistoryEntry(stableClose);
-      if (!allowEscape) return;
+      if (!isTopDialogHistoryEntry(stableClose)) return;
       e.preventDefault();
       e.stopImmediatePropagation();
       dismissFromOverlay();
@@ -445,7 +424,7 @@ export function VeitDialog({
     // Capture: vor Bubble-Listenern (z. B. Karten-UI), damit Escape nicht „durchrutscht“.
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [open, disabled, dismissFromOverlay, stableClose, historyStackMode]);
+  }, [open, disabled, dismissFromOverlay, stableClose]);
 
   useLayoutEffect(() => {
     if (!open || !mounted || !bodyScrollable || typeof window === 'undefined') return;

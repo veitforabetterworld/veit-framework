@@ -140,9 +140,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
   if (props.dismissOnly) {
     const tone = props.dismissOnlyTone ?? 'secondary';
     const onlyBtnClass =
-      tone === 'primary'
-        ? 'btn-primary min-h-[2.75rem] w-full sm:w-auto'
-        : 'btn-secondary min-h-[2.75rem] w-full sm:w-auto';
+      tone === 'primary' ? 'btn-primary w-full sm:w-auto' : 'btn-secondary w-full sm:w-auto';
     const innerDismiss = (
       <div className={`flex flex-col gap-2 ${className}`.trim()}>
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -176,7 +174,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
       <button
         type="submit"
         form={submitFormId}
-        className="btn-primary order-1 inline-flex min-h-[2.75rem] w-full items-center justify-center gap-2 sm:order-2 sm:w-auto"
+        className="btn-primary order-1 inline-flex w-full items-center justify-center gap-2 sm:order-2 sm:w-auto"
         disabled={savePrimaryDisabled}
       >
         {busy ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden /> : null}
@@ -185,7 +183,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
     ) : (
       <button
         type="button"
-        className="btn-primary order-1 inline-flex min-h-[2.75rem] w-full items-center justify-center gap-2 sm:order-2 sm:w-auto"
+        className="btn-primary order-1 inline-flex w-full items-center justify-center gap-2 sm:order-2 sm:w-auto"
         disabled={savePrimaryDisabled}
         onClick={() => void onSave?.()}
       >
@@ -214,7 +212,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-2">
           <button
             type="button"
-            className="btn-secondary order-2 min-h-[2.75rem] w-full sm:order-1 sm:w-auto"
+            className="btn-secondary order-2 w-full sm:order-1 sm:w-auto"
             disabled={busy}
             onClick={dismiss}
           >

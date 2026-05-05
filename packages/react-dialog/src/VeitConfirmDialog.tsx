@@ -52,14 +52,12 @@ export function VeitConfirmDialog({
       size="sm"
       footer={({ dismiss }) => (
         <VeitDialogFooter>
-          <button type="button" className="btn-secondary min-h-[44px]" disabled={disabled} onClick={dismiss}>
+          <button type="button" className="btn-secondary" disabled={disabled} onClick={dismiss}>
             {cancelLabel}
           </button>
           <button
             type="button"
-            className={`min-h-[44px] rounded-lg px-4 text-sm font-medium text-primary-foreground disabled:opacity-50 ${
-              destructive ? 'bg-destructive hover:bg-destructive/90' : 'btn-primary'
-            }`.trim()}
+            className={destructive ? 'btn-destructive' : 'btn-primary'}
             disabled={disabled}
             onClick={async () => {
               const labelHint = typeof confirmLabel === 'string' ? confirmLabel : '(confirmLabel)';

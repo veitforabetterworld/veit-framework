@@ -121,12 +121,12 @@ export function VeitPromptDialog({
       size="sm"
       footer={({ dismiss }) => (
         <VeitDialogFooter>
-          <button type="button" className="btn-secondary min-h-[44px]" disabled={disabled} onClick={dismiss}>
+          <button type="button" className="btn-secondary" disabled={disabled} onClick={dismiss}>
             {cancelLabel}
           </button>
           <button
             type="button"
-            className="btn-primary min-h-[44px]"
+            className="btn-primary"
             disabled={disabled || !canSubmit}
             onClick={async () => {
               if (!canSubmit || disabled) return;

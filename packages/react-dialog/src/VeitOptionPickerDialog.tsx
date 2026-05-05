@@ -148,7 +148,7 @@ export function VeitOptionPickerDialog<T extends string | number = number>({
       bodyScrollable
       footer={({ dismiss }) => (
         <VeitDialogFooter>
-          <button type="button" className="btn-secondary min-h-[44px]" disabled={disabled} onClick={dismiss}>
+          <button type="button" className="btn-secondary" disabled={disabled} onClick={dismiss}>
             {closeAriaLabel}
           </button>
         </VeitDialogFooter>

@@ -12,20 +12,18 @@ import {
 import { createPortal } from 'react-dom';
 import {
   closestCenter,
-  DndContext,
   defaultDropAnimationSideEffects,
   DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
   type DragEndEvent,
   type DragStartEvent,
   type DropAnimation,
-} from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+  arrayMove,
+  useVeitDndSensors,
+  VeitDndContext,
+  VeitSortableRegion,
+  VeitSortableActivatorRow,
+  verticalListSortingStrategy,
+} from '@veit/react-dnd';
 import { GripVertical, Plus } from 'lucide-react';
 import type { VeitDeleteConfirmConfig } from '@veit/react-dialog';
 import { VeitDeleteButton } from './VeitDeleteButton.js';
@@ -246,27 +244,13 @@ function SortableRowShellFixed({
   children: ReactNode;
   trailing: ReactNode;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: sortId,
-    disabled,
-  });
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.45 : 1,
-    zIndex: isDragging ? 2 : undefined,
-  };
   return (
-    <li ref={setNodeRef} style={style} className={veitInlineEditableListRowClass} {...attributes}>
-      <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+    <VeitSortableActivatorRow
+      id={sortId}
+      disabled={disabled}
+      draggingOpacity={0.45}
+      className={veitInlineEditableListRowClass}
+      renderActivator={({ setActivatorNodeRef, listeners }) => (
         <button
           ref={setActivatorNodeRef ?? undefined}
           type="button"
@@ -280,10 +264,11 @@ function SortableRowShellFixed({
         >
           <GripVertical className="h-4 w-4" aria-hidden />
         </button>
-        <div className="min-w-0 flex-1">{children}</div>
-        <div className="flex shrink-0 items-end sm:items-center">{trailing}</div>
-      </div>
-    </li>
+      )}
+      trailing={trailing}
+    >
+      {children}
+    </VeitSortableActivatorRow>
   );
 }
 
@@ -308,13 +293,9 @@ function InlineReorderableList({
   overlayItem: ReactNode;
   children: ReactNode;
 }) {
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  const sensors = useVeitDndSensors();
   return (
-    <DndContext
+    <VeitDndContext
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={(e: DragStartEvent) => setActiveSortId(String(e.active.id))}
@@ -324,9 +305,9 @@ function InlineReorderableList({
       }}
       onDragCancel={() => setActiveSortId(null)}
     >
-      <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+      <VeitSortableRegion items={sortableIds} strategy={verticalListSortingStrategy}>
         {children}
-      </SortableContext>
+      </VeitSortableRegion>
       {typeof document !== 'undefined'
         ? createPortal(
             <DragOverlay dropAnimation={inlineListDropAnimation} zIndex={dragOverlayZIndex}>
@@ -335,7 +316,7 @@ function InlineReorderableList({
             document.body,
           )
         : null}
-    </DndContext>
+    </VeitDndContext>
   );
 }
 

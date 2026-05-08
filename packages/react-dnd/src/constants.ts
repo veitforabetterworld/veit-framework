@@ -1,8 +1,8 @@
 /** Minimum pointer movement (px) before a mouse/stylus drag starts (avoids accidental drags). */
 export const VEIT_DND_POINTER_DISTANCE = 8;
 
-/** Touch: short hold (ms) before drag; distinguishes drag from scroll. */
-export const VEIT_DND_TOUCH_DELAY_MS = 220;
+/** Touch: short hold (ms) before drag; distinguishes drag from scroll (slightly above „tap“ reaction). */
+export const VEIT_DND_TOUCH_DELAY_MS = 280;
 
 /** Touch: allowed finger movement (px) during the hold phase. */
 export const VEIT_DND_TOUCH_TOLERANCE_PX = 8;

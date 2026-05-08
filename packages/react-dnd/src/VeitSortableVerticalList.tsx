@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import type { UniqueIdentifier } from '@dnd-kit/core';
 import type { DndContextProps } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { VeitDndContext } from './VeitDndContext.js';
+import { VeitSortableRegion } from './VeitSortableRegion.js';
 
 export type VeitSortableVerticalListProps = Omit<DndContextProps, 'sensors' | 'children'> & {
   sortableIds: UniqueIdentifier[];
@@ -28,9 +29,9 @@ export function VeitSortableVerticalList({
   return (
     <VeitDndContext {...dndProps}>
       {beforeSortable}
-      <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+      <VeitSortableRegion items={sortableIds} strategy={verticalListSortingStrategy}>
         {sortableChildren}
-      </SortableContext>
+      </VeitSortableRegion>
       {afterSortable}
     </VeitDndContext>
   );

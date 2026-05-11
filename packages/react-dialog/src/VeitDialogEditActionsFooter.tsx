@@ -1,17 +1,13 @@
-import { useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { Loader2, Trash2 } from 'lucide-react';
 import type { VeitDeleteConfirmConfig } from './VeitDeleteConfirmConfig.js';
 import { VeitConfirmDialog } from './VeitConfirmDialog.js';
+import { useVeitDialogRegisterUnsavedDirty, useVeitDialogRegisterUnsavedSave } from './VeitDialog.js';
 
 type VeitDialogEditActionsFooterCommon = {
   dismiss: () => void;
   busy: boolean;
   cancelLabel: string;
-  /**
-   * `inline`: nur die Aktionszeile (typisch für `VeitDialog`-`footer`).
-   * `sticky-panel`: gleiche Zeile mit oberem Trennstrich für eingebettete Formulare im Dialogkörper.
-   */
-  variant?: 'inline' | 'sticky-panel';
   className?: string;
 };
 
@@ -75,12 +71,13 @@ function VeitDialogEditActionsFooterDeleteTrigger({
     await Promise.resolve(onDelete());
   };
 
+  /** Gleiche Mindesthöhe wie `.btn-primary` / `.btn-secondary` (`min-h-[44px]`), damit die Zeile optisch fluchtet. */
   const presetClass =
-    'inline-flex h-10 w-10 shrink-0 items-center justify-center p-0 btn-destructive';
+    'inline-flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center p-0 btn-destructive';
   const btnClass = `${presetClass} ${className}`.trim();
 
   return (
-    <>
+    <div className="inline-flex shrink-0 items-center">
       <button
         type="button"
         className={btnClass}
@@ -120,7 +117,7 @@ function VeitDialogEditActionsFooterDeleteTrigger({
           onConfirm={runDelete}
         />
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -129,31 +126,47 @@ function VeitDialogEditActionsFooterDeleteTrigger({
  * Speichern ist deaktiviert bei `busy`, bei `dirty === false` (falls `dirty` gesetzt) und bei `saveDisabled`.
  */
 export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterProps) {
-  const {
-    dismiss,
-    busy,
-    cancelLabel,
-    variant = 'inline',
-    className = '',
-  } = props;
+  const isDismissOnly = 'dismissOnly' in props && props.dismissOnly;
+  const dirtyForRegister =
+    isDismissOnly ? undefined : (props as VeitDialogEditActionsFooterEditProps).dirty;
+  const regSubmitFormId = !isDismissOnly
+    ? (props as VeitDialogEditActionsFooterEditProps).submitFormId
+    : undefined;
+  const regOnSave = !isDismissOnly ? (props as VeitDialogEditActionsFooterEditProps).onSave : undefined;
+
+  const requestSave = useCallback(async (): Promise<void> => {
+    if (isDismissOnly) return;
+    if (regSubmitFormId != null && regSubmitFormId !== '') {
+      const el = document.getElementById(regSubmitFormId);
+      if (el instanceof HTMLFormElement) {
+        el.requestSubmit();
+      }
+      return;
+    }
+    if (regOnSave) {
+      await Promise.resolve(regOnSave());
+      return;
+    }
+    return;
+  }, [isDismissOnly, regSubmitFormId, regOnSave]);
+
+  useVeitDialogRegisterUnsavedDirty(dirtyForRegister);
+  useVeitDialogRegisterUnsavedSave(isDismissOnly ? null : requestSave);
+
+  const { dismiss, busy, cancelLabel, className = '' } = props;
 
   if (props.dismissOnly) {
     const tone = props.dismissOnlyTone ?? 'secondary';
-    const onlyBtnClass =
-      tone === 'primary' ? 'btn-primary w-full sm:w-auto' : 'btn-secondary w-full sm:w-auto';
-    const innerDismiss = (
+    const onlyBtnClass = `${tone === 'primary' ? 'btn-primary' : 'btn-secondary'} w-auto`.trim();
+    return (
       <div className={`flex flex-col gap-2 ${className}`.trim()}>
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-row flex-wrap justify-end gap-2">
           <button type="button" className={onlyBtnClass} disabled={busy} onClick={dismiss}>
             {cancelLabel}
           </button>
         </div>
       </div>
     );
-    if (variant === 'sticky-panel') {
-      return <div className="border-t border-border/40 pt-4">{innerDismiss}</div>;
-    }
-    return innerDismiss;
   }
 
   const {
@@ -174,7 +187,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
       <button
         type="submit"
         form={submitFormId}
-        className="btn-primary order-1 inline-flex w-full items-center justify-center gap-2 sm:order-2 sm:w-auto"
+        className="btn-primary inline-flex w-auto items-center justify-center gap-2"
         disabled={savePrimaryDisabled}
       >
         {busy ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden /> : null}
@@ -183,7 +196,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
     ) : (
       <button
         type="button"
-        className="btn-primary order-1 inline-flex w-full items-center justify-center gap-2 sm:order-2 sm:w-auto"
+        className="btn-primary inline-flex w-auto items-center justify-center gap-2"
         disabled={savePrimaryDisabled}
         onClick={() => void onSave?.()}
       >
@@ -199,20 +212,22 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
       leading
     );
 
-  const inner = (
+  return (
     <div className={`flex flex-col gap-2 ${className}`.trim()}>
       <div
         className={
           leftSlot != null
-            ? 'flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'
-            : 'flex flex-col gap-2 sm:flex-row sm:justify-end'
+            ? 'flex w-full min-w-0 flex-row flex-wrap items-center justify-between gap-2'
+            : 'flex w-full min-w-0 flex-col gap-2'
         }
       >
-        {leftSlot != null ? <div className="flex shrink-0 items-start">{leftSlot}</div> : null}
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-2">
+        {leftSlot != null ? (
+          <div className="flex shrink-0 items-center">{leftSlot}</div>
+        ) : null}
+        <div className="flex min-w-0 flex-1 flex-row flex-wrap items-center justify-end gap-2">
           <button
             type="button"
-            className="btn-secondary order-2 w-full sm:order-1 sm:w-auto"
+            className="btn-secondary w-auto"
             disabled={busy}
             onClick={dismiss}
           >
@@ -223,10 +238,4 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
       </div>
     </div>
   );
-
-  if (variant === 'sticky-panel') {
-    return <div className="border-t border-border/40 pt-4">{inner}</div>;
-  }
-
-  return inner;
 }

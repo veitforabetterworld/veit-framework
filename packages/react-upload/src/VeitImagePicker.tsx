@@ -7,7 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { ImageUp, Trash2, X } from 'lucide-react';
+import { ImageUp, Loader2, Trash2, X } from 'lucide-react';
 import { VeitConfirmDialog } from '@veit/react-dialog';
 
 const Z_LIGHTBOX = 12000;
@@ -26,6 +26,8 @@ export type VeitImagePickerI18n = {
   deleteSr: string;
   closeLightbox: string;
   backdropDismiss: string;
+  /** Aria-Label auf der Miniatur während `onPick` noch läuft (Upload). */
+  uploading?: string;
   deleteConfirm?: {
     title: string;
     message: string;
@@ -105,6 +107,7 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pickMenuOpen, setPickMenuOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [uploadBusy, setUploadBusy] = useState(false);
   const fileGalleryRef = useRef<HTMLInputElement>(null);
   const fileCameraRef = useRef<HTMLInputElement>(null);
   const pickWrapRef = useRef<HTMLDivElement>(null);
@@ -134,7 +137,12 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
   const runPick = useCallback(
     async (file: File | undefined | null) => {
       if (!file || !onPick) return;
-      await Promise.resolve(onPick(file));
+      setUploadBusy(true);
+      try {
+        await Promise.resolve(onPick(file));
+      } finally {
+        setUploadBusy(false);
+      }
     },
     [onPick],
   );
@@ -155,13 +163,13 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
     ? 'border border-border bg-muted'
     : 'border border-primary/25 bg-primary-container';
   const thumbClass = [
-    'flex shrink-0 items-center justify-center overflow-hidden',
+    'relative flex shrink-0 items-center justify-center overflow-hidden',
     thumbSurface,
     'ring-2 ring-transparent transition-shadow',
     'touch-manipulation',
     radius,
     thumbnailClassName ?? 'h-20 w-20',
-    disabled ? 'cursor-default opacity-60' : 'cursor-pointer hover:ring-border/70',
+    disabled || uploadBusy ? 'cursor-default opacity-60' : 'cursor-pointer hover:ring-border/70',
     'focus-visible:outline-none focus-visible:ring-primary/40',
     className,
   ]
@@ -169,7 +177,7 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
     .join(' ');
 
   const openEmptyPicker = () => {
-    if (!editable || disabled || !onPick) return;
+    if (!editable || disabled || uploadBusy || !onPick) return;
     if (sourceMode === 'camera') {
       fileCameraRef.current?.click();
       return;
@@ -178,7 +186,7 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
   };
 
   const handleThumbClick = () => {
-    if (disabled) return;
+    if (disabled || uploadBusy) return;
     if (!src) {
       openEmptyPicker();
       return;
@@ -243,7 +251,7 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
             type="file"
             accept={inputAccept}
             className="hidden"
-            disabled={disabled}
+            disabled={disabled || uploadBusy}
             onChange={handleFileInputChange}
           />
           <input
@@ -252,7 +260,7 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
             accept={inputAccept}
             capture={cameraFacing}
             className="hidden"
-            disabled={disabled}
+            disabled={disabled || uploadBusy}
             onChange={handleFileInputChange}
           />
         </>
@@ -267,13 +275,16 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
           handleThumbClick();
         }}
         onKeyDown={canThumbFocus ? handleThumbKeyDown : undefined}
-        aria-disabled={disabled || undefined}
+        aria-disabled={disabled || uploadBusy || undefined}
+        aria-busy={uploadBusy || undefined}
         aria-label={
-          src
-            ? viewOpenLabel
-            : editable && strings
-              ? `${strings.pickCamera}, ${strings.pickFile}`
-              : viewOpenLabel
+          uploadBusy
+            ? (strings?.uploading ?? 'Uploading…')
+            : src
+              ? viewOpenLabel
+              : editable && strings
+                ? `${strings.pickCamera}, ${strings.pickFile}`
+                : viewOpenLabel
         }
       >
         {src ? (
@@ -281,6 +292,17 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
         ) : (
           emptyInner
         )}
+        {uploadBusy ? (
+          <div
+            className={`pointer-events-none absolute inset-0 flex items-center justify-center ${radius} bg-background/60 backdrop-blur-[1px]`}
+            aria-hidden
+          >
+            <Loader2
+              className="h-[35%] w-[35%] min-h-[1.25rem] min-w-[1.25rem] max-w-[1.75rem] animate-spin text-primary motion-reduce:animate-none"
+              strokeWidth={2}
+            />
+          </div>
+        ) : null}
       </div>
 
       {editable && pickMenuOpen && sourceMode === 'general' && !src && strings ? (

@@ -3,13 +3,17 @@ export {
   VEIT_DIALOG_Z_STACK_STEP,
   useVeitDialogDismiss,
   useVeitDialogNestedZIndexBase,
+  useVeitDialogRegisterUnsavedDirty,
+  useVeitDialogRegisterUnsavedSave,
   veitDialogHistoryDebugEnabled,
   veitDialogHistoryLog,
   VeitDialog,
   VeitDialogCloseButton,
   VeitDialogFooter,
+  VEIT_DIALOG_UNSAVED_CHANGES_DEFAULTS_EN,
   type VeitDialogFooterContext,
   type VeitDialogProps,
+  type VeitDialogUnsavedChangesConfirm,
 } from './VeitDialog.js';
 export type { VeitDeleteConfirmConfig } from './VeitDeleteConfirmConfig.js';
 export {

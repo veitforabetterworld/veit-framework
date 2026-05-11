@@ -5,6 +5,8 @@ export type VeitOptionPickerItem<T extends string | number = number> = {
   value: T;
   label: string;
   swatchColor?: string;
+  /** Optional leading glyph (e.g. Lucide icon) when `showSwatch` is false. */
+  icon?: ReactNode;
 };
 
 export type VeitOptionPickerDialogProps<T extends string | number = number> = {
@@ -93,6 +95,15 @@ function OptionPickerList<T extends string | number>({
                   style={{ backgroundColor: it.swatchColor ?? 'rgb(var(--color-primary))' }}
                   aria-hidden
                 />
+              ) : it.icon ? (
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border shadow-sm ${
+                    selected ? 'border-primary/35 bg-primary/10 text-primary' : 'border-border bg-muted/30 text-muted-foreground'
+                  }`}
+                  aria-hidden
+                >
+                  {it.icon}
+                </span>
               ) : null}
               <span className="min-w-0 flex-1 truncate font-medium">{it.label}</span>
             </button>

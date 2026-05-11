@@ -8,7 +8,9 @@ export const VEIT_DND_TOUCH_DELAY_MS = 280;
 export const VEIT_DND_TOUCH_TOLERANCE_PX = 8;
 
 /**
- * Use on drag surfaces with dnd-kit `listeners` so mobile browsers do not treat the gesture as scroll.
- * Typically composed into Tailwind via {@link veitSortableSurfaceClassName}.
+ * Auf Drag-Flächen mit dnd-kit-`listeners` (via {@link veitSortableSurfaceClassName}).
+ * `touch-manipulation` lässt vertikales/horizontales Pan für verschachtelte Scroll-Areas zu
+ * (`touch-none` blockiert natives Scrollen unter dem Finger, z. B. Kanban-Spalten).
+ * Touch-Drag bleiben über {@link useVeitDndSensors} TouchSensor (`delay` / `tolerance`) gekoppelt.
  */
-export const VEIT_DRAG_SURFACE_TOUCH_CLASS = 'touch-none';
+export const VEIT_DRAG_SURFACE_TOUCH_CLASS = 'touch-manipulation';

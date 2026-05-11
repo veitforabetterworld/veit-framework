@@ -38,6 +38,10 @@ export type VeitNestedBoardDndShellProps = Omit<DndContextProps, 'collisionDetec
  * Einheitliche Hülle für verschachtelte Sortable-Boards: optionale Nested-Collision,
  * zusammengefügte Over-Ref-Updates für die Flug-Animation, optionales `DragOverlay`.
  *
+ * **Platzhalter über mehrere `SortableContext`:** Während des Drag muss über `onDragOver`
+ * oft die Items-Liste in React-State in die Hover-Spiegelt kopiert werden (vgl. Multiple
+ * Containers in @dnd-kit); sonst bleibt das Sortier-Loch nur im Quell-Container.
+ *
  * Ersetzt das manuelle Trio `createVeitNestedBoardCollisionDetection` +
  * `useVeitNestedBoardDragOverTarget` + `createVeitNestedBoardDropAnimation` an jedem Board.
  */

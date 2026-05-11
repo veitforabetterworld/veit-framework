@@ -11,7 +11,6 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-
 const sizeMax: Record<'sm' | 'md' | 'lg', string> = {
   sm: 'max-w-md',
   md: 'max-w-lg',
@@ -28,6 +27,72 @@ const DIALOG_BOTTOM_DOCK_MAX_H = 'max-h-[min(96dvh,calc(100svh-1rem))]';
 export const VEIT_DIALOG_DEFAULT_HISTORY_KEY = 'veit_dialog';
 
 const VeitDialogDismissContext = createContext<(() => void) | null>(null);
+
+/**
+ * {@link VeitDialogEditActionsFooter} trägt hier `dirty === true` ein; Schließen löst dann
+ * optional {@link VeitDialogProps.unsavedChangesConfirm} aus. Eigene Footer: {@link useVeitDialogRegisterUnsavedDirty}.
+ */
+const VeitDialogUnsavedDirtyRegistrationContext = createContext<((dirty: boolean) => void) | null>(null);
+
+/** Optionaler Save-Handler für das „Ungespeicherte Änderungen“-Popup. */
+const VeitDialogUnsavedSaveRegistrationContext = createContext<((onSave: (() => void | Promise<void>) | null) => void) | null>(
+  null,
+);
+
+export type VeitDialogUnsavedChangesConfirm = {
+  title: ReactNode;
+  message: ReactNode;
+  /** Primäre Aktion: speichern und Schließen (falls `useVeitDialogRegisterUnsavedSave` gesetzt ist). */
+  saveLabel: string;
+  /** Schließt nur die Bestätigung; weiter bearbeiten. */
+  cancelLabel: string;
+  /** Verwerfen und Hauptdialog schließen. */
+  confirmLabel: string;
+  closeAriaLabel?: string;
+  backdropDismissLabel?: string;
+  zIndexBase?: number;
+  destructive?: boolean;
+};
+
+/** Fallback, wenn `unsavedChangesConfirm` nicht gesetzt ist (Apps sollten eigene Texte übergeben). */
+export const VEIT_DIALOG_UNSAVED_CHANGES_DEFAULTS_EN: VeitDialogUnsavedChangesConfirm = {
+  title: 'Discard changes?',
+  message: 'You have unsaved changes. Save, keep editing, or discard?',
+  saveLabel: 'Save',
+  confirmLabel: 'Discard',
+  cancelLabel: 'Keep editing',
+  closeAriaLabel: 'Close',
+  backdropDismissLabel: 'Close',
+  destructive: true,
+};
+
+/**
+ * Nur innerhalb von {@link VeitDialog}: ungespeicherte Änderungen für die zentrale Schließ-Bestätigung melden.
+ * @param dirty `true` = es gibt Änderungen, die noch nicht gespeichert sind (wie bei {@link VeitDialogEditActionsFooter} `dirty`).
+ */
+export function useVeitDialogRegisterUnsavedDirty(dirty: boolean | undefined): void {
+  const register = useContext(VeitDialogUnsavedDirtyRegistrationContext);
+  useLayoutEffect(() => {
+    if (!register) return;
+    register(dirty === true);
+    return () => {
+      register(false);
+    };
+  }, [dirty, register]);
+}
+
+/**
+ * Nur innerhalb von {@link VeitDialog}: Save-Handler für das Unsaved-Popup registrieren.
+ * Typisch durch {@link VeitDialogEditActionsFooter} gesetzt.
+ */
+export function useVeitDialogRegisterUnsavedSave(onSave: (() => void | Promise<void>) | null): void {
+  const register = useContext(VeitDialogUnsavedSaveRegistrationContext);
+  useLayoutEffect(() => {
+    if (!register) return;
+    register(onSave);
+    return () => register(null);
+  }, [onSave, register]);
+}
 
 /**
  * Abstand zwischen übereinanderliegenden Dialog-Ebenen: Backdrop des Kindes liegt über Panel des Parents
@@ -62,6 +127,7 @@ export function useVeitDialogDismiss(): () => void {
 type HistoryCloseFn = () => void;
 const dialogHistoryStack: HistoryCloseFn[] = [];
 let dialogPopStateAttached = false;
+let dialogPopStateSeq = 0;
 
 const MAX_DIALOG_HISTORY_CHAIN = 48;
 
@@ -105,6 +171,7 @@ function attachGlobalDialogPopState() {
   if (dialogPopStateAttached || typeof window === 'undefined') return;
   dialogPopStateAttached = true;
   window.addEventListener('popstate', () => {
+    dialogPopStateSeq++;
     const beforeLen = dialogHistoryStack.length;
     const close = dialogHistoryStack.pop();
     veitDialogHistoryLog('popstate', {
@@ -152,11 +219,20 @@ function isTopDialogHistoryEntry(close: HistoryCloseFn): boolean {
 function navigateHistoryToClose(close: HistoryCloseFn): void {
   if (typeof window === 'undefined') return;
   let guard = 0;
+  let waitingForPopSeq: number | null = null;
   const step = () => {
     if (++guard > MAX_DIALOG_HISTORY_CHAIN) {
       veitDialogHistoryLog('navigateHistoryToClose.abortGuard', { guard });
       dialogHistoryRemove(close);
       return;
+    }
+    if (waitingForPopSeq !== null) {
+      if (dialogPopStateSeq === waitingForPopSeq) {
+        // Noch kein popstate angekommen → nicht erneut history.back feuern.
+        setTimeout(step, 8);
+        return;
+      }
+      waitingForPopSeq = null;
     }
     const idx = dialogHistoryStack.lastIndexOf(close);
     if (idx === -1) {
@@ -170,7 +246,8 @@ function navigateHistoryToClose(close: HistoryCloseFn): void {
       return;
     }
     window.history.back();
-    setTimeout(step, 0);
+    waitingForPopSeq = dialogPopStateSeq;
+    setTimeout(step, 8);
   };
   step();
 }
@@ -234,6 +311,13 @@ export type VeitDialogProps = {
    * Bei z. B. `position: relative`-Rahmen (eingebettete Karte) Element übergeben → Sheet mit `absolute`.
    */
   bottomDockRoot?: HTMLElement | null;
+  /**
+   * Texte für die Bestätigung beim Schließen mit ungespeicherten Änderungen.
+   * Registrierung über {@link VeitDialogEditActionsFooter} (`dirty`) oder
+   * {@link useVeitDialogRegisterUnsavedDirty} / {@link useVeitDialogRegisterUnsavedSave}.
+   * `undefined`: Fallback {@link VEIT_DIALOG_UNSAVED_CHANGES_DEFAULTS_EN}; `null`: Abfrage aus.
+   */
+  unsavedChangesConfirm?: VeitDialogUnsavedChangesConfirm | null;
 };
 
 export function VeitDialogCloseButton({
@@ -288,7 +372,29 @@ export function VeitDialog({
   bodyScrollable = true,
   presentation = 'modal',
   bottomDockRoot = null,
+  unsavedChangesConfirm,
 }: VeitDialogProps) {
+  const resolvedUnsavedConfirm =
+    unsavedChangesConfirm === null
+      ? null
+      : (unsavedChangesConfirm ?? VEIT_DIALOG_UNSAVED_CHANGES_DEFAULTS_EN);
+
+  const unsavedDirtyRef = useRef(false);
+  const registerUnsavedDirty = useCallback((v: boolean) => {
+    unsavedDirtyRef.current = v;
+  }, []);
+
+  const unsavedSaveRef = useRef<(() => void | Promise<void>) | null>(null);
+  const registerUnsavedSave = useCallback((fn: (() => void | Promise<void>) | null) => {
+    unsavedSaveRef.current = fn;
+  }, []);
+
+  const [unsavedPromptOpen, setUnsavedPromptOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) setUnsavedPromptOpen(false);
+  }, [open]);
+
   const backdropAriaLabel = backdropDismissLabel ?? closeAriaLabel;
   const autoTitleId = useId();
   const autoDescId = useId();
@@ -306,10 +412,19 @@ export function VeitDialog({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
+  /**
+   * `performDismiss` ruft `navigateHistoryToClose` → `history.back()`. React kann im selben Commit
+   * den `useLayoutEffect`-Cleanup ausführen, bevor `popstate` den Stack geleert hat — dann würde das
+   * Cleanup ein zweites `history.back()` auslösen. Pending bleibt true bis {@link stableClose} (popstate).
+   */
+  const performDismissHistoryBackPendingRef = useRef(false);
+
   /** Stabile Identität pro Dialog-Instanz — der Stack vergleicht Referenzen. */
   const stableCloseRef = useRef<HistoryCloseFn | null>(null);
   if (stableCloseRef.current === null) {
     stableCloseRef.current = () => {
+      /** Vom globalen `popstate` nach `history.back()` — Pending hier lösen, nicht per setTimeout. */
+      performDismissHistoryBackPendingRef.current = false;
       onCloseRef.current();
     };
   }
@@ -318,13 +433,6 @@ export function VeitDialog({
   const debugInstanceIdRef = useRef(`dlg-${Math.random().toString(36).slice(2, 9)}`);
 
   const historyPathKeyWhenOpenedRef = useRef<string | null>(null);
-
-  /**
-   * `performDismiss` ruft `navigateHistoryToClose` → `history.back()`. React kann im selben Commit
-   * den `useLayoutEffect`-Cleanup des noch geöffneten Dialogs ausführen, bevor `popstate` den Stack
-   * geleert hat — dann würde das Cleanup ein zweites `history.back()` auslösen (z. B. `?card=` weg).
-   */
-  const performDismissHistoryBackPendingRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -338,12 +446,12 @@ export function VeitDialog({
       open,
     });
     dialogHistoryPush(stableClose, historyStateKey);
-    historyPathKeyWhenOpenedRef.current = `${window.location.origin}${window.location.pathname}`;
+    historyPathKeyWhenOpenedRef.current = `${window.location.origin}${window.location.pathname}${window.location.search}`;
     return () => {
       const pathKeyWhenOpened = historyPathKeyWhenOpenedRef.current;
       historyPathKeyWhenOpenedRef.current = null;
       if (typeof window === 'undefined') return;
-      const pathKeyNow = `${window.location.origin}${window.location.pathname}`;
+      const pathKeyNow = `${window.location.origin}${window.location.pathname}${window.location.search}`;
       const onStack = dialogHistoryStack.lastIndexOf(stableClose);
       veitDialogHistoryLog('effect.cleanup', {
         instanceId: debugInstanceIdRef.current,
@@ -389,28 +497,26 @@ export function VeitDialog({
     }
     veitDialogHistoryLog('performDismiss.navigateHistoryToClose', { instanceId: debugInstanceIdRef.current });
     performDismissHistoryBackPendingRef.current = true;
-    try {
-      navigateHistoryToClose(stableClose);
-    } finally {
-      // Nach Layout-Cleanup desselben Frames (siehe effect.cleanup), damit verschachtelte
-      // `history.back()`-Ketten den Ref noch gesetzt lassen.
-      queueMicrotask(() => {
-        queueMicrotask(() => {
-          performDismissHistoryBackPendingRef.current = false;
-        });
-      });
-    }
+    navigateHistoryToClose(stableClose);
   }, [onClose, stableClose, historyStateKey]);
+
+  const attemptDismiss = useCallback(() => {
+    if (unsavedDirtyRef.current && resolvedUnsavedConfirm) {
+      setUnsavedPromptOpen(true);
+      return;
+    }
+    performDismiss();
+  }, [resolvedUnsavedConfirm, performDismiss]);
 
   const dismissFromOverlay = useCallback(() => {
     if (disabled || blockBackdropClose) return;
-    performDismiss();
-  }, [disabled, blockBackdropClose, performDismiss]);
+    attemptDismiss();
+  }, [disabled, blockBackdropClose, attemptDismiss]);
 
   const dismissFromCloseButton = useCallback(() => {
     if (disabled) return;
-    performDismiss();
-  }, [disabled, performDismiss]);
+    attemptDismiss();
+  }, [disabled, attemptDismiss]);
 
   useEffect(() => {
     if (!open) return;
@@ -462,6 +568,75 @@ export function VeitDialog({
     };
   }, [open, mounted, bodyScrollable, presentation]);
 
+  const unsavedPromptEl =
+    resolvedUnsavedConfirm != null ? (
+      <VeitDialog
+        open={unsavedPromptOpen}
+        onClose={() => setUnsavedPromptOpen(false)}
+        title={resolvedUnsavedConfirm.title}
+        closeAriaLabel={
+          resolvedUnsavedConfirm.closeAriaLabel ?? resolvedUnsavedConfirm.cancelLabel
+        }
+        backdropDismissLabel={
+          resolvedUnsavedConfirm.backdropDismissLabel ?? resolvedUnsavedConfirm.cancelLabel
+        }
+        zIndexBase={resolvedUnsavedConfirm.zIndexBase}
+        unsavedChangesConfirm={null}
+        variant="centered"
+        size="md"
+        footer={({ dismiss }) => (
+          <VeitDialogFooter className="sm:flex-nowrap">
+            <button type="button" className="btn-secondary" onClick={dismiss}>
+              {resolvedUnsavedConfirm.cancelLabel}
+            </button>
+            <button
+              type="button"
+              className="btn-destructive"
+              onClick={() => {
+                /**
+                 * Kein eigenes `dismiss()` hier: `performDismiss()` schließt den Hauptdialog via History
+                 * und baut dabei ggf. zuerst darüberliegende Dialoge (wie dieses Prompt) ab.
+                 * Ein zusätzliches `dismiss()` würde sonst ein doppeltes `history.back()` erzeugen.
+                 */
+                performDismiss();
+              }}
+            >
+              {resolvedUnsavedConfirm.confirmLabel}
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              autoFocus={unsavedSaveRef.current != null}
+              disabled={unsavedSaveRef.current == null}
+              onClick={() => {
+                dismiss();
+                void (async () => {
+                  const fn = unsavedSaveRef.current;
+                  if (!fn) return;
+                  try {
+                    await Promise.resolve(fn());
+                  } catch {
+                    // Bleibt im Hauptdialog; Nutzer kann weiter bearbeiten / erneut versuchen.
+                    return;
+                  }
+                  /**
+                   * Nicht automatisch schließen: je nach Save-Implementierung (z. B. `requestSubmit`)
+                   * wird der Dialog asynchron nach erfolgreichem Speichern selbst geschlossen.
+                   * Ein sofortiges `performDismiss()` würde sonst ein zusätzliches `history.back()`
+                   * auslösen und „zu weit zurück“ navigieren.
+                   */
+                })();
+              }}
+            >
+              {resolvedUnsavedConfirm.saveLabel}
+            </button>
+          </VeitDialogFooter>
+        )}
+      >
+        <div className="text-sm text-muted-foreground">{resolvedUnsavedConfirm.message}</div>
+      </VeitDialog>
+    ) : null;
+
   if (!open || !mounted) return null;
 
   const footerNode =
@@ -507,37 +682,42 @@ export function VeitDialog({
 
     const node = (
       <VeitDialogZStackContext.Provider value={nestedZForChildren}>
-        <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
-          <div
-            role={role}
-            aria-modal="false"
-            aria-labelledby={titleId}
-            aria-describedby={describedBy}
-            className={`${posClass} flex flex-col ${bottomShellClass}`}
-            style={{ zIndex: zLayer }}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <VeitDialogUnsavedDirtyRegistrationContext.Provider value={registerUnsavedDirty}>
+          <VeitDialogUnsavedSaveRegistrationContext.Provider value={registerUnsavedSave}>
+          <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
             <div
-              className={`flex shrink-0 items-start justify-between gap-3 border-b border-border/60 bg-background px-5 pb-4 pt-3 sm:px-6 ${headerClassName}`.trim()}
+              role={role}
+              aria-modal="false"
+              aria-labelledby={titleId}
+              aria-describedby={describedBy}
+              className={`${posClass} flex flex-col ${bottomShellClass}`}
+              style={{ zIndex: zLayer }}
+              onClick={(e) => e.stopPropagation()}
             >
-              {titleBlock}
-              {showCloseButton ? (
-                <VeitDialogCloseButton onClick={dismissFromCloseButton} label={closeAriaLabel} disabled={disabled} />
+              <div
+                className={`flex shrink-0 items-start justify-between gap-3 border-b border-border/60 bg-background px-5 pb-4 pt-3 sm:px-6 ${headerClassName}`.trim()}
+              >
+                {titleBlock}
+                {showCloseButton ? (
+                  <VeitDialogCloseButton onClick={dismissFromCloseButton} label={closeAriaLabel} disabled={disabled} />
+                ) : null}
+              </div>
+              <div
+                ref={bodyScrollable ? bodyScrollRef : undefined}
+                className={`min-h-0 grow-0 shrink overflow-x-hidden overflow-y-hidden bg-background px-5 py-4 sm:px-6 sm:py-5 ${bodyClassName}`.trim()}
+              >
+                {children}
+              </div>
+              {footerNode != null ? (
+                <div className="shrink-0 border-t border-border/50 bg-background px-5 py-4 sm:px-6 sm:py-5">
+                  {footerNode}
+                </div>
               ) : null}
             </div>
-            <div
-              ref={bodyScrollable ? bodyScrollRef : undefined}
-              className={`min-h-0 grow-0 shrink overflow-x-hidden overflow-y-hidden bg-background px-5 py-4 sm:px-6 sm:py-5 ${bodyClassName}`.trim()}
-            >
-              {children}
-            </div>
-            {footerNode != null ? (
-              <div className="shrink-0 border-t border-border/50 bg-background px-5 py-4 sm:px-6 sm:py-5">
-                {footerNode}
-              </div>
-            ) : null}
-          </div>
-        </VeitDialogDismissContext.Provider>
+            {unsavedPromptEl}
+          </VeitDialogDismissContext.Provider>
+          </VeitDialogUnsavedSaveRegistrationContext.Provider>
+        </VeitDialogUnsavedDirtyRegistrationContext.Provider>
       </VeitDialogZStackContext.Provider>
     );
 
@@ -556,54 +736,59 @@ export function VeitDialog({
 
   const node = (
     <VeitDialogZStackContext.Provider value={nestedZForChildren}>
-      <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
-        <>
-          <button
-            type="button"
-            className={`fixed inset-0 ${backdropClassName ?? 'bg-black/50'} ${backdropBlur ? 'backdrop-blur-[2px]' : ''}`.trim()}
-            style={{ zIndex: zBack }}
-            aria-label={backdropAriaLabel}
-            disabled={inactive}
-            onClick={() => {
-              if (!inactive) dismissFromOverlay();
-            }}
-          />
-          <div
-            className={`pointer-events-none fixed inset-0 flex ${overlayAlign}`}
-            style={{ zIndex: zLayer }}
-            role="presentation"
-          >
+      <VeitDialogUnsavedDirtyRegistrationContext.Provider value={registerUnsavedDirty}>
+        <VeitDialogUnsavedSaveRegistrationContext.Provider value={registerUnsavedSave}>
+        <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
+          <>
+            <button
+              type="button"
+              className={`fixed inset-0 ${backdropClassName ?? 'bg-black/50'} ${backdropBlur ? 'backdrop-blur-[2px]' : ''}`.trim()}
+              style={{ zIndex: zBack }}
+              aria-label={backdropAriaLabel}
+              disabled={inactive}
+              onClick={() => {
+                if (!inactive) dismissFromOverlay();
+              }}
+            />
             <div
-              role={role}
-              aria-modal="true"
-              aria-labelledby={titleId}
-              aria-describedby={describedBy}
-              className={`pointer-events-auto flex flex-col ${panelShape} ${className}`.trim()}
-              onClick={(e) => e.stopPropagation()}
+              className={`pointer-events-none fixed inset-0 flex ${overlayAlign}`}
+              style={{ zIndex: zLayer }}
+              role="presentation"
             >
               <div
-                className={`flex shrink-0 items-start justify-between gap-3 border-b border-border/60 bg-surface px-5 pb-4 pt-5 sm:px-6 ${headerClassName}`.trim()}
+                role={role}
+                aria-modal="true"
+                aria-labelledby={titleId}
+                aria-describedby={describedBy}
+                className={`pointer-events-auto flex flex-col ${panelShape} ${className}`.trim()}
+                onClick={(e) => e.stopPropagation()}
               >
-                {titleBlock}
-                {showCloseButton ? (
-                  <VeitDialogCloseButton onClick={dismissFromCloseButton} label={closeAriaLabel} disabled={disabled} />
+                <div
+                  className={`flex shrink-0 items-start justify-between gap-3 border-b border-border/60 bg-surface px-5 pb-4 pt-5 sm:px-6 ${headerClassName}`.trim()}
+                >
+                  {titleBlock}
+                  {showCloseButton ? (
+                    <VeitDialogCloseButton onClick={dismissFromCloseButton} label={closeAriaLabel} disabled={disabled} />
+                  ) : null}
+                </div>
+                <div
+                  ref={bodyScrollable ? bodyScrollRef : undefined}
+                  className={`min-h-0 grow-0 shrink overflow-x-hidden overflow-y-hidden bg-surface px-5 py-4 sm:px-6 sm:py-5 ${bodyClassName}`.trim()}
+                >
+                  {children}
+                </div>
+                {footerNode != null ? (
+                  <div className="shrink-0 border-t border-border/50 bg-surface px-5 py-4 sm:px-6 sm:py-5">
+                    {footerNode}
+                  </div>
                 ) : null}
               </div>
-              <div
-                ref={bodyScrollable ? bodyScrollRef : undefined}
-                className={`min-h-0 grow-0 shrink overflow-x-hidden overflow-y-hidden bg-surface px-5 py-4 sm:px-6 sm:py-5 ${bodyClassName}`.trim()}
-              >
-                {children}
-              </div>
-              {footerNode != null ? (
-                <div className="shrink-0 border-t border-border/50 bg-surface px-5 py-4 sm:px-6 sm:py-5">
-                  {footerNode}
-                </div>
-              ) : null}
             </div>
-          </div>
-        </>
-      </VeitDialogDismissContext.Provider>
+            {unsavedPromptEl}
+          </>
+        </VeitDialogDismissContext.Provider>
+        </VeitDialogUnsavedSaveRegistrationContext.Provider>
+      </VeitDialogUnsavedDirtyRegistrationContext.Provider>
     </VeitDialogZStackContext.Provider>
   );
 

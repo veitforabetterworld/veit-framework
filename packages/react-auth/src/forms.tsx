@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { VeitPasswordField } from '@veit/react-controls';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './AuthContext.js';
 import { useRedirectIfAuthenticated } from './useRedirectIfAuthenticated.js';
+import { resolvePostLoginPath } from './postLoginPath.js';
 
 type TFunction = (key: string) => string;
 
@@ -55,13 +57,24 @@ export function LoginForm<User>({
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/';
+  const returnPath = resolvePostLoginPath(
+    (location.state as { from?: unknown })?.from,
+    searchParams.get('next'),
+    '/',
+  );
 
   useEffect(() => {
     const v = searchParams.get('verified');
     if (v === 'success' || v === 'invalid') {
       setVerifiedMessage(v);
-      setSearchParams({}, { replace: true });
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('verified');
+          return next;
+        },
+        { replace: true },
+      );
     }
   }, [searchParams, setSearchParams]);
 
@@ -80,7 +93,7 @@ export function LoginForm<User>({
           setMfaCode('');
           return;
         }
-        navigate(from, { replace: true });
+        navigate(returnPath, { replace: true });
         return;
       }
       const code = mfaCode.replace(/\s/g, '');
@@ -89,7 +102,7 @@ export function LoginForm<User>({
         return;
       }
       await completeMfaLogin(mfaToken, code);
-      navigate(from, { replace: true });
+      navigate(returnPath, { replace: true });
     } catch (err) {
       setError(parseError(err));
     } finally {
@@ -144,9 +157,10 @@ export function LoginForm<User>({
             </div>
             <div>
               <label htmlFor="login-password" className="label">{t('account.password')}</label>
-              <input
+              <VeitPasswordField
                 id="login-password"
-                type="password"
+                showPasswordLabel={t('common.show_password')}
+                hidePasswordLabel={t('common.hide_password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -238,7 +252,17 @@ export function RegisterForm<User>({
             <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" className="input" placeholder={t('account.first_name')} />
             <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" className="input" placeholder={t('account.last_name')} />
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="input" placeholder={t('account.email')} />
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" className="input" placeholder={t('auth.password_min_length_label')} />
+            <VeitPasswordField
+              showPasswordLabel={t('common.show_password')}
+              hidePasswordLabel={t('common.hide_password')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              className="input"
+              placeholder={t('auth.password_min_length_label')}
+            />
             {renderPrivacyConsent(agreePrivacy, setAgreePrivacy)}
             <button type="submit" disabled={submitting} className="w-full btn-primary py-2.5">{t('auth.register')}</button>
           </form>
@@ -351,7 +375,16 @@ export function ResetPasswordForm({
       ) : (
         <form onSubmit={submit} className="space-y-4">
           {error && <div className="alert-error text-sm">{error}</div>}
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" className="input" />
+          <VeitPasswordField
+            showPasswordLabel={t('common.show_password')}
+            hidePasswordLabel={t('common.hide_password')}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            autoComplete="new-password"
+            className="input"
+          />
           <button type="submit" disabled={submitting} className="w-full btn-primary py-2.5">{t('auth.set_new_password')}</button>
         </form>
       )}

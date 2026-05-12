@@ -7,6 +7,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type MutableRefObject,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -22,6 +23,167 @@ const DIALOG_PANEL_MAX_H =
   'max-h-[min(96dvh,calc(100svh-2rem))]';
 
 const DIALOG_BOTTOM_DOCK_MAX_H = 'max-h-[min(96dvh,calc(100svh-1rem))]';
+
+/** Nach unten ziehen: ab dieser Verschiebung wird beim Loslassen geschlossen (Touch). */
+const VEIT_DIALOG_SWIPE_CLOSE_PX = 76;
+const VEIT_DIALOG_SWIPE_MAX_DRAG_PX = 300;
+
+/**
+ * Touch: Panel per Wisch nach unten schließen. Header immer; Body nur oben bzw. ohne Scroll.
+ * Native Listener mit `passive: false` auf `touchmove` (iOS).
+ * Beim Loslassen über Schwelle: `attemptDismiss` (typ. speichert bei Dirty wie Speichern-Button, sonst schließen).
+ */
+function useVeitDialogSwipeDismissEffect(opts: {
+  open: boolean;
+  swipeDisabled: boolean;
+  attemptDismiss: () => void;
+  panelRef: MutableRefObject<HTMLDivElement | null>;
+  headerRef: MutableRefObject<HTMLDivElement | null>;
+  bodyScrollRef: MutableRefObject<HTMLDivElement | null>;
+}) {
+  const { open, swipeDisabled, attemptDismiss, panelRef, headerRef, bodyScrollRef } = opts;
+  const attemptDismissRef = useRef(attemptDismiss);
+  attemptDismissRef.current = attemptDismiss;
+  const swipeDisabledRef = useRef(swipeDisabled);
+  swipeDisabledRef.current = swipeDisabled;
+
+  const clearTransform = useCallback(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    panel.style.transform = '';
+    panel.style.transition = '';
+  }, [panelRef]);
+
+  useEffect(() => {
+    if (!open) clearTransform();
+  }, [open, clearTransform]);
+
+  useEffect(() => {
+    if (!open || swipeDisabled) return;
+    const panel = panelRef.current;
+    const header = headerRef.current;
+    const body = bodyScrollRef.current;
+    if (!panel || !header || !body) return;
+
+    let startY = 0;
+    let startX = 0;
+    let dragging = false;
+
+    const parseTranslatePx = (): number => {
+      const m = /translateY\(([\d.]+)px\)/.exec(panel.style.transform);
+      return m ? parseFloat(m[1]) : 0;
+    };
+
+    const applyDrag = (dy: number) => {
+      const t = Math.min(dy * 0.45, VEIT_DIALOG_SWIPE_MAX_DRAG_PX);
+      panel.style.transition = 'none';
+      panel.style.transform = `translateY(${t}px)`;
+    };
+
+    const snapBack = () => {
+      panel.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+      panel.style.transform = 'translateY(0)';
+      window.setTimeout(() => {
+        if (!panelRef.current || panelRef.current !== panel) return;
+        if (panel.style.transform === 'translateY(0px)' || panel.style.transform === 'translateY(0)') {
+          clearTransform();
+        }
+      }, 240);
+    };
+
+    const endGesture = () => {
+      const wasDragging = dragging;
+      dragging = false;
+      if (!wasDragging) return;
+      const px = parseTranslatePx();
+      if (px >= VEIT_DIALOG_SWIPE_CLOSE_PX) {
+        clearTransform();
+        attemptDismissRef.current();
+        return;
+      }
+      if (px > 0) snapBack();
+      else clearTransform();
+    };
+
+    const moveOpts: AddEventListenerOptions = { passive: false };
+
+    const dominantVertical = (dy: number, dx: number) =>
+      Math.abs(dy) >= Math.max(8, Math.abs(dx) * 0.82);
+
+    const onHeaderStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+      dragging = false;
+    };
+
+    const onHeaderMove = (e: TouchEvent) => {
+      if (swipeDisabledRef.current || e.touches.length !== 1) return;
+      const dy = e.touches[0].clientY - startY;
+      const dx = e.touches[0].clientX - startX;
+      if (dy <= 6 || !dominantVertical(dy, dx)) return;
+      dragging = true;
+      e.preventDefault();
+      applyDrag(dy);
+    };
+
+    const onBodyStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+      dragging = false;
+    };
+
+    const onBodyMove = (e: TouchEvent) => {
+      if (swipeDisabledRef.current || e.touches.length !== 1) return;
+      const scr = bodyScrollRef.current;
+      const pad = 2;
+      const hasOverflow = !!(scr && scr.scrollHeight > scr.clientHeight + pad);
+      const atTop = !scr || scr.scrollTop <= 1;
+
+      if (hasOverflow && !atTop) {
+        if (dragging) {
+          clearTransform();
+          dragging = false;
+        }
+        startY = e.touches[0].clientY;
+        startX = e.touches[0].clientX;
+        return;
+      }
+
+      const dy = e.touches[0].clientY - startY;
+      const dx = e.touches[0].clientX - startX;
+      if (dy <= 8 || !dominantVertical(dy, dx)) return;
+
+      dragging = true;
+      e.preventDefault();
+      applyDrag(dy);
+    };
+
+    const onEnd = () => endGesture();
+
+    header.addEventListener('touchstart', onHeaderStart, { passive: true });
+    header.addEventListener('touchmove', onHeaderMove, moveOpts);
+    header.addEventListener('touchend', onEnd);
+    header.addEventListener('touchcancel', onEnd);
+
+    body.addEventListener('touchstart', onBodyStart, { passive: true });
+    body.addEventListener('touchmove', onBodyMove, moveOpts);
+    body.addEventListener('touchend', onEnd);
+    body.addEventListener('touchcancel', onEnd);
+
+    return () => {
+      header.removeEventListener('touchstart', onHeaderStart);
+      header.removeEventListener('touchmove', onHeaderMove);
+      header.removeEventListener('touchend', onEnd);
+      header.removeEventListener('touchcancel', onEnd);
+      body.removeEventListener('touchstart', onBodyStart);
+      body.removeEventListener('touchmove', onBodyMove);
+      body.removeEventListener('touchend', onEnd);
+      body.removeEventListener('touchcancel', onEnd);
+    };
+  }, [open, swipeDisabled, attemptDismiss, panelRef, headerRef, bodyScrollRef, clearTransform]);
+}
 
 /** Default `history.pushState` marker property for dialog entries. */
 export const VEIT_DIALOG_DEFAULT_HISTORY_KEY = 'veit_dialog';
@@ -404,6 +566,8 @@ export function VeitDialog({
   const [mounted, setMounted] = useState(false);
   /** Dialog-Body: `overflow-y` nur bei echtem Überlauf — vermeidet „Geister“-Scrollbalken (Subpixel/Flex). */
   const bodyScrollRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   const parentNestedZ = useContext(VeitDialogZStackContext);
   const resolvedZIndexBase = zIndexBaseProp ?? parentNestedZ ?? 200;
@@ -508,6 +672,31 @@ export function VeitDialog({
     performDismiss();
   }, [resolvedUnsavedConfirm, performDismiss]);
 
+  /**
+   * Wisch-zum-Schließen: bei offenen Änderungen zuerst denselben Speichern-Pfad wie der primäre
+   * Speichern-Button ({@link useVeitDialogRegisterUnsavedSave} / {@link VeitDialogEditActionsFooter}),
+   * statt sofort den „Ungespeichert“-Dialog zu öffnen.
+   */
+  const attemptSwipeDismiss = useCallback(() => {
+    if (unsavedDirtyRef.current && unsavedSaveRef.current) {
+      const fn = unsavedSaveRef.current;
+      void (async () => {
+        try {
+          await Promise.resolve(fn());
+        } catch {
+          // wie Fußzeilen-Speichern: Fehler → Dialog bleibt offen
+          return;
+        }
+        /**
+         * Kein `performDismiss()` hier: Speichern kann den Dialog asynchron schließen
+         * (wie beim Klick auf Speichern in der Fußzeile).
+         */
+      })();
+      return;
+    }
+    attemptDismiss();
+  }, [attemptDismiss]);
+
   const dismissFromOverlay = useCallback(() => {
     if (disabled || blockBackdropClose) return;
     attemptDismiss();
@@ -517,6 +706,16 @@ export function VeitDialog({
     if (disabled) return;
     attemptDismiss();
   }, [disabled, attemptDismiss]);
+
+  const swipeDismissDisabled = disabled || blockBackdropClose;
+  useVeitDialogSwipeDismissEffect({
+    open: open && mounted,
+    swipeDisabled: swipeDismissDisabled,
+    attemptDismiss: attemptSwipeDismiss,
+    panelRef,
+    headerRef,
+    bodyScrollRef,
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -686,6 +885,7 @@ export function VeitDialog({
           <VeitDialogUnsavedSaveRegistrationContext.Provider value={registerUnsavedSave}>
           <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
             <div
+              ref={panelRef}
               role={role}
               aria-modal="false"
               aria-labelledby={titleId}
@@ -695,6 +895,7 @@ export function VeitDialog({
               onClick={(e) => e.stopPropagation()}
             >
               <div
+                ref={headerRef}
                 className={`flex shrink-0 items-start justify-between gap-3 border-b border-border/60 bg-background px-5 pb-4 pt-3 sm:px-6 ${headerClassName}`.trim()}
               >
                 {titleBlock}
@@ -703,7 +904,7 @@ export function VeitDialog({
                 ) : null}
               </div>
               <div
-                ref={bodyScrollable ? bodyScrollRef : undefined}
+                ref={bodyScrollRef}
                 className={`min-h-0 grow-0 shrink overflow-x-hidden overflow-y-hidden bg-background px-5 py-4 sm:px-6 sm:py-5 ${bodyClassName}`.trim()}
               >
                 {children}
@@ -756,6 +957,7 @@ export function VeitDialog({
               role="presentation"
             >
               <div
+                ref={panelRef}
                 role={role}
                 aria-modal="true"
                 aria-labelledby={titleId}
@@ -764,6 +966,7 @@ export function VeitDialog({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div
+                  ref={headerRef}
                   className={`flex shrink-0 items-start justify-between gap-3 border-b border-border/60 bg-surface px-5 pb-4 pt-5 sm:px-6 ${headerClassName}`.trim()}
                 >
                   {titleBlock}
@@ -772,7 +975,7 @@ export function VeitDialog({
                   ) : null}
                 </div>
                 <div
-                  ref={bodyScrollable ? bodyScrollRef : undefined}
+                  ref={bodyScrollRef}
                   className={`min-h-0 grow-0 shrink overflow-x-hidden overflow-y-hidden bg-surface px-5 py-4 sm:px-6 sm:py-5 ${bodyClassName}`.trim()}
                 >
                   {children}

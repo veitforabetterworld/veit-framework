@@ -24,14 +24,21 @@ const DIALOG_PANEL_MAX_H =
 
 const DIALOG_BOTTOM_DOCK_MAX_H = 'max-h-[min(96dvh,calc(100svh-1rem))]';
 
-/** Nach unten ziehen: ab dieser Verschiebung wird beim Loslassen geschlossen (Touch). */
-const VEIT_DIALOG_SWIPE_CLOSE_PX = 76;
-const VEIT_DIALOG_SWIPE_MAX_DRAG_PX = 300;
+/** Loslassen: diese Verschiebung (px) oder Anteil Panelhöhe reicht zum Schließen ohne Fling. */
+const VEIT_DIALOG_SWIPE_CLOSE_MIN_PX = 88;
+const VEIT_DIALOG_SWIPE_CLOSE_RATIO_OF_PANEL = 0.26;
+/** Loslassen: Finger-Geschwindigkeit nach unten (px/ms); darüber immer schließen. */
+const VEIT_DIALOG_SWIPE_FLING_CLOSE_PX_PER_MS = 0.52;
+/** Starker Wischer nach oben beim Loslassen: immer wieder öffnen (abbricht Schließen). */
+const VEIT_DIALOG_SWIPE_FLING_CANCEL_PX_PER_MS = -0.42;
+/** Maximale Finger-Versetzung, die wir spiegeln (kein Kunst-Clamp bei 300px mehr). */
+const translateFromFingerDy = (dy: number): number =>
+  typeof window === 'undefined' ? Math.max(0, dy) : Math.max(0, Math.min(dy, window.innerHeight * 1.25));
 
 /**
- * Touch: Panel per Wisch nach unten schließen. Header immer; Body nur oben bzw. ohne Scroll.
+ * Touch: Panel 1:1 mit vertikalem Fingerweg; Loslassen per Position oder Abwärts-Fling schließt.
+ * Header immer; Body nur oben bzw. ohne Scroll.
  * Native Listener mit `passive: false` auf `touchmove` (iOS).
- * Beim Loslassen über Schwelle: `attemptDismiss` (typ. speichert bei Dirty wie Speichern-Button, sonst schließen).
  */
 function useVeitDialogSwipeDismissEffect(opts: {
   open: boolean;
@@ -68,27 +75,42 @@ function useVeitDialogSwipeDismissEffect(opts: {
     let startY = 0;
     let startX = 0;
     let dragging = false;
+    let lastMoveY = 0;
+    let lastMoveT = 0;
+    let velocityYPxPerMs = 0;
 
     const parseTranslatePx = (): number => {
-      const m = /translateY\(([\d.]+)px\)/.exec(panel.style.transform);
+      const m = /translateY\(([-\d.]+)px\)/.exec(panel.style.transform);
       return m ? parseFloat(m[1]) : 0;
     };
 
-    const applyDrag = (dy: number) => {
-      const t = Math.min(dy * 0.45, VEIT_DIALOG_SWIPE_MAX_DRAG_PX);
+    const resetVelocityTracker = () => {
+      velocityYPxPerMs = 0;
+      lastMoveY = 0;
+      lastMoveT = 0;
+    };
+
+    const applyDrag = (dyFromStart: number) => {
+      const t = translateFromFingerDy(dyFromStart);
       panel.style.transition = 'none';
       panel.style.transform = `translateY(${t}px)`;
     };
 
     const snapBack = () => {
-      panel.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+      panel.style.transition = 'transform 0.24s cubic-bezier(0.32, 0.72, 0, 1)';
       panel.style.transform = 'translateY(0)';
       window.setTimeout(() => {
         if (!panelRef.current || panelRef.current !== panel) return;
         if (panel.style.transform === 'translateY(0px)' || panel.style.transform === 'translateY(0)') {
           clearTransform();
         }
-      }, 240);
+      }, 260);
+    };
+
+    const dismissThresholdPx = (): number => {
+      const ph = panel.getBoundingClientRect().height || 0;
+      const ratioPx = ph > 0 ? ph * VEIT_DIALOG_SWIPE_CLOSE_RATIO_OF_PANEL : VEIT_DIALOG_SWIPE_CLOSE_MIN_PX;
+      return Math.max(VEIT_DIALOG_SWIPE_CLOSE_MIN_PX, ratioPx);
     };
 
     const endGesture = () => {
@@ -96,34 +118,70 @@ function useVeitDialogSwipeDismissEffect(opts: {
       dragging = false;
       if (!wasDragging) return;
       const px = parseTranslatePx();
-      if (px >= VEIT_DIALOG_SWIPE_CLOSE_PX) {
+      const thr = dismissThresholdPx();
+      const vy = velocityYPxPerMs;
+
+      if (vy <= VEIT_DIALOG_SWIPE_FLING_CANCEL_PX_PER_MS) {
+        if (px > 0) snapBack();
+        else clearTransform();
+        resetVelocityTracker();
+        return;
+      }
+
+      const flingShut = vy >= VEIT_DIALOG_SWIPE_FLING_CLOSE_PX_PER_MS;
+      const pastPosition = px >= thr;
+
+      if (flingShut || pastPosition) {
         clearTransform();
         attemptDismissRef.current();
+        resetVelocityTracker();
         return;
       }
       if (px > 0) snapBack();
       else clearTransform();
+      resetVelocityTracker();
     };
 
     const moveOpts: AddEventListenerOptions = { passive: false };
 
     const dominantVertical = (dy: number, dx: number) =>
-      Math.abs(dy) >= Math.max(8, Math.abs(dx) * 0.82);
+      Math.abs(dy) >= Math.max(6, Math.abs(dx) * 0.82);
+
+    const trackVelocity = (clientY: number) => {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (lastMoveT <= 0) {
+        lastMoveY = clientY;
+        lastMoveT = now;
+        return;
+      }
+      const dt = Math.max(4, now - lastMoveT);
+      velocityYPxPerMs = (clientY - lastMoveY) / dt;
+      lastMoveY = clientY;
+      lastMoveT = now;
+    };
 
     const onHeaderStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
       startY = e.touches[0].clientY;
       startX = e.touches[0].clientX;
       dragging = false;
+      resetVelocityTracker();
     };
 
     const onHeaderMove = (e: TouchEvent) => {
       if (swipeDisabledRef.current || e.touches.length !== 1) return;
-      const dy = e.touches[0].clientY - startY;
+      const y = e.touches[0].clientY;
+      const dy = y - startY;
       const dx = e.touches[0].clientX - startX;
-      if (dy <= 6 || !dominantVertical(dy, dx)) return;
-      dragging = true;
+      if (dy <= 0 || !dominantVertical(dy, dx)) return;
+      if (!dragging) {
+        dragging = true;
+        lastMoveY = y;
+        lastMoveT = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        velocityYPxPerMs = 0;
+      }
       e.preventDefault();
+      trackVelocity(y);
       applyDrag(dy);
     };
 
@@ -132,6 +190,7 @@ function useVeitDialogSwipeDismissEffect(opts: {
       startY = e.touches[0].clientY;
       startX = e.touches[0].clientX;
       dragging = false;
+      resetVelocityTracker();
     };
 
     const onBodyMove = (e: TouchEvent) => {
@@ -145,18 +204,26 @@ function useVeitDialogSwipeDismissEffect(opts: {
         if (dragging) {
           clearTransform();
           dragging = false;
+          resetVelocityTracker();
         }
         startY = e.touches[0].clientY;
         startX = e.touches[0].clientX;
         return;
       }
 
-      const dy = e.touches[0].clientY - startY;
+      const y = e.touches[0].clientY;
+      const dy = y - startY;
       const dx = e.touches[0].clientX - startX;
-      if (dy <= 8 || !dominantVertical(dy, dx)) return;
+      if (dy <= 0 || !dominantVertical(dy, dx)) return;
 
-      dragging = true;
+      if (!dragging) {
+        dragging = true;
+        lastMoveY = y;
+        lastMoveT = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        velocityYPxPerMs = 0;
+      }
       e.preventDefault();
+      trackVelocity(y);
       applyDrag(dy);
     };
 

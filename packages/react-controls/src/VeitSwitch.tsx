@@ -31,7 +31,7 @@ export function VeitSwitch({
       disabled={disabled}
       onClick={() => onCheckedChange(!checked)}
       className={
-        'relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border border-border/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 dark:[&>span]:ring-white/10 ' +
+        'inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border border-border/80 p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 ' +
         (checked ? 'border-primary/40 bg-primary' : 'bg-muted') +
         (className ? ` ${className}` : '')
       }
@@ -39,8 +39,8 @@ export function VeitSwitch({
       <span
         aria-hidden
         className={
-          'pointer-events-none absolute top-0.5 h-5 w-5 rounded-full bg-primary-foreground shadow-sm ring-1 ring-black/5 transition-transform motion-reduce:transition-none ' +
-          (checked ? 'left-0.5 translate-x-6' : 'left-0.5 translate-x-0')
+          'pointer-events-none block h-5 w-5 shrink-0 rounded-full bg-primary-foreground shadow-sm ring-1 ring-black/5 transition-transform motion-reduce:transition-none dark:ring-white/10 ' +
+          (checked ? 'translate-x-5' : 'translate-x-0')
         }
       />
     </button>

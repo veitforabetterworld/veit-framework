@@ -45,14 +45,10 @@ export {
 export {
   VeitHandwritingTextarea,
   VeitSmartHandwritingTextarea,
-  veitBrowserHandwritingRecognizer,
-  createVeitBackendHandwritingRecognizer,
-  type VeitHandwritingFallbackPolicy,
-  type VeitBackendHandwritingTransport,
-  type VeitHandwritingRecognitionMode,
+  createVeitHandwritingRecognizer,
+  type VeitHandwritingRecognizeTransport,
   type VeitHandwritingRecognitionResult,
   type VeitHandwritingRecognizeRequest,
-  type VeitHandwritingRecognizer,
   type VeitHandwritingStroke,
   type VeitHandwritingPoint,
 } from './VeitHandwritingInput.js';

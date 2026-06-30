@@ -6,6 +6,7 @@ Wiederverwendbare Bausteine für Node-/Web-Projekte (pnpm-Workspace-Pakete unter
 
 | Paket | Inhalt |
 |-------|--------|
+| **`@veit/tesseract-ocr`** | Gemeinsame Tesseract.js-OCR für Node (tessdata, Bildpuffer) |
 | **`@veit/db`** | PostgreSQL-Pool + Drizzle aus `DATABASE_URL` (`createPool`, `createDrizzle`, `getDatabaseUrl`) |
 | **`@veit/node-server`** | Fastify-Basis: CORS aus `CORS_ORIGINS`, `registerHealthRoutes`, `listen` |
 

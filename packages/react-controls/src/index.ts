@@ -3,6 +3,7 @@ export { VeitSettingsToggleRow, type VeitSettingsToggleRowProps } from './VeitSe
 export {
   VeitDataTable,
   type VeitDataTableColumn,
+  type VeitDataTableFilterOption,
   type VeitDataTableLabels,
   type VeitDataTablePagination,
   type VeitDataTablePaginationLabels,

@@ -3,6 +3,11 @@ import type { ReactNode } from 'react';
 
 import { VeitDataTableHeaderCell } from './VeitDataTableHeaderCell.js';
 
+export type VeitDataTableFilterOption = {
+  value: string;
+  label: ReactNode;
+};
+
 export type VeitDataTableColumn<T> = {
   id: string;
   header: ReactNode;
@@ -10,6 +15,29 @@ export type VeitDataTableColumn<T> = {
   sortable?: boolean;
   sortValue?: (row: T) => string | number | null | undefined;
   filterable?: boolean;
+  /**
+   * `text` (Standard): Freitext-Teilstring über `filterValue`.
+   * `enum` / `tags`: Mehrfachauswahl über `filterOptions` und exakter Abgleich mit `filterMatchValue`.
+   * `dateRange`: Von/bis-Datumsfilter über `filterMatchValue` (YYYY-MM-DD); optional leere Werte.
+   * `numberRange`: Von/bis-Zahlenfilter über `filterMatchValue`; Eingabe in Anzeigeeinheiten, optional `filterNumberDivisor`.
+   */
+  filterType?: 'text' | 'enum' | 'tags' | 'dateRange' | 'numberRange';
+  filterOptions?: VeitDataTableFilterOption[];
+  /** Für `enum` / `tags` / `dateRange` / `numberRange`: Rohwert(e) der Zeile zum Abgleich. */
+  filterMatchValue?: (row: T) => string | number | null | undefined | readonly string[];
+  /** Für `dateRange` / `numberRange`: Chip zum Filtern auf leere/null-Werte (z. B. „offen“). */
+  filterAllowEmpty?: boolean;
+  /** Für `dateRange` / `numberRange` mit `filterAllowEmpty`: Beschriftung des Leer-Chips (Fallback: `labels.filterEmptyOnly`). */
+  filterEmptyLabel?: ReactNode;
+  /**
+   * Für `numberRange`: Eingabewerte (z. B. Euro) mit diesem Faktor in Rohwerte umrechnen
+   * (z. B. `100` wenn `filterMatchValue` Cent liefert).
+   */
+  filterNumberDivisor?: number;
+  /** Für `numberRange`: `step`-Attribut der Zahleneingaben (Standard: `0.01` bei Divisor 100, sonst `any`). */
+  filterNumberStep?: string;
+  /** Optional: gewählte Filterwerte vor dem Abgleich erweitern (z. B. Tag-Nachfahren). */
+  filterExpandSelected?: (selected: string[]) => string[];
   /** Für Textsuche in der Ergebnismenge (nach Filter aller Spalten, clientseitig). */
   filterValue?: (row: T) => string;
   align?: 'left' | 'center' | 'right';
@@ -22,6 +50,23 @@ export type VeitDataTableLabels = {
   filterColumn: string;
   filterPlaceholder: string;
   clearFilter: string;
+  filterDateFrom: string;
+  filterDateTo: string;
+  filterNumberFrom: string;
+  filterNumberTo: string;
+  filterEmptyOnly: string;
+};
+
+type DateRangeFilterState = {
+  from: string;
+  to: string;
+  emptyOnly: boolean;
+};
+
+type NumberRangeFilterState = {
+  from: string;
+  to: string;
+  emptyOnly: boolean;
 };
 
 /** Platzhalter: `{from}`, `{to}`, `{total}`, `{page}`, `{pages}` */
@@ -71,6 +116,137 @@ function compareSort(
   return dir === 'asc' ? c : -c;
 }
 
+function parseMultiFilter(raw: string): string[] {
+  if (!raw.trim()) return [];
+  return raw.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+function serializeMultiFilter(selected: string[]): string {
+  return selected.join(',');
+}
+
+function parseDateRangeFilter(raw: string): DateRangeFilterState {
+  if (!raw.trim()) return { from: '', to: '', emptyOnly: false };
+  try {
+    const parsed = JSON.parse(raw) as Partial<DateRangeFilterState>;
+    if (parsed != null && typeof parsed === 'object') {
+      return {
+        from: typeof parsed.from === 'string' ? parsed.from : '',
+        to: typeof parsed.to === 'string' ? parsed.to : '',
+        emptyOnly: Boolean(parsed.emptyOnly),
+      };
+    }
+  } catch {
+    /* legacy / invalid */
+  }
+  return { from: '', to: '', emptyOnly: false };
+}
+
+function serializeDateRangeFilter(state: DateRangeFilterState): string {
+  if (!state.from && !state.to && !state.emptyOnly) return '';
+  return JSON.stringify(state);
+}
+
+function dateRangeFilterActive(state: DateRangeFilterState): boolean {
+  return state.from !== '' || state.to !== '' || state.emptyOnly;
+}
+
+function parseNumberBound(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseNumberRangeFilter(raw: string): NumberRangeFilterState {
+  if (!raw.trim()) return { from: '', to: '', emptyOnly: false };
+  try {
+    const parsed = JSON.parse(raw) as {
+      from?: number | string | null;
+      to?: number | string | null;
+      emptyOnly?: boolean;
+    };
+    if (parsed != null && typeof parsed === 'object') {
+      return {
+        from:
+          parsed.from != null && parsed.from !== '' && Number.isFinite(Number(parsed.from))
+            ? String(parsed.from)
+            : '',
+        to:
+          parsed.to != null && parsed.to !== '' && Number.isFinite(Number(parsed.to))
+            ? String(parsed.to)
+            : '',
+        emptyOnly: Boolean(parsed.emptyOnly),
+      };
+    }
+  } catch {
+    /* legacy / invalid */
+  }
+  return { from: '', to: '', emptyOnly: false };
+}
+
+function serializeNumberRangeFilter(state: NumberRangeFilterState): string {
+  const from = parseNumberBound(state.from);
+  const to = parseNumberBound(state.to);
+  if (from == null && to == null && !state.emptyOnly) return '';
+  return JSON.stringify({ from, to, emptyOnly: state.emptyOnly });
+}
+
+function numberRangeFilterActive(state: NumberRangeFilterState): boolean {
+  return parseNumberBound(state.from) != null || parseNumberBound(state.to) != null || state.emptyOnly;
+}
+
+function normalizeNumberFilterValue(
+  matchRaw: string | number | null | undefined | readonly string[],
+): number | null {
+  if (matchRaw == null) return null;
+  if (typeof matchRaw === 'number') {
+    return Number.isFinite(matchRaw) ? matchRaw : null;
+  }
+  if (Array.isArray(matchRaw)) {
+    const first = matchRaw[0];
+    if (first == null || first === '') return null;
+    const n = Number(first);
+    return Number.isFinite(n) ? n : null;
+  }
+  const trimmed = String(matchRaw).trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
+}
+
+function numberRangeBoundToRaw(bound: number | null, divisor: number): number | null {
+  if (bound == null) return null;
+  if (divisor === 1) return bound;
+  return Math.round(bound * divisor);
+}
+
+function normalizeDateFilterValue(value: string | null | undefined): string | null {
+  if (value == null) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+  return trimmed.slice(0, 10);
+}
+
+function columnFilterActive(
+  filterable: boolean | undefined,
+  filterType: VeitDataTableColumn<unknown>['filterType'],
+  raw: string,
+): boolean {
+  if (!filterable) return false;
+  const type = filterType ?? 'text';
+  if (type === 'enum' || type === 'tags') {
+    return parseMultiFilter(raw).length > 0;
+  }
+  if (type === 'dateRange') {
+    return dateRangeFilterActive(parseDateRangeFilter(raw));
+  }
+  if (type === 'numberRange') {
+    return numberRangeFilterActive(parseNumberRangeFilter(raw));
+  }
+  return raw.trim() !== '';
+}
+
 function applyColumnFilters<T>(
   rows: T[],
   columns: VeitDataTableColumn<T>[],
@@ -78,14 +254,299 @@ function applyColumnFilters<T>(
 ): T[] {
   return rows.filter((row) => {
     for (const col of columns) {
-      if (!col.filterable || !col.filterValue) continue;
-      const q = (filters[col.id] ?? '').trim().toLowerCase();
-      if (q === '') continue;
-      const v = (col.filterValue(row) ?? '').toLowerCase();
-      if (!v.includes(q)) return false;
+      if (!col.filterable) continue;
+      const raw = filters[col.id] ?? '';
+      const filterType = col.filterType ?? 'text';
+
+      if (filterType === 'text') {
+        if (!col.filterValue) continue;
+        const q = raw.trim().toLowerCase();
+        if (q === '') continue;
+        const v = (col.filterValue(row) ?? '').toLowerCase();
+        if (!v.includes(q)) return false;
+        continue;
+      }
+
+      if (filterType === 'enum' || filterType === 'tags') {
+        let selected = parseMultiFilter(raw);
+        if (selected.length === 0) continue;
+        if (col.filterExpandSelected) {
+          selected = col.filterExpandSelected(selected);
+        }
+        const matchRaw = col.filterMatchValue?.(row);
+        const matchValues =
+          matchRaw == null
+            ? []
+            : Array.isArray(matchRaw)
+              ? matchRaw.map(String)
+              : [String(matchRaw)];
+        if (!matchValues.some((v) => selected.includes(v))) return false;
+        continue;
+      }
+
+      if (filterType === 'dateRange') {
+        const { from, to, emptyOnly } = parseDateRangeFilter(raw);
+        if (!from && !to && !emptyOnly) continue;
+        const matchRaw = col.filterMatchValue?.(row);
+        const dateStr = Array.isArray(matchRaw)
+          ? normalizeDateFilterValue(matchRaw[0] as string | null | undefined)
+          : normalizeDateFilterValue(matchRaw as string | null | undefined);
+        const isEmpty = dateStr == null;
+        if (emptyOnly) {
+          if (!isEmpty) return false;
+          continue;
+        }
+        if (isEmpty) return false;
+        if (from && dateStr < from) return false;
+        if (to && dateStr > to) return false;
+        continue;
+      }
+
+      if (filterType === 'numberRange') {
+        const { from, to, emptyOnly } = parseNumberRangeFilter(raw);
+        const fromBound = parseNumberBound(from);
+        const toBound = parseNumberBound(to);
+        if (fromBound == null && toBound == null && !emptyOnly) continue;
+        const matchRaw = col.filterMatchValue?.(row);
+        const numValue = normalizeNumberFilterValue(
+          matchRaw == null
+            ? null
+            : Array.isArray(matchRaw)
+              ? matchRaw
+              : matchRaw,
+        );
+        const isEmpty = numValue == null;
+        if (emptyOnly) {
+          if (!isEmpty) return false;
+          continue;
+        }
+        if (isEmpty) return false;
+        const divisor = col.filterNumberDivisor ?? 1;
+        const fromRaw = numberRangeBoundToRaw(fromBound, divisor);
+        const toRaw = numberRangeBoundToRaw(toBound, divisor);
+        if (fromRaw != null && numValue < fromRaw) return false;
+        if (toRaw != null && numValue > toRaw) return false;
+      }
     }
     return true;
   });
+}
+
+type VeitDataTableOptionFilterProps = {
+  options: VeitDataTableFilterOption[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  clearLabel: string;
+  onClear: () => void;
+};
+
+type VeitDataTableDateRangeFilterProps = {
+  state: DateRangeFilterState;
+  onChange: (state: DateRangeFilterState) => void;
+  allowEmpty: boolean;
+  emptyLabel: ReactNode;
+  fromLabel: string;
+  toLabel: string;
+  clearLabel: string;
+  onClear: () => void;
+};
+
+type VeitDataTableNumberRangeFilterProps = {
+  state: NumberRangeFilterState;
+  onChange: (state: NumberRangeFilterState) => void;
+  allowEmpty: boolean;
+  emptyLabel: ReactNode;
+  fromLabel: string;
+  toLabel: string;
+  clearLabel: string;
+  step: string;
+  onClear: () => void;
+};
+
+function VeitDataTableNumberRangeFilter({
+  state,
+  onChange,
+  allowEmpty,
+  emptyLabel,
+  fromLabel,
+  toLabel,
+  clearLabel,
+  step,
+  onClear,
+}: VeitDataTableNumberRangeFilterProps) {
+  const active = numberRangeFilterActive(state);
+
+  return (
+    <>
+      {allowEmpty ? (
+        <button
+          type="button"
+          className={`mb-2 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+            state.emptyOnly
+              ? 'border-primary bg-primary/10 font-medium text-primary'
+              : 'border-border/70 text-muted-foreground hover:border-border hover:text-foreground'
+          }`}
+          onClick={() =>
+            onChange({
+              ...state,
+              emptyOnly: !state.emptyOnly,
+              from: !state.emptyOnly ? '' : state.from,
+              to: !state.emptyOnly ? '' : state.to,
+            })
+          }
+        >
+          {emptyLabel}
+        </button>
+      ) : null}
+      <div className={`space-y-2 ${state.emptyOnly ? 'pointer-events-none opacity-50' : ''}`}>
+        <label className="block space-y-1">
+          <span className="text-xs text-muted-foreground">{fromLabel}</span>
+          <input
+            type="number"
+            className="input w-full text-sm tabular-nums"
+            value={state.from}
+            step={step}
+            onChange={(e) => onChange({ ...state, from: e.target.value, emptyOnly: false })}
+          />
+        </label>
+        <label className="block space-y-1">
+          <span className="text-xs text-muted-foreground">{toLabel}</span>
+          <input
+            type="number"
+            className="input w-full text-sm tabular-nums"
+            value={state.to}
+            step={step}
+            min={state.from || undefined}
+            onChange={(e) => onChange({ ...state, to: e.target.value, emptyOnly: false })}
+          />
+        </label>
+      </div>
+      {active ? (
+        <button
+          type="button"
+          className="mt-2 text-xs text-muted-foreground underline hover:text-foreground"
+          onClick={onClear}
+        >
+          {clearLabel}
+        </button>
+      ) : null}
+    </>
+  );
+}
+
+function VeitDataTableDateRangeFilter({
+  state,
+  onChange,
+  allowEmpty,
+  emptyLabel,
+  fromLabel,
+  toLabel,
+  clearLabel,
+  onClear,
+}: VeitDataTableDateRangeFilterProps) {
+  const active = dateRangeFilterActive(state);
+
+  return (
+    <>
+      {allowEmpty ? (
+        <button
+          type="button"
+          className={`mb-2 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+            state.emptyOnly
+              ? 'border-primary bg-primary/10 font-medium text-primary'
+              : 'border-border/70 text-muted-foreground hover:border-border hover:text-foreground'
+          }`}
+          onClick={() =>
+            onChange({
+              ...state,
+              emptyOnly: !state.emptyOnly,
+              from: !state.emptyOnly ? '' : state.from,
+              to: !state.emptyOnly ? '' : state.to,
+            })
+          }
+        >
+          {emptyLabel}
+        </button>
+      ) : null}
+      <div className={`space-y-2 ${state.emptyOnly ? 'pointer-events-none opacity-50' : ''}`}>
+        <label className="block space-y-1">
+          <span className="text-xs text-muted-foreground">{fromLabel}</span>
+          <input
+            type="date"
+            className="input w-full text-sm"
+            value={state.from}
+            onChange={(e) => onChange({ ...state, from: e.target.value, emptyOnly: false })}
+          />
+        </label>
+        <label className="block space-y-1">
+          <span className="text-xs text-muted-foreground">{toLabel}</span>
+          <input
+            type="date"
+            className="input w-full text-sm"
+            value={state.to}
+            min={state.from || undefined}
+            onChange={(e) => onChange({ ...state, to: e.target.value, emptyOnly: false })}
+          />
+        </label>
+      </div>
+      {active ? (
+        <button
+          type="button"
+          className="mt-2 text-xs text-muted-foreground underline hover:text-foreground"
+          onClick={onClear}
+        >
+          {clearLabel}
+        </button>
+      ) : null}
+    </>
+  );
+}
+
+function VeitDataTableOptionFilter({
+  options,
+  selected,
+  onChange,
+  clearLabel,
+  onClear,
+}: VeitDataTableOptionFilterProps) {
+  const toggle = (value: string) => {
+    onChange(
+      selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value],
+    );
+  };
+
+  return (
+    <>
+      <div className="flex max-h-48 flex-wrap gap-1.5 overflow-y-auto">
+        {options.map((opt) => {
+          const on = selected.includes(opt.value);
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                on
+                  ? 'border-primary bg-primary/10 font-medium text-primary'
+                  : 'border-border/70 text-muted-foreground hover:border-border hover:text-foreground'
+              }`}
+              onClick={() => toggle(opt.value)}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+      {selected.length > 0 ? (
+        <button
+          type="button"
+          className="mt-2 text-xs text-muted-foreground underline hover:text-foreground"
+          onClick={onClear}
+        >
+          {clearLabel}
+        </button>
+      ) : null}
+    </>
+  );
 }
 
 function sortRows<T>(
@@ -140,6 +601,9 @@ export type VeitDataTableProps<T> = {
   trailingColumnCount?: number;
   /** Optional `<tfoot>` (ein oder mehrere `<tr>`). */
   tableFooter?: ReactNode;
+  /** Gesteuerte Spaltenfilter (z. B. Sync mit externem Tag-Filter). */
+  columnFilters?: Record<string, string>;
+  onColumnFiltersChange?: (filters: Record<string, string>) => void;
 };
 
 /**
@@ -167,10 +631,25 @@ export function VeitDataTable<T>({
   trailingCell,
   trailingColumnCount = 0,
   tableFooter,
+  columnFilters: columnFiltersProp,
+  onColumnFiltersChange,
 }: VeitDataTableProps<T>) {
   const tableRef = useRef<HTMLTableElement>(null);
   const [sortSpec, setSortSpec] = useState<{ columnId: string; dir: 'asc' | 'desc' } | null>(null);
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [uncontrolledColumnFilters, setUncontrolledColumnFilters] = useState<Record<string, string>>({});
+  const isFiltersControlled = columnFiltersProp !== undefined;
+  const columnFilters = isFiltersControlled ? columnFiltersProp : uncontrolledColumnFilters;
+
+  const patchColumnFilters = useCallback(
+    (updater: (prev: Record<string, string>) => Record<string, string>) => {
+      if (isFiltersControlled) {
+        onColumnFiltersChange?.(updater(columnFiltersProp ?? {}));
+      } else {
+        setUncontrolledColumnFilters(updater);
+      }
+    },
+    [columnFiltersProp, isFiltersControlled, onColumnFiltersChange],
+  );
   const [filterOpenFor, setFilterOpenFor] = useState<string | null>(null);
   const [clientPageIndex, setClientPageIndex] = useState(0);
 
@@ -294,7 +773,7 @@ export function VeitDataTable<T>({
                 ? columns.map((col) => {
                 const sortOn = sortSpec?.columnId === col.id;
                 const sortDir: 'asc' | 'desc' | undefined = sortOn ? sortSpec?.dir : undefined;
-                const filterOn = col.filterable ? (columnFilters[col.id] ?? '').trim() !== '' : false;
+                const filterOn = columnFilterActive(col.filterable, col.filterType, columnFilters[col.id] ?? '');
                 const align = col.align ?? 'left';
                 const alignClass =
                   align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left';
@@ -335,30 +814,106 @@ export function VeitDataTable<T>({
                         role="dialog"
                         aria-label={labels.filterColumn}
                       >
-                        <input
-                          type="search"
-                          className="input w-full text-sm"
-                          placeholder={labels.filterPlaceholder}
-                          value={columnFilters[col.id] ?? ''}
-                          onChange={(e) =>
-                            setColumnFilters((prev) => ({ ...prev, [col.id]: e.target.value }))
-                          }
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          className="mt-2 text-xs text-muted-foreground underline hover:text-foreground"
-                          onClick={() => {
-                            setColumnFilters((prev) => {
-                              const next = { ...prev };
-                              delete next[col.id];
-                              return next;
-                            });
-                            setFilterOpenFor(null);
-                          }}
-                        >
-                          {labels.clearFilter}
-                        </button>
+                        {col.filterType === 'dateRange' ? (
+                          <VeitDataTableDateRangeFilter
+                            state={parseDateRangeFilter(columnFilters[col.id] ?? '')}
+                            allowEmpty={!!col.filterAllowEmpty}
+                            emptyLabel={col.filterEmptyLabel ?? labels.filterEmptyOnly}
+                            fromLabel={labels.filterDateFrom}
+                            toLabel={labels.filterDateTo}
+                            clearLabel={labels.clearFilter}
+                            onChange={(state) =>
+                              patchColumnFilters((prev) => ({
+                                ...prev,
+                                [col.id]: serializeDateRangeFilter(state),
+                              }))
+                            }
+                            onClear={() => {
+                              patchColumnFilters((prev) => {
+                                const next = { ...prev };
+                                delete next[col.id];
+                                return next;
+                              });
+                              setFilterOpenFor(null);
+                            }}
+                          />
+                        ) : col.filterType === 'numberRange' ? (
+                          <VeitDataTableNumberRangeFilter
+                            state={parseNumberRangeFilter(columnFilters[col.id] ?? '')}
+                            allowEmpty={!!col.filterAllowEmpty}
+                            emptyLabel={col.filterEmptyLabel ?? labels.filterEmptyOnly}
+                            fromLabel={labels.filterNumberFrom}
+                            toLabel={labels.filterNumberTo}
+                            clearLabel={labels.clearFilter}
+                            step={
+                              col.filterNumberStep ??
+                              (col.filterNumberDivisor === 100 ? '0.01' : 'any')
+                            }
+                            onChange={(state) =>
+                              patchColumnFilters((prev) => ({
+                                ...prev,
+                                [col.id]: serializeNumberRangeFilter(state),
+                              }))
+                            }
+                            onClear={() => {
+                              patchColumnFilters((prev) => {
+                                const next = { ...prev };
+                                delete next[col.id];
+                                return next;
+                              });
+                              setFilterOpenFor(null);
+                            }}
+                          />
+                        ) : (col.filterType === 'enum' || col.filterType === 'tags') &&
+                          col.filterOptions &&
+                          col.filterOptions.length > 0 ? (
+                          <VeitDataTableOptionFilter
+                            options={col.filterOptions}
+                            selected={parseMultiFilter(columnFilters[col.id] ?? '')}
+                            onChange={(selected) =>
+                              patchColumnFilters((prev) => ({
+                                ...prev,
+                                [col.id]: serializeMultiFilter(selected),
+                              }))
+                            }
+                            clearLabel={labels.clearFilter}
+                            onClear={() => {
+                              patchColumnFilters((prev) => {
+                                const next = { ...prev };
+                                delete next[col.id];
+                                return next;
+                              });
+                              setFilterOpenFor(null);
+                            }}
+                          />
+                        ) : (
+                          <>
+                            <input
+                              type="search"
+                              className="input w-full text-sm"
+                              placeholder={labels.filterPlaceholder}
+                              value={columnFilters[col.id] ?? ''}
+                              onChange={(e) =>
+                                patchColumnFilters((prev) => ({ ...prev, [col.id]: e.target.value }))
+                              }
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              className="mt-2 text-xs text-muted-foreground underline hover:text-foreground"
+                              onClick={() => {
+                                patchColumnFilters((prev) => {
+                                  const next = { ...prev };
+                                  delete next[col.id];
+                                  return next;
+                                });
+                                setFilterOpenFor(null);
+                              }}
+                            >
+                              {labels.clearFilter}
+                            </button>
+                          </>
+                        )}
                       </div>
                     ) : null}
                   </th>

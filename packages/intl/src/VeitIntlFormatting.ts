@@ -80,6 +80,21 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const ISO_DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** YYYY-MM-DD als lokales Kalenderdatum (T12:00:00), sonst normales `Date`-Parsing. */
+function coerceToLocalizedDate(input: Date | string | number): Date {
+  if (input instanceof Date) return input;
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (ISO_DATE_ONLY_RE.test(trimmed)) {
+      return new Date(`${trimmed}T12:00:00`);
+    }
+    return new Date(trimmed);
+  }
+  return new Date(input);
+}
+
 /** Zentrale Formatier‑API für ein fixes aufgelöstes Intl‑Locale. Cache pro Tag. */
 export class VeitIntlFormatting {
   private static readonly instances = new Map<string, VeitIntlFormatting>();
@@ -118,12 +133,29 @@ export class VeitIntlFormatting {
     }
   }
 
+  /** Nur Datum (ohne Uhrzeit); YYYY-MM-DD wird als lokales Kalenderdatum interpretiert. */
+  localizedDate(
+    input: Date | string | number,
+    options?: Intl.DateTimeFormatOptions,
+  ): string {
+    const dt = coerceToLocalizedDate(input);
+    if (Number.isNaN(dt.valueOf())) {
+      return typeof input === 'string' ? input : '';
+    }
+    const opts = options ?? ({ dateStyle: 'medium' } satisfies Intl.DateTimeFormatOptions);
+    try {
+      return new Intl.DateTimeFormat(this.intlResolvedTag, opts).format(dt);
+    } catch {
+      return typeof input === 'string' ? input : dt.toISOString().slice(0, 10);
+    }
+  }
+
   /** Datum/Zeit; Fallback ISO bei ungültigem Datum bzw. `Intl`‑Fehler. */
   localizedDateTime(
     input: Date | string | number,
     options?: Intl.DateTimeFormatOptions,
   ): string {
-    const dt = input instanceof Date ? input : new Date(input);
+    const dt = coerceToLocalizedDate(input);
     if (Number.isNaN(dt.valueOf())) {
       return typeof input === 'string' ? input : '';
     }
@@ -332,6 +364,14 @@ export class VeitIntlFormatting {
 
 export function formatDecimalNumber(uiLocale: string, value: number, options?: Intl.NumberFormatOptions): string {
   return VeitIntlFormatting.forUiLocale(uiLocale).decimal(value, options);
+}
+
+export function formatLocalizedDate(
+  uiLocale: string,
+  input: Date | string | number,
+  options?: Intl.DateTimeFormatOptions,
+): string {
+  return VeitIntlFormatting.forUiLocale(uiLocale).localizedDate(input, options);
 }
 
 export function formatLocalizedDateTime(

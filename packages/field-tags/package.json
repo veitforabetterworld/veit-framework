@@ -1,0 +1,21 @@
+{
+  "name": "@veit/field-tags",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared field/tag tree utilities and tag color helpers.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test \"src/**/*.test.ts\""
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

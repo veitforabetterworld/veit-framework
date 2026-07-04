@@ -1,4 +1,5 @@
 export { VeitSwitch, type VeitSwitchProps } from './VeitSwitch.js';
+export { VeitTabBar, type VeitTabBarItem, type VeitTabBarProps } from './VeitTabBar.js';
 export { VeitSettingsToggleRow, type VeitSettingsToggleRowProps } from './VeitSettingsToggleRow.js';
 export {
   VeitDataTable,

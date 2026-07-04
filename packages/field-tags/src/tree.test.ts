@@ -87,6 +87,27 @@ describe('@veit/field-tags tree', () => {
     assert.deepEqual(expandFilterTagIds([1], tags).sort(), [1, 2, 3]);
   });
 
+  it('entityMatchesTagFilter includes descendants', async () => {
+    const { entityMatchesTagFilter } = await import('./tableFilter.js');
+    assert.equal(entityMatchesTagFilter([2], 1, tags), true);
+    assert.equal(entityMatchesTagFilter([4], 1, tags), false);
+    assert.equal(entityMatchesTagFilter([], null, tags), true);
+  });
+
+  it('table column tag filter round-trips', async () => {
+    const {
+      parseTableMultiFilter,
+      serializeTableMultiFilter,
+      tagIdFromTableColumnFilter,
+      setTableColumnTagFilter,
+    } = await import('./tableFilter.js');
+    assert.deepEqual(parseTableMultiFilter('1, 2'), ['1', '2']);
+    assert.equal(serializeTableMultiFilter(['3']), '3');
+    assert.equal(tagIdFromTableColumnFilter('42'), 42);
+    assert.deepEqual(setTableColumnTagFilter({}, 'col', 5), { col: '5' });
+    assert.deepEqual(setTableColumnTagFilter({ col: '5' }, 'col', null), {});
+  });
+
   it('plans tree moves onto parent zones', () => {
     const byParent = buildTagChildrenMap(tags);
     const plan = planTagTreeMove('tag-4', 'tag-parent-1', tags, byParent);

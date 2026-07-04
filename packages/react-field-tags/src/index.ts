@@ -10,6 +10,7 @@ export { VeitFieldTagEditDialog, type VeitFieldTagEditDialogProps } from './Veit
 export { VeitFieldTagFieldsEditor, type VeitFieldTagFieldsEditorProps } from './VeitFieldTagFieldsEditor.js';
 export { VeitFieldTagPicker, type VeitFieldTagPickerProps } from './VeitFieldTagPicker.js';
 export { VeitFieldTagBadge, type VeitFieldTagBadgeProps } from './VeitFieldTagBadge.js';
+export { VeitFieldTagFilterBar, type VeitFieldTagFilterBarProps } from './VeitFieldTagFilterBar.js';
 export type {
   FlatTagDraft,
   NestedTagDraft,

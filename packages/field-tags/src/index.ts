@@ -33,3 +33,10 @@ export {
   type TagTreeMovePlan,
 } from './tree.js';
 export { saveNestedFieldTagTree, type NestedFieldTagMutations } from './save.js';
+export {
+  entityMatchesTagFilter,
+  parseTableMultiFilter,
+  serializeTableMultiFilter,
+  setTableColumnTagFilter,
+  tagIdFromTableColumnFilter,
+} from './tableFilter.js';

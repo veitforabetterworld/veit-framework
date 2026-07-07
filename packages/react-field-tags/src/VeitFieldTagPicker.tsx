@@ -8,7 +8,7 @@ import {
   type FieldTag,
   type TagPickerOption,
 } from '@veit/field-tags';
-import { VeitDialog, VeitDialogEditActionsFooter } from '@veit/react-dialog';
+import { VeitPickerDialog } from '@veit/react-dialog';
 
 import { VeitFieldTagBadge } from './VeitFieldTagBadge.js';
 import type { VeitFieldTagPickerStrings } from './types.js';
@@ -164,18 +164,15 @@ export function VeitFieldTagPicker({
         </div>
       </div>
 
-      {dialogOpen ? (
-        <VeitDialog
-          open
-          onClose={closeDialog}
-          title={strings.pickTitle}
-          closeAriaLabel={strings.close}
-          variant="responsive"
-          size="sm"
-          footer={({ dismiss }) => (
-            <VeitDialogEditActionsFooter dismissOnly dismiss={dismiss} busy={false} cancelLabel={strings.close} />
-          )}
-        >
+      <VeitPickerDialog
+        open={dialogOpen}
+        onClose={closeDialog}
+        title={strings.pickTitle}
+        closeAriaLabel={strings.close}
+        variant="responsive"
+        size="sm"
+        footerProps={{ dismissOnly: true, busy: false, cancelLabel: strings.close }}
+      >
           <div className="space-y-3">
             {canManageTags && onOpenTagManager ? (
               <button
@@ -250,8 +247,7 @@ export function VeitFieldTagPicker({
               )}
             </ul>
           </div>
-        </VeitDialog>
-      ) : null}
+        </VeitPickerDialog>
 
       {renderTagManager}
     </>

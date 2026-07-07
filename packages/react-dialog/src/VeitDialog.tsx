@@ -12,6 +12,24 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import {
+  VEIT_DIALOG_DEFAULT_HISTORY_KEY,
+  dialogHistoryDismissCoalescedOverlay,
+  dialogHistoryIndexOf,
+  dialogHistoryPush,
+  dialogHistoryRemove,
+  dialogHistoryStackLength,
+  dialogHistoryStripMarker,
+  dialogHistorySuppressNextPopstate,
+  dialogHistorySyncBack,
+  isTopDialogHistoryEntry,
+  navigateHistoryToClose,
+  veitDialogHistoryStateKey,
+  type HistoryCloseFn,
+} from './dialogHistory.js';
+import { resolveVeitDialogHistoryMode, veitDialogHistoryFlags, type VeitDialogHistoryMode } from './dialogHistoryMode.js';
+
+export { VEIT_DIALOG_DEFAULT_HISTORY_KEY } from './dialogHistory.js';
 const sizeMax: Record<'sm' | 'md' | 'lg', string> = {
   sm: 'max-w-md',
   md: 'max-w-lg',
@@ -37,25 +55,22 @@ const translateFromFingerDy = (dy: number): number =>
 
 /**
  * Touch: Panel 1:1 mit vertikalem Fingerweg; Loslassen per Position oder Abwärts-Fling schließt.
- * Header immer; Body nur oben bzw. ohne Scroll.
+ * Header immer; Body-Schließen nur bei scrollTop <= 0 und Wisch nach unten.
  * Native Listener mit `passive: false` auf `touchmove` (iOS).
  */
 function useVeitDialogSwipeDismissEffect(opts: {
   open: boolean;
   swipeDisabled: boolean;
-  bodyHasVerticalScroll: boolean;
   attemptDismiss: () => void;
   panelRef: MutableRefObject<HTMLDivElement | null>;
   headerRef: MutableRefObject<HTMLDivElement | null>;
   bodyScrollRef: MutableRefObject<HTMLDivElement | null>;
 }) {
-  const { open, swipeDisabled, bodyHasVerticalScroll, attemptDismiss, panelRef, headerRef, bodyScrollRef } = opts;
+  const { open, swipeDisabled, attemptDismiss, panelRef, headerRef, bodyScrollRef } = opts;
   const attemptDismissRef = useRef(attemptDismiss);
   attemptDismissRef.current = attemptDismiss;
   const swipeDisabledRef = useRef(swipeDisabled);
   swipeDisabledRef.current = swipeDisabled;
-  const bodyHasVerticalScrollRef = useRef(bodyHasVerticalScroll);
-  bodyHasVerticalScrollRef.current = bodyHasVerticalScroll;
 
   const clearTransform = useCallback(() => {
     const panel = panelRef.current;
@@ -189,7 +204,6 @@ function useVeitDialogSwipeDismissEffect(opts: {
     };
 
     const onBodyStart = (e: TouchEvent) => {
-      if (bodyHasVerticalScrollRef.current) return;
       if (e.touches.length !== 1) return;
       startY = e.touches[0].clientY;
       startX = e.touches[0].clientX;
@@ -198,14 +212,11 @@ function useVeitDialogSwipeDismissEffect(opts: {
     };
 
     const onBodyMove = (e: TouchEvent) => {
-      if (bodyHasVerticalScrollRef.current) return;
       if (swipeDisabledRef.current || e.touches.length !== 1) return;
       const scr = bodyScrollRef.current;
-      const pad = 2;
-      const hasOverflow = !!(scr && scr.scrollHeight > scr.clientHeight + pad);
-      const atTop = !scr || scr.scrollTop <= 1;
+      const atTop = !scr || scr.scrollTop <= 0;
 
-      if (hasOverflow && !atTop) {
+      if (!atTop) {
         if (dragging) {
           clearTransform();
           dragging = false;
@@ -239,12 +250,10 @@ function useVeitDialogSwipeDismissEffect(opts: {
     header.addEventListener('touchend', onEnd);
     header.addEventListener('touchcancel', onEnd);
 
-    if (!bodyHasVerticalScrollRef.current) {
-      body.addEventListener('touchstart', onBodyStart, { passive: true });
-      body.addEventListener('touchmove', onBodyMove, moveOpts);
-      body.addEventListener('touchend', onEnd);
-      body.addEventListener('touchcancel', onEnd);
-    }
+    body.addEventListener('touchstart', onBodyStart, { passive: true });
+    body.addEventListener('touchmove', onBodyMove, moveOpts);
+    body.addEventListener('touchend', onEnd);
+    body.addEventListener('touchcancel', onEnd);
 
     return () => {
       header.removeEventListener('touchstart', onHeaderStart);
@@ -256,11 +265,8 @@ function useVeitDialogSwipeDismissEffect(opts: {
       body.removeEventListener('touchend', onEnd);
       body.removeEventListener('touchcancel', onEnd);
     };
-  }, [open, swipeDisabled, bodyHasVerticalScroll, attemptDismiss, panelRef, headerRef, bodyScrollRef, clearTransform]);
+  }, [open, swipeDisabled, attemptDismiss, panelRef, headerRef, bodyScrollRef, clearTransform]);
 }
-
-/** Default `history.pushState` marker property for dialog entries. */
-export const VEIT_DIALOG_DEFAULT_HISTORY_KEY = 'veit_dialog';
 
 const VeitDialogDismissContext = createContext<(() => void) | null>(null);
 
@@ -360,188 +366,6 @@ export function useVeitDialogDismiss(): () => void {
   return d;
 }
 
-type HistoryCloseFn = () => void;
-type HistoryEntryMode = 'push' | 'coalesce';
-const dialogHistoryStack: HistoryCloseFn[] = [];
-const dialogHistoryEntryMode = new Map<HistoryCloseFn, HistoryEntryMode>();
-let dialogPopStateAttached = false;
-let dialogPopStateSeq = 0;
-/** `dialogHistorySyncBack`: History ohne `onClose` — nächstes `popstate` ignorieren. */
-let dialogSuppressNextPopHandler = false;
-
-const MAX_DIALOG_HISTORY_CHAIN = 48;
-
-/** In der Browser-Konsole: `localStorage.setItem('VEIT_DIALOG_HISTORY_DEBUG','1')` dann Seite neu laden. */
-export function veitDialogHistoryDebugEnabled(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    return window.localStorage.getItem('VEIT_DIALOG_HISTORY_DEBUG') === '1';
-  } catch {
-    return false;
-  }
-}
-
-function veitDialogHistorySnapshot(): Record<string, unknown> {
-  if (typeof window === 'undefined') {
-    return { href: '', historyLength: -1, stateKeys: [] as string[] };
-  }
-  const s = window.history.state;
-  const stateKeys =
-    s != null && typeof s === 'object' && !Array.isArray(s) ? Object.keys(s as Record<string, unknown>) : [];
-  return {
-    href: window.location.href,
-    historyLength: window.history.length,
-    stateKeys,
-  };
-}
-
-export function veitDialogHistoryLog(
-  phase: string,
-  detail: Record<string, unknown> & { instanceId?: string; historyStateKey?: string },
-) {
-  if (!veitDialogHistoryDebugEnabled()) return;
-  console.log('[VeitDialog:history]', phase, {
-    ...detail,
-    stackLen: dialogHistoryStack.length,
-    ...veitDialogHistorySnapshot(),
-  });
-}
-
-function attachGlobalDialogPopState() {
-  if (dialogPopStateAttached || typeof window === 'undefined') return;
-  dialogPopStateAttached = true;
-  window.addEventListener('popstate', () => {
-    dialogPopStateSeq++;
-    if (dialogSuppressNextPopHandler) {
-      dialogSuppressNextPopHandler = false;
-      veitDialogHistoryLog('popstate.suppressedSyncBack', {});
-      return;
-    }
-    const beforeLen = dialogHistoryStack.length;
-    const close = dialogHistoryStack.pop();
-    veitDialogHistoryLog('popstate', {
-      stackLenBeforePop: beforeLen,
-      hadCloseHandler: Boolean(close),
-    });
-    close?.();
-  });
-}
-
-/**
- * Neuen History-Eintrag für einen Dialog bauen: bisherigen `history.state` flach übernehmen
- * (z. B. React Router), damit `history.back()` beim Schließen nicht die vorherige Ebene
- * „leer“ wiederherstellt und z. B. `?card=` / `?event=` verloren geht.
- */
-function buildDialogHistoryStateEntry(historyStateKey: string): unknown {
-  const raw = typeof window !== 'undefined' ? window.history.state : null;
-  if (raw != null && typeof raw === 'object' && !Array.isArray(raw)) {
-    return { ...(raw as Record<string, unknown>), [historyStateKey]: true };
-  }
-  return { [historyStateKey]: true };
-}
-
-function dialogHistoryPush(close: HistoryCloseFn, historyStateKey: string, mode: HistoryEntryMode = 'push'): void {
-  attachGlobalDialogPopState();
-  dialogHistoryStack.push(close);
-  dialogHistoryEntryMode.set(close, mode);
-  const state = buildDialogHistoryStateEntry(historyStateKey);
-  if (mode === 'coalesce') {
-    window.history.replaceState(state, '', window.location.href);
-    veitDialogHistoryLog('replaceState.coalesce', { historyStateKey, stackLenAfterPush: dialogHistoryStack.length });
-    return;
-  }
-  window.history.pushState(state, '', window.location.href);
-  veitDialogHistoryLog('pushState', { historyStateKey, stackLenAfterPush: dialogHistoryStack.length });
-}
-
-function dialogHistoryRemove(close: HistoryCloseFn): void {
-  const i = dialogHistoryStack.lastIndexOf(close);
-  if (i !== -1) dialogHistoryStack.splice(i, 1);
-  dialogHistoryEntryMode.delete(close);
-}
-
-function historyStateHasDialogMarker(historyStateKey: string): boolean {
-  if (typeof window === 'undefined') return false;
-  const s = window.history.state;
-  return (
-    s != null &&
-    typeof s === 'object' &&
-    !Array.isArray(s) &&
-    (s as Record<string, unknown>)[historyStateKey] === true
-  );
-}
-
-/**
- * History-Eintrag entfernen und ggf. `history.back()` — ohne `onClose` (Cleanup / Parent hat Dialog schon zu).
- */
-function dialogHistorySyncBack(close: HistoryCloseFn, historyStateKey: string): void {
-  const mode = dialogHistoryEntryMode.get(close) ?? 'push';
-  dialogHistoryRemove(close);
-  if (typeof window === 'undefined') return;
-  if (mode === 'coalesce') {
-    if (historyStateHasDialogMarker(historyStateKey)) {
-      veitDialogHistoryLog('syncBack.coalesce.historyBack', { historyStateKey });
-      dialogSuppressNextPopHandler = true;
-      window.history.back();
-    }
-    return;
-  }
-  if (historyStateHasDialogMarker(historyStateKey)) {
-    veitDialogHistoryLog('syncBack.historyBack', { historyStateKey });
-    dialogSuppressNextPopHandler = true;
-    window.history.back();
-  }
-}
-
-function isTopDialogHistoryEntry(close: HistoryCloseFn): boolean {
-  const n = dialogHistoryStack.length;
-  return n > 0 && dialogHistoryStack[n - 1] === close;
-}
-
-/**
- * Entfernt die History-Ebene dieses Dialogs. Liegt der Eintrag nicht oben auf dem Stack
- * (überlagernde Dialoge), werden zuerst die oberen Ebenen per `history.back()` abgebaut.
- */
-function navigateHistoryToClose(close: HistoryCloseFn, historyStateKey: string): void {
-  if (typeof window === 'undefined') return;
-  let guard = 0;
-  let waitingForPopSeq: number | null = null;
-  const step = () => {
-    if (++guard > MAX_DIALOG_HISTORY_CHAIN) {
-      veitDialogHistoryLog('navigateHistoryToClose.abortGuard', { guard });
-      dialogHistoryRemove(close);
-      if (historyStateHasDialogMarker(historyStateKey)) {
-        dialogSuppressNextPopHandler = true;
-        window.history.back();
-      }
-      return;
-    }
-    if (waitingForPopSeq !== null) {
-      if (dialogPopStateSeq === waitingForPopSeq) {
-        // Noch kein popstate angekommen → nicht erneut history.back feuern.
-        setTimeout(step, 8);
-        return;
-      }
-      waitingForPopSeq = null;
-    }
-    const idx = dialogHistoryStack.lastIndexOf(close);
-    if (idx === -1) {
-      veitDialogHistoryLog('navigateHistoryToClose.skipNotOnStack', { guard });
-      return;
-    }
-    const top = isTopDialogHistoryEntry(close);
-    veitDialogHistoryLog('navigateHistoryToClose.historyBack', { guard, idx, isTop: top });
-    if (top) {
-      window.history.back();
-      return;
-    }
-    window.history.back();
-    waitingForPopSeq = dialogPopStateSeq;
-    setTimeout(step, 8);
-  };
-  step();
-}
-
 /** Passed to `footer` when it is a render function; same behavior as {@link useVeitDialogDismiss}. */
 export type VeitDialogFooterContext = {
   dismiss: () => void;
@@ -586,11 +410,18 @@ export type VeitDialogProps = {
    */
   historyStateKey?: string;
   /**
-   * `coalesce`: Dialog-Marker per `replaceState` auf den aktuellen History-Eintrag legen (kein extra `pushState`).
-   * Für Deep-Links: zuerst URL per `navigate`/`setSearchParams` **pushen**, dann Dialog mit `historyCoalesce` öffnen —
-   * ein `history.back()` schließt Dialog und URL-Parameter zusammen.
+   * Wie der Dialog mit der Browser-History synchronisiert wird.
+   * Bevorzugt gegenüber {@link historyCoalesce} / {@link historyNested}.
+   */
+  historyMode?: VeitDialogHistoryMode;
+  /**
+   * @deprecated Use {@link historyMode} `'entity'` instead.
    */
   historyCoalesce?: boolean;
+  /**
+   * @deprecated Use {@link historyMode} `'overlay'` instead.
+   */
+  historyNested?: boolean;
   /**
    * `false`: Body fest ohne vertikales Scroll (z. B. Zeiträder). Wenn `true`: vertikales Scrollen nur,
    * wenn Inhalt wirklich höher als der Body — kein dauerhaftes `overflow-y:auto` (vermeidet Geister-Scrollbalken).
@@ -664,8 +495,10 @@ export function VeitDialog({
   bodyClassName = '',
   headerClassName = '',
   titleClassName = '',
-  historyStateKey = VEIT_DIALOG_DEFAULT_HISTORY_KEY,
+  historyStateKey: historyStateKeyProp = VEIT_DIALOG_DEFAULT_HISTORY_KEY,
+  historyMode: historyModeProp,
   historyCoalesce = false,
+  historyNested = false,
   bodyScrollable = true,
   presentation = 'modal',
   bottomDockRoot = null,
@@ -693,6 +526,8 @@ export function VeitDialog({
   }, [open]);
 
   const backdropAriaLabel = backdropDismissLabel ?? closeAriaLabel;
+  const reactInstanceId = useId();
+  const resolvedHistoryStateKey = veitDialogHistoryStateKey(reactInstanceId, historyStateKeyProp);
   const autoTitleId = useId();
   const autoDescId = useId();
   const titleId = autoTitleId;
@@ -704,7 +539,6 @@ export function VeitDialog({
   const panelRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const bodyHasVerticalScrollRef = useRef(false);
-  const [bodyHasVerticalScroll, setBodyHasVerticalScroll] = useState(false);
 
   const parentNestedZ = useContext(VeitDialogZStackContext);
   const resolvedZIndexBase = zIndexBaseProp ?? parentNestedZ ?? 200;
@@ -716,22 +550,21 @@ export function VeitDialog({
   /**
    * `performDismiss` ruft `navigateHistoryToClose` → `history.back()`. React kann im selben Commit
    * den `useLayoutEffect`-Cleanup ausführen, bevor `popstate` den Stack geleert hat — dann würde das
-   * Cleanup ein zweites `history.back()` auslösen. Pending bleibt true bis {@link stableClose} (popstate).
+   * Cleanup ein zweites `history.back()` auslösen. {@link dismissHandledByPopstateRef} verhindert das.
    */
   const performDismissHistoryBackPendingRef = useRef(false);
+  const dismissHandledByPopstateRef = useRef(false);
 
   /** Stabile Identität pro Dialog-Instanz — der Stack vergleicht Referenzen. */
   const stableCloseRef = useRef<HistoryCloseFn | null>(null);
   if (stableCloseRef.current === null) {
     stableCloseRef.current = () => {
-      /** Vom globalen `popstate` nach `history.back()` — Pending hier lösen, nicht per setTimeout. */
+      dismissHandledByPopstateRef.current = true;
       performDismissHistoryBackPendingRef.current = false;
       onCloseRef.current();
     };
   }
   const stableClose = stableCloseRef.current;
-
-  const debugInstanceIdRef = useRef(`dlg-${Math.random().toString(36).slice(2, 9)}`);
 
   const historyPathKeyWhenOpenedRef = useRef<string | null>(null);
 
@@ -739,74 +572,71 @@ export function VeitDialog({
     setMounted(true);
   }, []);
 
+  const resolvedHistoryMode = resolveVeitDialogHistoryMode({
+    historyMode: historyModeProp,
+    historyCoalesce,
+    historyNested,
+  });
+  const historyFlags = veitDialogHistoryFlags(resolvedHistoryMode);
+  const resolvedHistoryCoalesce = historyFlags.historyCoalesce;
+  const syncDialogHistory = historyFlags.syncHistory;
+
   useLayoutEffect(() => {
-    if (!open || typeof window === 'undefined') return;
-    veitDialogHistoryLog('effect.mountPush', {
-      instanceId: debugInstanceIdRef.current,
-      historyStateKey,
-      open,
-    });
-    dialogHistoryPush(stableClose, historyStateKey, historyCoalesce ? 'coalesce' : 'push');
+    if (!open || typeof window === 'undefined' || !syncDialogHistory) return;
+    dialogHistoryPush(stableClose, resolvedHistoryStateKey, resolvedHistoryCoalesce ? 'coalesce' : 'push');
     historyPathKeyWhenOpenedRef.current = `${window.location.origin}${window.location.pathname}${window.location.search}`;
     return () => {
-      const pathKeyWhenOpened = historyPathKeyWhenOpenedRef.current;
       historyPathKeyWhenOpenedRef.current = null;
       if (typeof window === 'undefined') return;
-      const pathKeyNow = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-      const onStack = dialogHistoryStack.lastIndexOf(stableClose);
-      veitDialogHistoryLog('effect.cleanup', {
-        instanceId: debugInstanceIdRef.current,
-        historyStateKey,
-        pathKeyWhenOpened,
-        pathKeyNow,
-        pathMismatch: pathKeyWhenOpened !== null && pathKeyNow !== pathKeyWhenOpened,
-        onStackIdx: onStack,
-      });
+      const onStack = dialogHistoryIndexOf(stableClose);
+      if (dismissHandledByPopstateRef.current) {
+        dismissHandledByPopstateRef.current = false;
+        if (onStack !== -1) dialogHistoryRemove(stableClose);
+        return;
+      }
       if (performDismissHistoryBackPendingRef.current) {
+        performDismissHistoryBackPendingRef.current = false;
         if (onStack !== -1) {
-          performDismissHistoryBackPendingRef.current = false;
-          veitDialogHistoryLog('effect.cleanup.pendingSyncBack', { instanceId: debugInstanceIdRef.current });
-          dialogHistorySyncBack(stableClose, historyStateKey);
-        } else {
-          veitDialogHistoryLog('effect.cleanup.skipNavigatePerformDismissPending', {
-            instanceId: debugInstanceIdRef.current,
-          });
+          dialogHistorySuppressNextPopstate();
+          dialogHistoryRemove(stableClose);
+          if (resolvedHistoryCoalesce) {
+            dialogHistoryStripMarker(resolvedHistoryStateKey);
+          }
+          dismissHandledByPopstateRef.current = true;
+          onCloseRef.current();
         }
         return;
       }
       if (onStack === -1) {
-        if (historyStateHasDialogMarker(historyStateKey)) {
-          veitDialogHistoryLog('effect.cleanup.orphanMarkerSyncBack', { instanceId: debugInstanceIdRef.current });
-          dialogSuppressNextPopHandler = true;
-          window.history.back();
-        } else {
-          veitDialogHistoryLog('effect.cleanup.skipNavigateNotOnStack', { instanceId: debugInstanceIdRef.current });
-        }
+        dialogHistoryStripMarker(resolvedHistoryStateKey);
         return;
       }
-      veitDialogHistoryLog('effect.cleanup.dialogHistorySyncBack', { instanceId: debugInstanceIdRef.current });
-      dialogHistorySyncBack(stableClose, historyStateKey);
+      dialogHistorySyncBack(stableClose, resolvedHistoryStateKey);
     };
-  }, [open, historyStateKey, historyCoalesce, stableClose]);
+  }, [open, resolvedHistoryStateKey, resolvedHistoryCoalesce, syncDialogHistory, resolvedHistoryMode, stableClose]);
 
   const performDismiss = useCallback(() => {
-    veitDialogHistoryLog('performDismiss.enter', {
-      instanceId: debugInstanceIdRef.current,
-      historyStateKey,
-    });
     if (typeof window === 'undefined') {
       onClose();
       return;
     }
-    if (dialogHistoryStack.lastIndexOf(stableClose) === -1) {
-      veitDialogHistoryLog('performDismiss.onCloseNotOnStack', { instanceId: debugInstanceIdRef.current });
+    if (!syncDialogHistory || dialogHistoryIndexOf(stableClose) === -1) {
       onClose();
       return;
     }
-    veitDialogHistoryLog('performDismiss.navigateHistoryToClose', { instanceId: debugInstanceIdRef.current });
+    if (
+      resolvedHistoryCoalesce &&
+      dialogHistoryStackLength() > 1 &&
+      isTopDialogHistoryEntry(stableClose)
+    ) {
+      dialogHistoryDismissCoalescedOverlay(stableClose, resolvedHistoryStateKey);
+      dismissHandledByPopstateRef.current = true;
+      onClose();
+      return;
+    }
     performDismissHistoryBackPendingRef.current = true;
-    navigateHistoryToClose(stableClose, historyStateKey);
-  }, [onClose, stableClose, historyStateKey]);
+    navigateHistoryToClose(stableClose, resolvedHistoryStateKey);
+  }, [onClose, stableClose, resolvedHistoryStateKey, resolvedHistoryCoalesce, syncDialogHistory]);
 
   const attemptDismiss = useCallback(() => {
     if (unsavedDirtyRef.current && resolvedUnsavedConfirm) {
@@ -855,7 +685,6 @@ export function VeitDialog({
   useVeitDialogSwipeDismissEffect({
     open: open && mounted,
     swipeDisabled: swipeDismissDisabled,
-    bodyHasVerticalScroll: bodyScrollable && bodyHasVerticalScroll,
     attemptDismiss: attemptSwipeDismiss,
     panelRef,
     headerRef,
@@ -888,7 +717,6 @@ export function VeitDialog({
       el.style.overflowX = 'hidden';
       el.style.touchAction = needs ? 'pan-y' : '';
       bodyHasVerticalScrollRef.current = needs;
-      setBodyHasVerticalScroll(needs);
     };
 
     sync();
@@ -914,7 +742,6 @@ export function VeitDialog({
       el.style.overflowX = '';
       el.style.touchAction = '';
       bodyHasVerticalScrollRef.current = false;
-      setBodyHasVerticalScroll(false);
     };
   }, [open, mounted, bodyScrollable, presentation]);
 
@@ -923,6 +750,7 @@ export function VeitDialog({
       <VeitDialog
         open={unsavedPromptOpen}
         onClose={() => setUnsavedPromptOpen(false)}
+        historyNested
         title={resolvedUnsavedConfirm.title}
         closeAriaLabel={
           resolvedUnsavedConfirm.closeAriaLabel ?? resolvedUnsavedConfirm.cancelLabel

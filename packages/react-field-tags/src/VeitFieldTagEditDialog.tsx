@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { FieldTag } from '@veit/field-tags';
 import {
-  VeitDialog,
-  VeitDialogEditActionsFooter,
+  VeitEditDialog,
   type VeitDeleteConfirmConfig,
-  type VeitDialogUnsavedChangesConfirm,
+  type VeitDialogUnsavedConfirmOverride,
+  useResolvedVeitDialogUnsavedConfirm,
 } from '@veit/react-dialog';
 
 import { VeitFieldTagListEditor, flatDraftRowsEqual, nestedDraftRowsEqual } from './VeitFieldTagListEditor.js';
@@ -32,7 +32,7 @@ export type VeitFieldTagEditDialogProps =
       strings: VeitFieldTagListStrings & VeitFieldTagEditDialogStrings;
       deleteConfirm: (item: FlatTagDraft) => VeitDeleteConfirmConfig;
       zIndexBase?: number;
-      unsavedChangesConfirm?: VeitDialogUnsavedChangesConfirm | null;
+      unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
       dialogTitle?: never;
     }
   | {
@@ -50,7 +50,7 @@ export type VeitFieldTagEditDialogProps =
       deleteButtonClassName?: string;
       deleteButtonLabel: React.ReactNode;
       zIndexBase?: number;
-      unsavedChangesConfirm?: VeitDialogUnsavedChangesConfirm | null;
+      unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
     };
 
 export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
@@ -145,34 +145,31 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
 
   const showEditor = !loading && !loadError;
   const canWrite = isNested ? !props.disabled : props.canWrite !== false;
-
-  if (!open) return null;
+  const unsavedChangesConfirm = useResolvedVeitDialogUnsavedConfirm(props.unsavedChangesConfirm, 'edit');
 
   return (
-    <VeitDialog
-      open
+    <VeitEditDialog
+      historyMode="overlay"
+      open={open}
       onClose={busy ? () => {} : onClose}
       title={title}
       closeAriaLabel={strings.close}
       zIndexBase={zIndexBase}
-      unsavedChangesConfirm={props.unsavedChangesConfirm}
+      unsavedChangesConfirm={unsavedChangesConfirm}
       variant="responsive"
       size={isNested ? 'md' : 'lg'}
       disabled={busy}
       blockBackdropClose={busy}
-      footer={
+      footerProps={
         showEditor && canWrite
-          ? ({ dismiss }) => (
-              <VeitDialogEditActionsFooter
-                dismiss={dismiss}
-                onSave={() => void flushSave()}
-                busy={busy}
-                dirty={dirty}
-                cancelLabel={strings.cancel}
-                saveLabel={strings.save}
-              />
-            )
-          : undefined
+          ? {
+              onSave: () => void flushSave(),
+              busy,
+              dirty,
+              cancelLabel: strings.cancel,
+              saveLabel: strings.save,
+            }
+          : { dismissOnly: true, busy: false, cancelLabel: strings.close }
       }
     >
       {loading ? (
@@ -223,6 +220,6 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
           )}
         </div>
       )}
-    </VeitDialog>
+    </VeitEditDialog>
   );
 }

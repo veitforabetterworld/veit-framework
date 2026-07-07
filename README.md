@@ -9,6 +9,8 @@ Wiederverwendbare Bausteine für Node-/Web-Projekte (pnpm-Workspace-Pakete unter
 | **`@veit/tesseract-ocr`** | Gemeinsame Tesseract.js-OCR für Node (tessdata, Bildpuffer) |
 | **`@veit/db`** | PostgreSQL-Pool + Drizzle aus `DATABASE_URL` (`createPool`, `createDrizzle`, `getDatabaseUrl`) |
 | **`@veit/node-server`** | Fastify-Basis: CORS aus `CORS_ORIGINS`, `registerHealthRoutes`, `listen` |
+| **`@veit/react-dialog`** | Modale Dialoge: History-Sync, Presets (Entity/Overlay/Sheet/Wizard/Picker), Unsaved-Prompt |
+| **`@veit/react-dialog-router`** | React-Router Deep-Link-Hooks für Entity-Dialoge |
 
 ## Eigenes Repo entwickeln
 

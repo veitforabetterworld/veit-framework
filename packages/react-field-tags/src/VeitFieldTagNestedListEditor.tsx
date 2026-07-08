@@ -2,11 +2,12 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { GripVertical, Plus } from 'lucide-react';
 import {
   buildTagChildrenMap,
+  buildTagColorIndexMap,
   canMoveTagToParent,
   parseTagParentZoneId,
   parseTagSortId,
   planTagTreeMove,
-  tagColor,
+  tagColorHexForIndex,
   tagParentZoneId,
   tagSortId,
   tagTreeMoveUnchanged,
@@ -62,9 +63,9 @@ function resolveFieldId(rows: NestedTagDraft[], fieldId: number): number {
 
 function NestedTagRow({
   tag,
+  colorIndex,
   sortDisabled,
   strings,
-  defaultHex,
   deleteConfirm,
   deleteButtonClassName,
   deleteButtonLabel,
@@ -74,9 +75,9 @@ function NestedTagRow({
   onAddChild,
 }: {
   tag: FieldTag;
+  colorIndex: number;
   sortDisabled: boolean;
   strings: VeitFieldTagListStrings;
-  defaultHex?: string;
   deleteConfirm: (item: NestedTagDraft) => VeitDeleteConfirmConfig;
   deleteButtonClassName?: string;
   deleteButtonLabel: ReactNode;
@@ -85,7 +86,7 @@ function NestedTagRow({
   onDelete: (tagId: number) => void;
   onAddChild: (tagId: number) => void;
 }) {
-  const hex = tag.hex_color || defaultHex || tagColor(tag);
+  const hex = tag.hex_color?.trim() || tagColorHexForIndex(colorIndex);
   const deleteBtn = (
     <VeitDeleteButton
       className={deleteButtonClassName ?? 'h-9 w-9 shrink-0 self-end p-0 sm:self-center'}
@@ -196,6 +197,7 @@ function TagSiblingList({
   deleteButtonLabel: ReactNode;
 }) {
   const nodes = byParent.get(parentId) ?? [];
+  const colorIndexById = useMemo(() => buildTagColorIndexMap(rows), [rows]);
   const [addingUnder, setAddingUnder] = useState<number | 'root' | null>(null);
   const [newName, setNewName] = useState('');
   const sortIds = useMemo(() => nodes.map((tag) => tagSortId(tag.id)), [nodes]);
@@ -220,7 +222,7 @@ function TagSiblingList({
         parent_id: parent,
         name,
         sort_order: siblings.length,
-        hex_color: defaultHex ?? null,
+        hex_color: tagColorHexForIndex(rows.length + 1),
       },
     ]);
     setNewName('');
@@ -288,9 +290,9 @@ function TagSiblingList({
             <li key={tag.id} className="space-y-2">
               <NestedTagRow
                 tag={tag}
+                colorIndex={colorIndexById.get(tag.id) ?? 1}
                 sortDisabled={sortDisabled}
                 strings={strings}
-                defaultHex={defaultHex}
                 deleteConfirm={deleteConfirm}
                 deleteButtonClassName={deleteButtonClassName}
                 deleteButtonLabel={deleteButtonLabel}

@@ -144,7 +144,7 @@ export function VeitPickerDialog({
   );
 }
 
-/** Fußzeilen-Props für Edit-Dialoge — `dismiss` wird intern injiziert; `dirty` ist Pflicht (außer dismissOnly). */
+/** Fußzeilen-Props für Edit-Dialoge — `dismiss` wird intern injiziert; `dirty` ist Pflicht (außer dismissOnly). `formBaseline` via {@link useDialogFormBaseline}. */
 export type VeitEditDialogFooterProps =
   | Omit<VeitDialogEditActionsFooterDismissOnlyProps, 'dismiss'>
   | (Omit<VeitDialogEditActionsFooterEditProps, 'dismiss'> & { dirty: boolean });

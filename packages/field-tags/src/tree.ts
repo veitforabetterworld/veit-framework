@@ -41,6 +41,28 @@ export function buildTagChildrenMap(tags: FieldTag[]): Map<number | null, FieldT
   return m;
 }
 
+/** Depth-first order (parents before children) — required when persisting new temp IDs. */
+export function tagsDepthFirstOrder(tags: FieldTag[]): FieldTag[] {
+  const byParent = buildTagChildrenMap(tags);
+  const out: FieldTag[] = [];
+  const walk = (parentId: number | null) => {
+    for (const tag of byParent.get(parentId) ?? []) {
+      out.push(tag);
+      walk(tag.id);
+    }
+  };
+  walk(null);
+  return out;
+}
+
+/** 1-based index per tag in depth-first order (for golden-angle default colors). */
+export function buildTagColorIndexMap(tags: FieldTag[]): Map<number, number> {
+  const ordered = tagsDepthFirstOrder(tags);
+  const map = new Map<number, number>();
+  ordered.forEach((tag, i) => map.set(tag.id, i + 1));
+  return map;
+}
+
 export function tagsForField(allTags: FieldTag[], fieldId: number, field?: FieldDef): FieldTag[] {
   if (field?.system_key && fieldId === 0 && allTags.length > 0) {
     const fieldIds = [...new Set(allTags.map((t) => t.field_id))];
@@ -96,7 +118,7 @@ export function sortFields(fields: FieldDef[]): FieldDef[] {
   return [...fields].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
 }
 
-export function recordTagsByField(recordTags: FieldTag[]): Map<number, FieldTag[]> {
+function groupTagsByField(recordTags: FieldTag[]): Map<number, FieldTag[]> {
   const m = new Map<number, FieldTag[]>();
   for (const tag of recordTags) {
     const list = m.get(tag.field_id);
@@ -111,7 +133,7 @@ export function tagsById(allTags: FieldTag[]): Map<number, FieldTag> {
 }
 
 /** Stored tags plus all ancestor tags (deduplicated, root-first per chain). */
-export function expandTagsWithAncestors(storedTags: FieldTag[], allTags: FieldTag[]): FieldTag[] {
+function expandTagsWithAncestors(storedTags: FieldTag[], allTags: FieldTag[]): FieldTag[] {
   const byId = tagsById(allTags);
   const seen = new Set<number>();
   const out: FieldTag[] = [];
@@ -131,11 +153,38 @@ export function expandTagsWithAncestors(storedTags: FieldTag[], allTags: FieldTa
   return out;
 }
 
-export function recordTagsByFieldWithAncestors(
-  recordTags: FieldTag[],
+/**
+ * Tags stored on a record (by ID), expanded with ancestors for table/card display.
+ * Selecting „Werbung › Plakatierung“ yields both parent and child badges.
+ */
+export function tagsForRecordDisplayByIds(
+  storedTagIds: readonly number[],
   allTags: FieldTag[],
-): Map<number, FieldTag[]> {
-  return recordTagsByField(expandTagsWithAncestors(recordTags, allTags));
+  fieldId?: number,
+): FieldTag[] {
+  const byId = tagsById(allTags);
+  const stored = storedTagIds
+    .map((id) => byId.get(id))
+    .filter((t): t is FieldTag => t != null);
+  return tagsForRecordDisplay(stored, allTags, fieldId);
+}
+
+/** Stored tag rows on a record, expanded with ancestors for table/card display. */
+export function tagsForRecordDisplay(
+  storedTags: readonly FieldTag[],
+  allTags: FieldTag[],
+  fieldId?: number,
+): FieldTag[] {
+  let out = expandTagsWithAncestors([...storedTags], allTags);
+  if (fieldId != null) out = out.filter((t) => t.field_id === fieldId);
+  return out;
+}
+
+/**
+ * Stored record tags grouped by field, with ancestor tags included (standard table display).
+ */
+export function recordTagsByField(recordTags: FieldTag[], allTags: FieldTag[]): Map<number, FieldTag[]> {
+  return groupTagsByField(expandTagsWithAncestors(recordTags, allTags));
 }
 
 function buildTagDescendantsMap(allTags: FieldTag[]): Map<number, number[]> {

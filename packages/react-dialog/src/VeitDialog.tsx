@@ -270,6 +270,9 @@ function useVeitDialogSwipeDismissEffect(opts: {
 
 const VeitDialogDismissContext = createContext<(() => void) | null>(null);
 
+/** Schließen nach erfolgreichem Speichern — umgeht die Ungespeichert-Prüfung (Dirty-Ref wird zuerst geleert). */
+const VeitDialogDismissAfterSaveContext = createContext<(() => void) | null>(null);
+
 /**
  * {@link VeitDialogEditActionsFooter} trägt hier `dirty === true` ein; Schließen löst dann
  * optional {@link VeitDialogProps.unsavedChangesConfirm} aus. Eigene Footer: {@link useVeitDialogRegisterUnsavedDirty}.
@@ -362,6 +365,18 @@ export function useVeitDialogDismiss(): () => void {
   const d = useContext(VeitDialogDismissContext);
   if (!d) {
     throw new Error('useVeitDialogDismiss must be used inside VeitDialog');
+  }
+  return d;
+}
+
+/**
+ * Nur nach erfolgreichem Speichern: Dirty-Flag zurücksetzen und Dialog schließen,
+ * ohne „Ungespeicherte Änderungen“-Prompt. Typisch via {@link VeitDialogEditActionsFooter}.
+ */
+export function useVeitDialogDismissAfterSave(): () => void {
+  const d = useContext(VeitDialogDismissAfterSaveContext);
+  if (!d) {
+    throw new Error('useVeitDialogDismissAfterSave must be used inside VeitDialog');
   }
   return d;
 }
@@ -646,6 +661,13 @@ export function VeitDialog({
     performDismiss();
   }, [resolvedUnsavedConfirm, performDismiss]);
 
+  /** Nach Speichern: Dirty synchron löschen, dann schließen (kein Ungespeichert-Popup). */
+  const dismissAfterSave = useCallback(() => {
+    unsavedDirtyRef.current = false;
+    setUnsavedPromptOpen(false);
+    performDismiss();
+  }, [performDismiss]);
+
   /**
    * Wisch-zum-Schließen: bei offenen Änderungen zuerst denselben Speichern-Pfad wie der primäre
    * Speichern-Button ({@link useVeitDialogRegisterUnsavedSave} / {@link VeitDialogEditActionsFooter}),
@@ -863,6 +885,7 @@ export function VeitDialog({
         <VeitDialogUnsavedDirtyRegistrationContext.Provider value={registerUnsavedDirty}>
           <VeitDialogUnsavedSaveRegistrationContext.Provider value={registerUnsavedSave}>
           <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
+          <VeitDialogDismissAfterSaveContext.Provider value={dismissAfterSave}>
             <div
               ref={panelRef}
               role={role}
@@ -895,6 +918,7 @@ export function VeitDialog({
               ) : null}
             </div>
             {unsavedPromptEl}
+          </VeitDialogDismissAfterSaveContext.Provider>
           </VeitDialogDismissContext.Provider>
           </VeitDialogUnsavedSaveRegistrationContext.Provider>
         </VeitDialogUnsavedDirtyRegistrationContext.Provider>
@@ -919,6 +943,7 @@ export function VeitDialog({
       <VeitDialogUnsavedDirtyRegistrationContext.Provider value={registerUnsavedDirty}>
         <VeitDialogUnsavedSaveRegistrationContext.Provider value={registerUnsavedSave}>
         <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
+        <VeitDialogDismissAfterSaveContext.Provider value={dismissAfterSave}>
           <>
             <button
               type="button"
@@ -968,6 +993,7 @@ export function VeitDialog({
             </div>
             {unsavedPromptEl}
           </>
+        </VeitDialogDismissAfterSaveContext.Provider>
         </VeitDialogDismissContext.Provider>
         </VeitDialogUnsavedSaveRegistrationContext.Provider>
       </VeitDialogUnsavedDirtyRegistrationContext.Provider>

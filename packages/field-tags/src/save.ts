@@ -1,4 +1,4 @@
-import { buildTagChildrenMap, tagTreeMoveUnchanged, type FieldTag } from './tree.js';
+import { buildTagChildrenMap, tagsDepthFirstOrder, tagTreeMoveUnchanged, type FieldTag } from './tree.js';
 
 export type NestedFieldTagMutations = {
   createTag: (input: {
@@ -24,20 +24,19 @@ export async function saveNestedFieldTagTree(
   const baselineById = new Map(baseline.map((tag) => [tag.id, tag]));
   const rowById = new Map(rows.map((tag) => [tag.id, tag]));
   const tempIdToReal = new Map<number, number>();
-
-  for (const tag of rows) {
-    if (tag.id < 0) {
-      const created = await mutations.createTag({
-        parent_id: tag.parent_id ?? null,
-        name: tag.name.trim(),
-        sort_order: tag.sort_order,
-        hex_color: tag.hex_color ?? undefined,
-      });
-      tempIdToReal.set(tag.id, created.id);
-    }
-  }
-
   const resolveId = (id: number) => (id < 0 ? (tempIdToReal.get(id) ?? id) : id);
+
+  const newTags = tagsDepthFirstOrder(rows).filter((tag) => tag.id < 0);
+  for (const tag of newTags) {
+    const parentId = tag.parent_id == null ? null : resolveId(tag.parent_id);
+    const created = await mutations.createTag({
+      parent_id: parentId,
+      name: tag.name.trim(),
+      sort_order: tag.sort_order,
+      hex_color: tag.hex_color ?? undefined,
+    });
+    tempIdToReal.set(tag.id, created.id);
+  }
 
   for (const tag of rows) {
     if (tag.id < 0) continue;

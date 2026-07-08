@@ -130,7 +130,6 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
       } else if (props.canWrite !== false) {
         await props.onSave(flatRows, flatBaseline);
       }
-      onClose();
     } catch (e) {
       setLocalError((e as Error).message);
       try {
@@ -141,7 +140,7 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
     } finally {
       setBusy(false);
     }
-  }, [busy, flatBaseline, flatRows, isNested, load, nestedBaseline, nestedRows, onClose, props]);
+  }, [busy, flatBaseline, flatRows, isNested, load, nestedBaseline, nestedRows, props]);
 
   const showEditor = !loading && !loadError;
   const canWrite = isNested ? !props.disabled : props.canWrite !== false;

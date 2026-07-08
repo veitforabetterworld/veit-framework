@@ -41,10 +41,15 @@ export type VeitDialogEditActionsFooterEditProps = VeitDialogEditActionsFooterCo
     dismissOnly?: false;
     saveLabel: string;
     /**
-     * Wenn gesetzt: Speichern ist deaktiviert, solange `dirty === false` (keine Änderungen).
-     * Entspricht dem früheren manuellen `saveDisabled={!dirty}`.
+     * Steuert „Ungespeicherte Änderungen“ beim Schließen (via {@link useVeitDialogRegisterUnsavedDirty}).
+     * Vergleich Draft vs. Baseline beim Öffnen – nicht „irgendein Feld befüllt“.
      */
     dirty?: boolean;
+    /**
+     * Speichern nur bei `dirty === true` deaktivieren. Standard: `true` (Edit-Dialoge).
+     * Create-Dialoge: `false`, damit Speichern mit gültigen Voreinstellungen sofort möglich ist.
+     */
+    saveRequiresDirty?: boolean;
     /**
      * Nach erfolgreichem Speichern Baseline = aktueller Draft (dirty → false).
      * Typisch via {@link useDialogFormBaseline}.
@@ -139,7 +144,8 @@ function VeitDialogEditActionsFooterDeleteTrigger({
 
 /**
  * Einheitliche Fußzeile: optional Löschen links, Abbrechen, Speichern.
- * Speichern ist deaktiviert bei `busy`, bei `dirty === false` (falls `dirty` gesetzt) und bei `saveDisabled`.
+ * Speichern ist deaktiviert bei `busy`, bei `saveDisabled` und – falls `saveRequiresDirty !== false` –
+ * bei `dirty === false` (wenn `dirty` gesetzt).
  */
 export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterProps) {
   const { dismiss, busy, cancelLabel, className = '' } = props;
@@ -199,6 +205,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
     dirty,
     formBaseline,
     saveDisabled = false,
+    saveRequiresDirty = true,
     leading,
     deleteAction,
   } = props;
@@ -221,7 +228,9 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
   };
 
   const savePrimaryDisabled =
-    busy || Boolean(saveDisabled) || (dirty !== undefined ? !dirty : false);
+    busy ||
+    Boolean(saveDisabled) ||
+    (saveRequiresDirty !== false && dirty !== undefined ? !dirty : false);
 
   const saveButton =
     submitFormId != null && submitFormId !== '' ? (

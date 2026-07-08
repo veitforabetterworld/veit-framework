@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import type { VeitDeleteConfirmConfig } from '@veit/react-dialog';
+import { tagColorHexForIndex } from '@veit/field-tags';
 import { useVeitInlineEditableListPrimaryIdPrefix, VeitInlineEditableList } from '@veit/react-controls';
 
 import {
@@ -134,7 +135,7 @@ function VeitFieldTagFlatListEditor({
         canWrite
           ? () => {
               const id = `t-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())}`;
-              onItemsChange([...items, { id, name: '', hex_color: defaultHex }]);
+              onItemsChange([...items, { id, name: '', hex_color: tagColorHexForIndex(items.length + 1) }]);
             }
           : undefined
       }

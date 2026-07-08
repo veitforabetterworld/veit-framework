@@ -10,6 +10,10 @@ import {
   planTagTreeMove,
   sortFields,
   tagColorHexForIndex,
+  tagsDepthFirstOrder,
+  tagsForRecordDisplay,
+  tagsForRecordDisplayByIds,
+  recordTagsByField,
   type FieldDef,
   type FieldTag,
 } from './index.js';
@@ -112,5 +116,35 @@ describe('@veit/field-tags tree', () => {
     const byParent = buildTagChildrenMap(tags);
     const plan = planTagTreeMove('tag-4', 'tag-parent-1', tags, byParent);
     assert.deepEqual(plan, { tagId: 4, parentId: 1, orderedSiblingIds: [2, 3, 4] });
+  });
+
+  it('orders tags depth-first (parents before children)', () => {
+    const temp: FieldTag[] = [
+      { id: -2, field_id: 1, parent_id: -1, name: 'Child', sort_order: 0 },
+      { id: -1, field_id: 1, parent_id: null, name: 'Parent', sort_order: 0 },
+    ];
+    assert.deepEqual(tagsDepthFirstOrder(temp).map((t) => t.id), [-1, -2]);
+  });
+
+  it('expands stored nested tags with ancestors for display', () => {
+    const all: FieldTag[] = [
+      { id: 1, field_id: 10, parent_id: null, name: 'Werbung', sort_order: 0 },
+      { id: 2, field_id: 10, parent_id: 1, name: 'Plakatierung', sort_order: 0 },
+    ];
+    assert.deepEqual(
+      tagsForRecordDisplayByIds([2], all).map((t) => t.id),
+      [1, 2],
+    );
+    assert.deepEqual(
+      tagsForRecordDisplay([{ id: 2, field_id: 10, parent_id: 1, name: 'Plakatierung', sort_order: 0 }], all).map(
+        (t) => t.id,
+      ),
+      [1, 2],
+    );
+    const byField = recordTagsByField(
+      [{ id: 2, field_id: 10, parent_id: 1, name: 'Plakatierung', sort_order: 0 }],
+      all,
+    );
+    assert.deepEqual((byField.get(10) ?? []).map((t) => t.id), [1, 2]);
   });
 });

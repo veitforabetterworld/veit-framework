@@ -2,7 +2,8 @@ import { useCallback, useState, type ReactNode } from 'react';
 import { Loader2, Trash2 } from 'lucide-react';
 import type { VeitDeleteConfirmConfig } from './VeitDeleteConfirmConfig.js';
 import { VeitConfirmDialog } from './VeitConfirmDialog.js';
-import { useVeitDialogRegisterUnsavedDirty, useVeitDialogRegisterUnsavedSave } from './VeitDialog.js';
+import { useVeitDialogRegisterUnsavedDirty, useVeitDialogRegisterUnsavedSave, useVeitDialogDismissAfterSave } from './VeitDialog.js';
+import { applyDialogSaveSuccess, type DialogFormBaselineBinding } from './dialogFormDirty.js';
 
 type VeitDialogEditActionsFooterCommon = {
   dismiss: () => void;
@@ -44,6 +45,11 @@ export type VeitDialogEditActionsFooterEditProps = VeitDialogEditActionsFooterCo
      * Entspricht dem früheren manuellen `saveDisabled={!dirty}`.
      */
     dirty?: boolean;
+    /**
+     * Nach erfolgreichem Speichern Baseline = aktueller Draft (dirty → false).
+     * Typisch via {@link useDialogFormBaseline}.
+     */
+    formBaseline?: DialogFormBaselineBinding;
     /** Zusätzliche Deaktivierung (z. B. Validierung trotz `dirty`). */
     saveDisabled?: boolean;
     /** Links, z. B. Zusatz-Aktionen. Wird ignoriert, wenn `deleteAction` gesetzt ist. */
@@ -63,12 +69,22 @@ function VeitDialogEditActionsFooterDeleteTrigger({
   className = '',
   confirm,
   busy,
-}: VeitDialogEditActionsFooterDeleteAction & { busy: boolean }) {
+  dismissAfterSuccess,
+}: VeitDialogEditActionsFooterDeleteAction & {
+  busy: boolean;
+  dismissAfterSuccess: () => void;
+}) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const mergedDisabled = disabled || busy;
 
   const runDelete = async () => {
-    await Promise.resolve(onDelete());
+    try {
+      await Promise.resolve(onDelete());
+      setConfirmOpen(false);
+      dismissAfterSuccess();
+    } catch {
+      /* Fehler → Hauptdialog bleibt offen (wie beim Speichern). */
+    }
   };
 
   /** Gleiche Mindesthöhe wie `.btn-primary` / `.btn-secondary` (`min-h-[44px]`), damit die Zeile optisch fluchtet. */
@@ -126,6 +142,8 @@ function VeitDialogEditActionsFooterDeleteTrigger({
  * Speichern ist deaktiviert bei `busy`, bei `dirty === false` (falls `dirty` gesetzt) und bei `saveDisabled`.
  */
 export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterProps) {
+  const { dismiss, busy, cancelLabel, className = '' } = props;
+  const dismissAfterSave = useVeitDialogDismissAfterSave();
   const isDismissOnly = 'dismissOnly' in props && props.dismissOnly;
   const dirtyForRegister =
     isDismissOnly ? undefined : (props as VeitDialogEditActionsFooterEditProps).dirty;
@@ -133,6 +151,9 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
     ? (props as VeitDialogEditActionsFooterEditProps).submitFormId
     : undefined;
   const regOnSave = !isDismissOnly ? (props as VeitDialogEditActionsFooterEditProps).onSave : undefined;
+  const regFormBaseline = !isDismissOnly
+    ? (props as VeitDialogEditActionsFooterEditProps).formBaseline
+    : undefined;
 
   const requestSave = useCallback(async (): Promise<void> => {
     if (isDismissOnly) return;
@@ -145,15 +166,17 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
     }
     if (regOnSave) {
       await Promise.resolve(regOnSave());
+      applyDialogSaveSuccess({
+        formBaseline: regFormBaseline,
+        dismiss: dismissAfterSave,
+      });
       return;
     }
     return;
-  }, [isDismissOnly, regSubmitFormId, regOnSave]);
+  }, [isDismissOnly, regSubmitFormId, regOnSave, regFormBaseline, dismissAfterSave]);
 
   useVeitDialogRegisterUnsavedDirty(dirtyForRegister);
   useVeitDialogRegisterUnsavedSave(isDismissOnly ? null : requestSave);
-
-  const { dismiss, busy, cancelLabel, className = '' } = props;
 
   if (props.dismissOnly) {
     const tone = props.dismissOnlyTone ?? 'secondary';
@@ -174,10 +197,28 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
     submitFormId,
     saveLabel,
     dirty,
+    formBaseline,
     saveDisabled = false,
     leading,
     deleteAction,
   } = props;
+
+  const runSave = async () => {
+    if (submitFormId != null && submitFormId !== '') {
+      const el = document.getElementById(submitFormId);
+      if (el instanceof HTMLFormElement) {
+        el.requestSubmit();
+      }
+      return;
+    }
+    if (onSave) {
+      await Promise.resolve(onSave());
+      applyDialogSaveSuccess({
+        formBaseline,
+        dismiss: dismissAfterSave,
+      });
+    }
+  };
 
   const savePrimaryDisabled =
     busy || Boolean(saveDisabled) || (dirty !== undefined ? !dirty : false);
@@ -198,7 +239,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
         type="button"
         className="btn-primary inline-flex w-auto items-center justify-center gap-2"
         disabled={savePrimaryDisabled}
-        onClick={() => void onSave?.()}
+        onClick={() => void runSave()}
       >
         {busy ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden /> : null}
         {saveLabel}
@@ -207,7 +248,11 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
 
   const leftSlot =
     deleteAction != null ? (
-      <VeitDialogEditActionsFooterDeleteTrigger {...deleteAction} busy={busy} />
+      <VeitDialogEditActionsFooterDeleteTrigger
+        {...deleteAction}
+        busy={busy}
+        dismissAfterSuccess={dismissAfterSave}
+      />
     ) : (
       leading
     );

@@ -75,9 +75,6 @@ export type UseDialogFormBaselineOptions<T extends Record<string, unknown>> = {
   resetDeps: readonly unknown[];
   /** Baseline nur im Dialog tracken (z. B. `variant === 'dialog'`). Standard: `true`. */
   track?: boolean;
-  /** Create-Modus: `dirty` via {@link hasAnyFieldInput} statt Baseline-Vergleich. */
-  isCreate?: boolean;
-  emptyBaseline?: T;
   equals?: (a: T, b: T) => boolean;
 };
 
@@ -91,8 +88,6 @@ export function useDialogFormBaseline<T extends Record<string, unknown>>({
   resolveBaseline,
   resetDeps,
   track = true,
-  isCreate = false,
-  emptyBaseline,
   equals,
 }: UseDialogFormBaselineOptions<T>) {
   const [baseline, setBaseline] = useState(resolveBaseline);
@@ -105,9 +100,7 @@ export function useDialogFormBaseline<T extends Record<string, unknown>>({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- resetDeps steuern den Reset
   }, [track, ...resetDeps]);
 
-  const editDirty = useFormDirty(draft, baseline, equals);
-  const dirty =
-    isCreate && emptyBaseline != null ? hasAnyFieldInput(draft, emptyBaseline) : editDirty;
+  const dirty = useFormDirty(draft, baseline, equals);
 
   const formBaseline = useMemo(
     (): DialogFormBaselineBinding => ({

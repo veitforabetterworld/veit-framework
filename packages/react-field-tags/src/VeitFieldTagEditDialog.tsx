@@ -127,8 +127,10 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
     try {
       if (isNested) {
         await props.onSave(nestedRows, nestedBaseline);
+        setNestedBaseline(cloneNestedDraftRows(nestedRows));
       } else if (props.canWrite !== false) {
         await props.onSave(flatRows, flatBaseline);
+        setFlatBaseline(cloneFlatDraftRows(flatRows));
       }
     } catch (e) {
       setLocalError((e as Error).message);
@@ -137,6 +139,7 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
       } catch {
         /* ignore reload failure */
       }
+      throw e;
     } finally {
       setBusy(false);
     }
@@ -150,7 +153,7 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
     <VeitEditDialog
       historyMode="overlay"
       open={open}
-      onClose={busy ? () => {} : onClose}
+      onClose={onClose}
       title={title}
       closeAriaLabel={strings.close}
       zIndexBase={zIndexBase}
@@ -162,7 +165,7 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
       footerProps={
         showEditor && canWrite
           ? {
-              onSave: () => void flushSave(),
+              onSave: flushSave,
               busy,
               dirty,
               cancelLabel: strings.cancel,

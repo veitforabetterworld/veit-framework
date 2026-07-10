@@ -280,7 +280,10 @@ export { veitDialogHistoryFlags } from './dialogHistoryMode.js';
 export type { VeitDialogHistoryMode } from './dialogHistoryMode.js';
 export { resolveVeitDialogHistoryMode } from './dialogHistoryMode.js';
 
-export type VeitEntityEditDialogProps = Omit<VeitEditDialogProps, 'historyMode'>;
+export type VeitEntityEditDialogProps = Omit<VeitEditDialogProps, 'historyMode' | 'dismissRef'> & {
+  /** Pflicht bei Deep-Link-Bearbeitung — typisch via `useEntityDialogClose` (`@veit/react-dialog-router`). */
+  dismissRef: NonNullable<VeitEditDialogProps['dismissRef']>;
+};
 export function VeitEntityEditDialog(props: VeitEntityEditDialogProps) {
   return <VeitEditDialog {...props} historyMode="entity" />;
 }

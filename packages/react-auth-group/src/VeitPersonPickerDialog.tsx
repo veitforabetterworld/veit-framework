@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { VeitPersonListRowProfile } from '@veit/react-controls';
 import { useVeitDialogNestedZIndexBase, VeitDialog, VeitDialogFooter } from '@veit/react-dialog';
 
@@ -46,25 +46,17 @@ function defaultRow(props: {
   radioName: string;
   personRowLabels: VeitPersonPickerPersonRowLabels;
 }): ReactNode {
-  const { person, selected, onToggle, mode, radioName, personRowLabels } = props;
+  const { person, selected, onToggle, mode, personRowLabels } = props;
   return (
-    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-2 py-2 transition hover:bg-muted/50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40">
-      {mode === 'multi' ? (
-        <input
-          type="checkbox"
-          className="h-4 w-4 shrink-0 rounded border-input"
-          checked={selected}
-          onChange={onToggle}
-        />
-      ) : (
-        <input
-          type="radio"
-          name={radioName}
-          className="h-4 w-4 shrink-0 border-input"
-          checked={selected}
-          onChange={onToggle}
-        />
-      )}
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      className={`flex w-full items-center gap-3 rounded-xl border px-2 py-2 text-left transition hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+        selected ? 'border-primary/40 bg-primary/5' : 'border-transparent'
+      }`}
+      onClick={onToggle}
+    >
       <VeitPersonListRowProfile
         className="min-w-0 flex-1 pointer-events-none"
         displayName={person.displayName}
@@ -77,7 +69,10 @@ function defaultRow(props: {
         profilePreviewSuffix={personRowLabels.profilePreviewSuffix}
         closeAriaLabel={personRowLabels.closeAriaLabel}
       />
-    </label>
+      {mode === 'multi' && selected ? (
+        <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+      ) : null}
+    </button>
   );
 }
 
@@ -214,7 +209,12 @@ export function VeitPersonPickerDialog({
               {results.length === 0 && !busy ? emptyMessage : noResultsMessage}
             </p>
           ) : (
-            <ul className="space-y-1" role="list">
+            <ul
+              id={listId}
+              className="space-y-1"
+              role="listbox"
+              aria-multiselectable={mode === 'multi' ? true : undefined}
+            >
               {choices.map((person) => {
                 const selected =
                   mode === 'multi' ? selectedMulti.has(person.id) : selectedSingle === person.id;
@@ -223,7 +223,7 @@ export function VeitPersonPickerDialog({
                     ? () => toggleMulti(person.id)
                     : () => setSelectedSingle(person.id);
                 return (
-                  <li key={person.id}>
+                  <li key={person.id} role="presentation">
                     {renderPersonRow({
                       person,
                       selected,

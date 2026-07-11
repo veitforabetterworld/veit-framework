@@ -39,7 +39,7 @@ export function VeitFieldTagPicker({
   onChange,
   disabled,
   allowMultiple = true,
-  canManageTags = false,
+  canManageTags: _canManageTags = false,
   strings,
   onOpenTagManager,
   renderTagManager,
@@ -54,6 +54,7 @@ export function VeitFieldTagPicker({
   const optionsById = useMemo(() => tagPickerOptionsById(allOptions), [allOptions]);
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const filtered = useMemo(() => filterOptions(allOptions, query), [allOptions, query]);
+  const tagManagerAvailable = onOpenTagManager != null;
 
   const selectedOptions = useMemo(
     () => selectedIds.map((id) => optionsById.get(id)).filter((o): o is TagPickerOption => o != null),
@@ -174,7 +175,7 @@ export function VeitFieldTagPicker({
         footerProps={{ dismissOnly: true, busy: false, cancelLabel: strings.close }}
       >
           <div className="space-y-3">
-            {canManageTags && onOpenTagManager ? (
+            {tagManagerAvailable ? (
               <button
                 type="button"
                 className="btn-secondary inline-flex min-h-[40px] w-full items-center justify-center gap-2 text-sm"
@@ -206,7 +207,7 @@ export function VeitFieldTagPicker({
               {filtered.length === 0 ? (
                 <li className="px-3 py-2 text-sm text-muted-foreground">
                   {allOptions.length === 0
-                    ? canManageTags
+                    ? tagManagerAvailable
                       ? strings.tagPickerEmptyManage
                       : strings.tagPickerEmpty
                     : strings.tagNoResults}

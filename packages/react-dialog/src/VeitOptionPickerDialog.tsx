@@ -155,7 +155,7 @@ export function VeitOptionPickerDialog<T extends string | number = number>({
       zIndexBase={zIndexBase}
       disabled={disabled}
       variant="centered"
-      size="md"
+      size="sm"
       bodyScrollable
       footer={({ dismiss }) => (
         <VeitDialogFooter>

@@ -30,10 +30,10 @@ import {
 import { resolveVeitDialogHistoryMode, veitDialogHistoryFlags, type VeitDialogHistoryMode } from './dialogHistoryMode.js';
 
 export { VEIT_DIALOG_DEFAULT_HISTORY_KEY } from './dialogHistory.js';
-const sizeMax: Record<'sm' | 'md' | 'lg', string> = {
-  sm: 'max-w-md',
-  md: 'max-w-lg',
-  lg: 'max-w-xl',
+/** Zwei feste Dialogbreiten: schmal (~576px) und breit (~1280px). Kein `md`, keine `className`-Overrides für `max-w`. */
+const sizeMax: Record<'sm' | 'lg', string> = {
+  sm: 'max-w-xl',
+  lg: 'max-w-7xl',
 };
 
 /** Kein festes px-Deckel: wächst mit dem Inhalt bis knapp unter die sichtbare Viewport-Höhe, dann erst Scroll. */
@@ -409,7 +409,7 @@ export type VeitDialogProps = {
   blockBackdropClose?: boolean;
   /** Disables Escape and backdrop close (e.g. while saving). */
   disabled?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'lg';
   /** `responsive`: sheet on mobile, centered from sm; `centered`: always centered. */
   variant?: 'responsive' | 'centered';
   role?: 'dialog' | 'alertdialog';
@@ -500,7 +500,7 @@ export function VeitDialog({
   zIndexBase: zIndexBaseProp,
   blockBackdropClose = false,
   disabled = false,
-  size = 'md',
+  size = 'sm',
   variant = 'responsive',
   role = 'dialog',
   showCloseButton = true,
@@ -783,7 +783,7 @@ export function VeitDialog({
         zIndexBase={resolvedUnsavedConfirm.zIndexBase}
         unsavedChangesConfirm={null}
         variant="centered"
-        size="md"
+        size="sm"
         footer={({ dismiss }) => (
           <VeitDialogFooter className="sm:flex-nowrap">
             <button type="button" className="btn-secondary" onClick={dismiss}>

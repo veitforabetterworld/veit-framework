@@ -159,7 +159,7 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
       zIndexBase={zIndexBase}
       unsavedChangesConfirm={unsavedChangesConfirm}
       variant="responsive"
-      size={isNested ? 'md' : 'lg'}
+      size="sm"
       disabled={busy}
       blockBackdropClose={busy}
       footerProps={

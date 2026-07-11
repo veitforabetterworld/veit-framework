@@ -109,9 +109,9 @@ export function VeitSheetDialog({
 }
 
 export type VeitPickerDialogProps = VeitDialogPresetBase & {
-  /** Standard: centered, md */
+  /** Standard: centered, sm */
   variant?: 'responsive' | 'centered';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'lg';
   /** Optional: Standard-Fußzeile (z. B. Bestätigen oder Schließen). */
   footerProps?: VeitActionDialogFooterProps;
   unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
@@ -120,7 +120,7 @@ export type VeitPickerDialogProps = VeitDialogPresetBase & {
 /** Auswahl-/Picker-Dialog über einem Entity (Overlay-History). */
 export function VeitPickerDialog({
   variant = 'centered',
-  size = 'lg',
+  size = 'sm',
   footerProps,
   unsavedChangesConfirm: unsavedOverride,
   ...props

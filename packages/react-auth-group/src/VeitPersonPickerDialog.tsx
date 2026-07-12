@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { VeitPersonListRowProfile } from '@veit/react-controls';
-import { useVeitDialogNestedZIndexBase, VeitDialog, VeitDialogFooter } from '@veit/react-dialog';
+import { useVeitDialogNestedZIndexBase, VeitOverlayActionDialog, useManagedOverlayDialogBinding } from '@veit/react-dialog';
 
 import type { VeitPersonRef } from './types.js';
 
@@ -94,6 +94,7 @@ export function VeitPersonPickerDialog({
   personRowLabels,
   renderPersonRow = defaultRow,
 }: VeitPersonPickerDialogProps) {
+  const binding = useManagedOverlayDialogBinding(open, onClose);
   const listId = useId();
   const nestedZ = useVeitDialogNestedZIndexBase();
   const zIndexBase = zIndexBaseProp ?? nestedZ ?? 260;
@@ -151,9 +152,8 @@ export function VeitPersonPickerDialog({
   };
 
   return (
-    <VeitDialog
-      open={open}
-      onClose={onClose}
+    <VeitOverlayActionDialog
+      binding={binding}
       title={title}
       closeAriaLabel={closeAriaLabel}
       backdropDismissLabel={closeAriaLabel}
@@ -161,37 +161,27 @@ export function VeitPersonPickerDialog({
       variant="centered"
       size="lg"
       className="max-w-lg"
-      footer={({ dismiss }) => (
-        <VeitDialogFooter>
-          <button type="button" className="btn-secondary min-h-[44px]" onClick={dismiss}>
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            className="btn-primary min-h-[44px] disabled:opacity-50"
-            disabled={!canConfirm || confirmBusy}
-            onClick={async () => {
-              const ids =
-                mode === 'multi'
-                  ? Array.from(selectedMulti)
-                  : selectedSingle != null
-                    ? [selectedSingle]
-                    : [];
-              if (ids.length === 0) return;
-              setConfirmBusy(true);
-              try {
-                await onConfirm(ids);
-                dismiss();
-              } finally {
-                setConfirmBusy(false);
-              }
-            }}
-          >
-            {confirmBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            {confirmLabel}
-          </button>
-        </VeitDialogFooter>
-      )}
+      footerProps={{
+        busy: confirmBusy,
+        cancelLabel,
+        saveLabel: confirmLabel,
+        saveDisabled: !canConfirm,
+        onSave: async () => {
+          const ids =
+            mode === 'multi'
+              ? Array.from(selectedMulti)
+              : selectedSingle != null
+                ? [selectedSingle]
+                : [];
+          if (ids.length === 0) return;
+          setConfirmBusy(true);
+          try {
+            await onConfirm(ids);
+          } finally {
+            setConfirmBusy(false);
+          }
+        },
+      }}
     >
       <div className="space-y-3">
         <input
@@ -239,6 +229,6 @@ export function VeitPersonPickerDialog({
           )}
         </div>
       </div>
-    </VeitDialog>
+    </VeitOverlayActionDialog>
   );
 }

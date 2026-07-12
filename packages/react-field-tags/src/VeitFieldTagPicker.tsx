@@ -8,7 +8,7 @@ import {
   type FieldTag,
   type TagPickerOption,
 } from '@veit/field-tags';
-import { VeitPickerDialog } from '@veit/react-dialog';
+import { VeitPickerDialog, useManagedOverlayDialogBinding } from '@veit/react-dialog';
 
 import { VeitFieldTagBadge } from './VeitFieldTagBadge.js';
 import type { VeitFieldTagPickerStrings } from './types.js';
@@ -66,6 +66,8 @@ export function VeitFieldTagPicker({
     setQuery('');
     setHighlight(0);
   }, []);
+
+  const pickerBinding = useManagedOverlayDialogBinding(dialogOpen, closeDialog);
 
   const openDialog = useCallback(() => {
     if (disabled) return;
@@ -166,8 +168,7 @@ export function VeitFieldTagPicker({
       </div>
 
       <VeitPickerDialog
-        open={dialogOpen}
-        onClose={closeDialog}
+        binding={pickerBinding}
         title={strings.pickTitle}
         closeAriaLabel={strings.close}
         variant="responsive"

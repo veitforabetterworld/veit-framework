@@ -6,12 +6,10 @@ export {
   useVeitDialogNestedZIndexBase,
   useVeitDialogRegisterUnsavedDirty,
   useVeitDialogRegisterUnsavedSave,
-  VeitDialog,
   VeitDialogCloseButton,
   VeitDialogFooter,
   VEIT_DIALOG_UNSAVED_CHANGES_DEFAULTS_EN,
   type VeitDialogFooterContext,
-  type VeitDialogProps,
   type VeitDialogUnsavedChangesConfirm,
 } from './VeitDialog.js';
 export type { VeitDialogHistoryMode } from './dialogHistoryMode.js';
@@ -64,6 +62,7 @@ export {
   commitFormBaseline,
   useDialogFormBaseline,
   applyDialogSaveSuccess,
+  bindDialogFormBaseline,
   type DialogFormBaselineBinding,
   type UseDialogFormBaselineOptions,
 } from './dialogFormDirty.js';
@@ -80,4 +79,9 @@ export {
   type VeitOptionPickerItem,
 } from './VeitOptionPickerDialog.js';
 export type { VeitDeleteConfirmConfig } from './VeitDeleteConfirmConfig.js';
-
+export {
+  useManagedOverlayDialog,
+  useManagedOverlayDialogBinding,
+  type ManagedOverlayDialog,
+  type ManagedOverlayDialogBinding,
+} from './managedOverlayDialog.js';

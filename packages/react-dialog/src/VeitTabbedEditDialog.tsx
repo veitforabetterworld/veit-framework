@@ -1,22 +1,22 @@
 import type { ReactNode } from 'react';
 import { VeitOverlayEditDialog, type VeitEditDialogFooterProps } from './VeitDialogPresets.js';
-
+import type { DialogFormBaselineBinding } from './dialogFormDirty.js';
+import type { ManagedOverlayDialogBinding } from './managedOverlayDialog.js';
 export type VeitTabbedEditDialogTab<TTab extends string = string> = {
   id: TTab;
   label: string;
 };
 
 export type VeitTabbedOverlayEditDialogProps<TTab extends string = string> = {
-  open: boolean;
-  onClose: () => void;
+  binding: ManagedOverlayDialogBinding;
   title: string;
   closeAriaLabel: string;
   cancelLabel: string;
   saveLabel: string;
   onSave: () => void | Promise<void>;
   dirty: boolean;
-  saving?: boolean;
-  busy?: boolean;
+  formBaseline: DialogFormBaselineBinding;
+  saving?: boolean;  busy?: boolean;
   zIndexBase?: number;
   localError?: string | null;
   tabs?: VeitTabbedEditDialogTab<TTab>[];
@@ -28,16 +28,15 @@ export type VeitTabbedOverlayEditDialogProps<TTab extends string = string> = {
 
 /** Overlay-Edit-Dialog mit optionalen Tabs und Fehlerbanner (z. B. Tool-Zugriff). */
 export function VeitTabbedOverlayEditDialog<TTab extends string = string>({
-  open,
-  onClose,
+  binding,
   title,
   closeAriaLabel,
   cancelLabel,
   saveLabel,
   onSave,
   dirty,
-  saving = false,
-  busy = false,
+  formBaseline,
+  saving = false,  busy = false,
   zIndexBase = 320,
   localError,
   tabs,
@@ -50,18 +49,14 @@ export function VeitTabbedOverlayEditDialog<TTab extends string = string>({
   const footerProps: VeitEditDialogFooterProps = {
     busy: locked,
     dirty,
+    formBaseline,
     cancelLabel,
     saveLabel,
     onSave: () => void onSave(),
   };
-
   return (
     <VeitOverlayEditDialog
-      open={open}
-      onClose={() => {
-        if (locked) return;
-        onClose();
-      }}
+      binding={binding}
       title={title}
       titleClassName="heading-2 pr-2"
       closeAriaLabel={closeAriaLabel}

@@ -11,12 +11,30 @@ import {
   type VeitDialogEditActionsFooterEditProps,
   type VeitDialogEditActionsFooterProps,
 } from './VeitDialogEditActionsFooter.js';
+import type { DialogFormBaselineBinding } from './dialogFormDirty.js';
 import { useLayoutEffect } from 'react';
 import { veitDialogHistoryFlags, type VeitDialogHistoryMode } from './dialogHistoryMode.js';
 import {
   useResolvedVeitDialogUnsavedConfirm,
   type VeitDialogUnsavedConfirmOverride,
 } from './unsavedConfirmContext.js';
+import {
+  overlayBindingToDialogProps,
+  type ManagedOverlayDialogBinding,
+} from './managedOverlayDialog.js';
+
+export type { ManagedOverlayDialogBinding, ManagedOverlayDialog } from './managedOverlayDialog.js';
+export {
+  useManagedOverlayDialog,
+  useManagedOverlayDialogBinding,
+} from './managedOverlayDialog.js';
+
+type OverlayBindingProps = {
+  /** Pflicht für Overlay-Presets — via {@link useManagedOverlayDialog} oder {@link useManagedOverlayDialogBinding}. */
+  binding: ManagedOverlayDialogBinding;
+};
+
+type VeitOverlayPresetBase = Omit<VeitDialogPresetBase, 'open' | 'onClose'>;
 
 export function EntityDialogDismissBridge({
   dismissRef,
@@ -51,14 +69,19 @@ function presetDialogProps(
   };
 }
 
-export type VeitOverlayDialogProps = VeitDialogPresetBase & {
+export type VeitOverlayDialogProps = VeitOverlayPresetBase & OverlayBindingProps & {
   unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
 };
 
 /** Verschachtelter Dialog ohne eigene URL — ein Browser-Zurück schließt nur diesen Dialog. */
-export function VeitOverlayDialog({ unsavedChangesConfirm: unsavedOverride, ...props }: VeitOverlayDialogProps) {
+export function VeitOverlayDialog({ binding, unsavedChangesConfirm: unsavedOverride, ...props }: VeitOverlayDialogProps) {
   const unsavedChangesConfirm = useResolvedVeitDialogUnsavedConfirm(unsavedOverride, 'edit');
-  return <VeitDialog {...presetDialogProps('overlay', props)} unsavedChangesConfirm={unsavedChangesConfirm} />;
+  return (
+    <VeitDialog
+      {...presetDialogProps('overlay', { ...overlayBindingToDialogProps(binding), ...props })}
+      unsavedChangesConfirm={unsavedChangesConfirm}
+    />
+  );
 }
 
 export type VeitEntityDialogProps = VeitDialogPresetBase & {
@@ -108,7 +131,7 @@ export function VeitSheetDialog({
   );
 }
 
-export type VeitPickerDialogProps = VeitDialogPresetBase & {
+export type VeitPickerDialogProps = VeitOverlayPresetBase & OverlayBindingProps & {
   /** Standard: centered, sm */
   variant?: 'responsive' | 'centered';
   size?: 'sm' | 'lg';
@@ -119,6 +142,7 @@ export type VeitPickerDialogProps = VeitDialogPresetBase & {
 
 /** Auswahl-/Picker-Dialog über einem Entity (Overlay-History). */
 export function VeitPickerDialog({
+  binding,
   variant = 'centered',
   size = 'sm',
   footerProps,
@@ -128,7 +152,7 @@ export function VeitPickerDialog({
   const unsavedChangesConfirm = useResolvedVeitDialogUnsavedConfirm(unsavedOverride, 'edit');
   return (
     <VeitDialog
-      {...presetDialogProps('overlay', { variant, size, ...props })}
+      {...presetDialogProps('overlay', { ...overlayBindingToDialogProps(binding), variant, size, ...props })}
       unsavedChangesConfirm={unsavedChangesConfirm}
       footer={
         footerProps != null
@@ -144,10 +168,13 @@ export function VeitPickerDialog({
   );
 }
 
-/** Fußzeilen-Props für Edit-Dialoge — `dismiss` wird intern injiziert; `dirty` ist Pflicht (außer dismissOnly). `formBaseline` via {@link useDialogFormBaseline}. */
+/** Fußzeilen-Props für Edit-Dialoge — `dismiss` wird intern injiziert; `dirty` + `formBaseline` sind Pflicht (außer dismissOnly). */
 export type VeitEditDialogFooterProps =
   | Omit<VeitDialogEditActionsFooterDismissOnlyProps, 'dismiss'>
-  | (Omit<VeitDialogEditActionsFooterEditProps, 'dismiss'> & { dirty: boolean });
+  | (Omit<VeitDialogEditActionsFooterEditProps, 'dismiss' | 'dirty' | 'formBaseline'> & {
+      dirty: boolean;
+      formBaseline: DialogFormBaselineBinding;
+    });
 
 /** Fußzeilen-Props für Action-Dialoge (One-Shot) — `dirty` optional. */
 export type VeitActionDialogFooterProps =
@@ -226,7 +253,7 @@ export function VeitActionDialog({
   );
 }
 
-export type VeitWizardDialogProps = VeitDialogPresetBase & {
+export type VeitWizardDialogProps = VeitOverlayPresetBase & OverlayBindingProps & {
   /** Optionaler Zurück-Schritt (links neben Schließen). */
   onBack?: () => void;
   backLabel?: string;
@@ -239,6 +266,7 @@ export type VeitWizardDialogProps = VeitDialogPresetBase & {
 
 /** Mehrstufiger Overlay-Wizard (z. B. Verknüpfung hinzufügen). */
 export function VeitWizardDialog({
+  binding,
   onBack,
   backLabel,
   closeLabel,
@@ -251,10 +279,13 @@ export function VeitWizardDialog({
 }: VeitWizardDialogProps) {
   const unsavedChangesConfirm = useResolvedVeitDialogUnsavedConfirm(unsavedOverride, 'edit');
   const isBusy = busy || !!disabled;
+  const { open, onClose } = overlayBindingToDialogProps(binding);
   return (
     <VeitDialog
       {...presetDialogProps('overlay', {
         ...props,
+        open,
+        onClose,
         disabled: isBusy,
         blockBackdropClose: blockBackdropClose ?? isBusy,
       })}
@@ -288,9 +319,12 @@ export function VeitEntityEditDialog(props: VeitEntityEditDialogProps) {
   return <VeitEditDialog {...props} historyMode="entity" />;
 }
 
-export type VeitOverlayEditDialogProps = Omit<VeitEditDialogProps, 'historyMode'>;
-export function VeitOverlayEditDialog(props: VeitOverlayEditDialogProps) {
-  return <VeitEditDialog {...props} historyMode="overlay" />;
+export type VeitOverlayEditDialogProps = Omit<VeitEditDialogProps, 'historyMode' | 'open' | 'onClose'> &
+  OverlayBindingProps;
+export function VeitOverlayEditDialog({ binding, ...props }: VeitOverlayEditDialogProps) {
+  return (
+    <VeitEditDialog {...props} {...overlayBindingToDialogProps(binding)} historyMode="overlay" />
+  );
 }
 
 export type VeitSheetEditDialogProps = Omit<VeitEditDialogProps, 'historyMode'>;
@@ -303,9 +337,12 @@ export function VeitEntityActionDialog(props: VeitEntityActionDialogProps) {
   return <VeitActionDialog {...props} historyMode="entity" />;
 }
 
-export type VeitOverlayActionDialogProps = Omit<VeitActionDialogProps, 'historyMode'>;
-export function VeitOverlayActionDialog(props: VeitOverlayActionDialogProps) {
-  return <VeitActionDialog {...props} historyMode="overlay" />;
+export type VeitOverlayActionDialogProps = Omit<VeitActionDialogProps, 'historyMode' | 'open' | 'onClose'> &
+  OverlayBindingProps;
+export function VeitOverlayActionDialog({ binding, ...props }: VeitOverlayActionDialogProps) {
+  return (
+    <VeitActionDialog {...props} {...overlayBindingToDialogProps(binding)} historyMode="overlay" />
+  );
 }
 
 export type VeitSheetActionDialogProps = Omit<VeitActionDialogProps, 'historyMode'>;

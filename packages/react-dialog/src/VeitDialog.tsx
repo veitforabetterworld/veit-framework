@@ -29,6 +29,11 @@ import {
 } from './dialogHistory.js';
 import { resolveVeitDialogHistoryMode, veitDialogHistoryFlags, type VeitDialogHistoryMode } from './dialogHistoryMode.js';
 
+function isVeitDialogDevMode(): boolean {
+  const env = (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV;
+  return env !== 'production';
+}
+
 export { VEIT_DIALOG_DEFAULT_HISTORY_KEY } from './dialogHistory.js';
 /** Zwei feste Dialogbreiten: schmal (~576px) und breit (~1280px). Kein `md`, keine `className`-Overrides für `max-w`. */
 const sizeMax: Record<'sm' | 'lg', string> = {
@@ -625,6 +630,13 @@ export function VeitDialog({
       if (onStack === -1) {
         dialogHistoryStripMarker(resolvedHistoryStateKey);
         return;
+      }
+      if (isVeitDialogDevMode()) {
+        console.error(
+          '[VeitDialog] Dialog shell unmounted while still on the history stack. ' +
+            'Keep overlay presets mounted and toggle binding.open (via useManagedOverlayDialog / useManagedOverlayDialogBinding) — ' +
+            'do not conditionally mount with `{open && <OverlayEditDialog …>}`.',
+        );
       }
       dialogHistorySyncBack(stableClose, resolvedHistoryStateKey);
     };

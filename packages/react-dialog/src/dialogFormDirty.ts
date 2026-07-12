@@ -67,6 +67,13 @@ export function applyDialogSaveSuccess(options: {
   dismiss();
 }
 
+export function bindDialogFormBaseline(
+  getDraft: () => unknown,
+  setBaseline: (next: unknown) => void,
+): DialogFormBaselineBinding {
+  return { setBaseline, getDraft };
+}
+
 export type UseDialogFormBaselineOptions<T extends Record<string, unknown>> = {
   draft: T;
   /** Baseline-Wert beim Öffnen / wenn sich `resetDeps` ändern. */

@@ -33,8 +33,19 @@ export type VeitDialogEditActionsFooterDeleteAction = {
 };
 
 type EditSaveAction =
-  | { submitFormId: string; onSave?: () => void | Promise<void> }
-  | { submitFormId?: undefined; onSave: () => void | Promise<void> };
+  | {
+      submitFormId: string;
+      /** Optional — bei `submitFormId` schließt das Form-`onSubmit` selbst (z. B. via `useVeitDialogDismissAfterSave`). */
+      onSave?: () => void | Promise<void>;
+    }
+  | {
+      submitFormId?: undefined;
+      /**
+       * Nur persistieren — nicht `onClose`/`dismiss` aufrufen.
+       * Der Footer ruft nach Erfolg automatisch `dismissAfterSave` auf.
+       */
+      onSave: () => void | Promise<void>;
+    };
 
 export type VeitDialogEditActionsFooterEditProps = VeitDialogEditActionsFooterCommon &
   EditSaveAction & {

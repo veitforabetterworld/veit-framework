@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import type { FieldTag } from '@veit/field-tags';
 import {
   VeitEditDialog,
+  bindDialogFormBaseline,
   type VeitDeleteConfirmConfig,
   type VeitDialogUnsavedConfirmOverride,
   useResolvedVeitDialogUnsavedConfirm,
@@ -120,6 +121,18 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
     return !flatDraftRowsEqual(flatRows, flatBaseline, props.defaultHex);
   }, [flatBaseline, flatRows, isNested, nestedBaseline, nestedRows, props]);
 
+  const formBaseline = useMemo(
+    () =>
+      bindDialogFormBaseline(
+        () => (isNested ? nestedRows : flatRows),
+        (next) => {
+          if (isNested) setNestedBaseline(cloneNestedDraftRows(next as NestedTagDraft[]));
+          else setFlatBaseline(cloneFlatDraftRows(next as FlatTagDraft[]));
+        },
+      ),
+    [flatRows, isNested, nestedRows, props.defaultHex],
+  );
+
   const flushSave = useCallback(async () => {
     if (props.disabled || busy) return;
     setBusy(true);
@@ -168,6 +181,7 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
               onSave: flushSave,
               busy,
               dirty,
+              formBaseline,
               cancelLabel: strings.cancel,
               saveLabel: strings.save,
             }

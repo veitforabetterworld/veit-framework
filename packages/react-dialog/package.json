@@ -16,13 +16,14 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@types/node": "^22.10.5",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "node --import tsx --test \"src/**/*.test.ts\""
   }
 }

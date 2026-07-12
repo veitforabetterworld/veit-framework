@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { FieldTag } from '@veit/field-tags';
 import {
@@ -83,6 +83,9 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
     setFlatBaseline(cloneFlatDraftRows(tags));
   }, [isNested, props]);
 
+  const loadRef = useRef(load);
+  loadRef.current = load;
+
   useEffect(() => {
     if (!open) {
       setFlatRows([]);
@@ -100,7 +103,7 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
     setLoadError(null);
     void (async () => {
       try {
-        await load();
+        await loadRef.current();
       } catch (e) {
         if (!cancelled) {
           setLoadError((e as Error).message);
@@ -114,7 +117,7 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
     return () => {
       cancelled = true;
     };
-  }, [open, load]);
+  }, [open]);
 
   const dirty = useMemo(() => {
     if (isNested) return !nestedDraftRowsEqual(nestedRows, nestedBaseline);

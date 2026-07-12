@@ -72,7 +72,9 @@ export function VeitAccountPasswordSection({
           />
         </div>
         {(currentPassword.length > 0 || newPassword.length > 0) && (
-          <button type="submit" disabled={submitting} className="btn-primary">{saveLabel}</button>
+          <button type="submit" disabled={submitting} className="btn-primary btn-sm">
+            {saveLabel}
+          </button>
         )}
       </form>
     </VeitAccountSection>

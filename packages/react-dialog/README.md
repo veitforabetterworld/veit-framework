@@ -12,9 +12,8 @@ Modal dialogs for React: portals, browser-history sync (`history.back()`), unsav
 
 | Preset | Use case | History mode |
 |--------|----------|--------------|
-| `VeitEntityEditDialog` | Edit entity with deep-link URL (`dismissRef` required) | `entity` |
+| `VeitEntityEditDialog` | Edit entity with deep-link URL (`dismissRef` required); optional `bottomDockRoot` for map dock | `entity` (coalesce) |
 | `VeitOverlayEditDialog` | Edit overlay (admin, nested editors, create flows) | `overlay` |
-| `VeitSheetEditDialog` | Edit in bottom sheet (map tool) | `sheet` |
 | `VeitEntityActionDialog` | One-shot action with deep-link | `entity` |
 | `VeitOverlayActionDialog` | One-shot overlay (import, picker close) | `overlay` |
 | `VeitSheetActionDialog` | One-shot sheet | `sheet` |

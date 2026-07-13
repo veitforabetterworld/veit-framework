@@ -61,10 +61,12 @@ function presetDialogProps(
   props: VeitDialogPresetBase & { bottomDockRoot?: HTMLElement | null },
 ): VeitDialogProps {
   const flags = veitDialogHistoryFlags(mode);
+  /** Bottom-Dock (z. B. Kartentool): Darstellung unten, History-Modus bleibt (entity = coalesce). */
+  const presentation = props.bottomDockRoot != null ? 'bottom' : flags.presentation;
   return {
     ...props,
     historyMode: mode,
-    presentation: flags.presentation,
+    presentation,
     bottomDockRoot: props.bottomDockRoot,
   };
 }
@@ -312,8 +314,13 @@ export type { VeitDialogHistoryMode } from './dialogHistoryMode.js';
 export { resolveVeitDialogHistoryMode } from './dialogHistoryMode.js';
 
 export type VeitEntityEditDialogProps = Omit<VeitEditDialogProps, 'historyMode' | 'dismissRef'> & {
-  /** Pflicht bei Deep-Link-Bearbeitung — typisch via `useEntityDialogClose` (`@veit/react-dialog-router`). */
+  /** Pflicht bei Deep-Link-Bearbeitung — typisch via `useEntityDialogKit` (`@veit/react-dialog-router`). */
   dismissRef: NonNullable<VeitEditDialogProps['dismissRef']>;
+  /**
+   * Optional: Panel am Kartenrahmen andocken (`presentation="bottom"`) bei unverändertem Entity-History (coalesce).
+   * Für reine Bottom-Sheets ohne Deep-Link: {@link VeitSheetActionDialog}.
+   */
+  bottomDockRoot?: HTMLElement | null;
 };
 export function VeitEntityEditDialog(props: VeitEntityEditDialogProps) {
   return <VeitEditDialog {...props} historyMode="entity" />;
@@ -325,11 +332,6 @@ export function VeitOverlayEditDialog({ binding, ...props }: VeitOverlayEditDial
   return (
     <VeitEditDialog {...props} {...overlayBindingToDialogProps(binding)} historyMode="overlay" />
   );
-}
-
-export type VeitSheetEditDialogProps = Omit<VeitEditDialogProps, 'historyMode'>;
-export function VeitSheetEditDialog(props: VeitSheetEditDialogProps) {
-  return <VeitEditDialog {...props} historyMode="sheet" />;
 }
 
 export type VeitEntityActionDialogProps = Omit<VeitActionDialogProps, 'historyMode'>;

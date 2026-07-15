@@ -37,7 +37,7 @@ export function VeitTabBar<T extends string = string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={`flex flex-wrap gap-2 border-b border-border/60 pb-2${className ? ` ${className}` : ''}`}
+      className={`flex flex-wrap items-center gap-2 border-b border-border/60 pb-1${className ? ` ${className}` : ''}`}
     >
       {items.map((item) => {
         const active = value === item.id;

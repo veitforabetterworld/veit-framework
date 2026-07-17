@@ -197,6 +197,7 @@ export function LoginForm<User>({
 export function RegisterForm<User>({
   t,
   parseError,
+  onSuggestPassword,
   renderLogo,
   renderSkipToMain,
   renderPrivacyConsent,
@@ -204,6 +205,7 @@ export function RegisterForm<User>({
 }: {
   t: TFunction;
   parseError: (error: unknown) => string;
+  onSuggestPassword?: () => Promise<string>;
   renderLogo?: () => React.ReactNode;
   renderSkipToMain?: () => React.ReactNode;
   renderPrivacyConsent: (checked: boolean, onCheckedChange: (next: boolean) => void) => React.ReactNode;
@@ -211,15 +213,43 @@ export function RegisterForm<User>({
 }) {
   const { register } = useAuth<User>();
   const blockGuestPage = useRedirectIfAuthenticated<User>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const returnPath = resolvePostLoginPath(
+    (location.state as { from?: unknown })?.from,
+    searchParams.get('next'),
+    '/organizations/list',
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [successMsgKey, setSuccessMsgKey] = useState('auth.verification_email_sent');
+  const [suggestingPassword, setSuggestingPassword] = useState(false);
+
+  const suggestPassword = async () => {
+    if (!onSuggestPassword) return;
+    setSuggestingPassword(true);
+    setError(null);
+    try {
+      const next = await onSuggestPassword();
+      setPassword(next);
+      setPasswordVisible(true);
+      try {
+        await navigator.clipboard.writeText(next);
+      } catch {
+        // Clipboard may be blocked; password is still prefilled and visible.
+      }
+    } catch (err) {
+      setError(parseError(err));
+    } finally {
+      setSuggestingPassword(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,9 +258,8 @@ export function RegisterForm<User>({
     if (!firstName.trim() || !lastName.trim()) return setError(t('auth.first_last_name_required'));
     setSubmitting(true);
     try {
-      const msgKey = await register({ email, password, firstName, lastName, allowDirectOrgAdd: false });
-      setSuccessMsgKey(msgKey.startsWith('auth.') ? msgKey : 'auth.verification_email_sent');
-      setSuccess(true);
+      await register({ email, password, firstName, lastName, allowDirectOrgAdd: false });
+      navigate(returnPath, { replace: true });
     } catch (err) {
       setError(parseError(err));
     } finally {
@@ -242,32 +271,42 @@ export function RegisterForm<User>({
 
   return (
     <AuthFrame renderLogo={renderLogo} renderSkipToMain={renderSkipToMain}>
-      {success ? (
-        <div className="alert-success mb-4">{t(successMsgKey)}</div>
-      ) : (
-        <>
-          <h1 className="heading-1 mb-6">{t('auth.register')}</h1>
-          <form onSubmit={submit} className="space-y-4">
-            {error && <div className="alert-error text-sm">{error}</div>}
-            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" className="input" placeholder={t('account.first_name')} />
-            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" className="input" placeholder={t('account.last_name')} />
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="input" placeholder={t('account.email')} />
+      <>
+        <h1 className="heading-1 mb-6">{t('auth.register')}</h1>
+        <form onSubmit={submit} className="space-y-4">
+          {error && <div className="alert-error text-sm">{error}</div>}
+          <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" className="input" placeholder={t('account.first_name')} />
+          <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" className="input" placeholder={t('account.last_name')} />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="input" placeholder={t('account.email')} />
+          <div>
             <VeitPasswordField
               showPasswordLabel={t('common.show_password')}
               hidePasswordLabel={t('common.hide_password')}
+              visible={passwordVisible}
+              onVisibleChange={setPasswordVisible}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={8}
+              minLength={10}
               autoComplete="new-password"
               className="input"
               placeholder={t('auth.password_min_length_label')}
             />
-            {renderPrivacyConsent(agreePrivacy, setAgreePrivacy)}
-            <button type="submit" disabled={submitting} className="w-full btn-primary py-2.5">{t('auth.register')}</button>
-          </form>
-        </>
-      )}
+            {onSuggestPassword && (
+              <button
+                type="button"
+                disabled={suggestingPassword || submitting}
+                onClick={() => void suggestPassword()}
+                className="mt-2 w-full btn-secondary py-2 text-sm"
+              >
+                {t('auth.suggest_password')}
+              </button>
+            )}
+          </div>
+          {renderPrivacyConsent(agreePrivacy, setAgreePrivacy)}
+          <button type="submit" disabled={submitting} className="w-full btn-primary py-2.5">{t('auth.register')}</button>
+        </form>
+      </>
       {renderFooter?.()}
     </AuthFrame>
   );
@@ -381,7 +420,7 @@ export function ResetPasswordForm({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={8}
+            minLength={10}
             autoComplete="new-password"
             className="input"
           />

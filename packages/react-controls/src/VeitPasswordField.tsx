@@ -6,6 +6,10 @@ export type VeitPasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>,
   showPasswordLabel: string;
   /** Zugänglicher Name im sichtbaren Zustand */
   hidePasswordLabel: string;
+  /** Steuert Sichtbarkeit von außen (optional). */
+  visible?: boolean;
+  /** Callback bei Sichtbarkeitswechsel (optional). */
+  onVisibleChange?: (visible: boolean) => void;
   /** Zusätzliche Klassen für den äußeren Flex-Wrapper */
   wrapperClassName?: string;
   /** Zusätzliche Klassen für den Umschalt-Button */
@@ -20,6 +24,8 @@ export const VeitPasswordField = forwardRef<HTMLInputElement, VeitPasswordFieldP
     {
       showPasswordLabel,
       hidePasswordLabel,
+      visible: visibleProp,
+      onVisibleChange,
       wrapperClassName = '',
       toggleButtonClassName = '',
       className = '',
@@ -28,7 +34,13 @@ export const VeitPasswordField = forwardRef<HTMLInputElement, VeitPasswordFieldP
     },
     ref,
   ) {
-    const [visible, setVisible] = useState(false);
+    const [internalVisible, setInternalVisible] = useState(false);
+    const isControlled = visibleProp !== undefined;
+    const visible = isControlled ? visibleProp : internalVisible;
+    const setVisible = (next: boolean) => {
+      if (!isControlled) setInternalVisible(next);
+      onVisibleChange?.(next);
+    };
     const toggleLabel = visible ? hidePasswordLabel : showPasswordLabel;
 
     return (
@@ -47,7 +59,7 @@ export const VeitPasswordField = forwardRef<HTMLInputElement, VeitPasswordFieldP
           title={toggleLabel}
           aria-pressed={visible}
           disabled={disabled}
-          onClick={() => setVisible((v) => !v)}
+          onClick={() => setVisible(!visible)}
         >
           {visible ? <Eye className="h-4 w-4 shrink-0" aria-hidden /> : <EyeOff className="h-4 w-4 shrink-0" aria-hidden />}
         </button>

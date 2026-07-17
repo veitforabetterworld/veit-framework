@@ -1,7 +1,7 @@
 export type AuthMfaMethod = string;
 
 export type AuthLoginResult =
-  | { needsMfa: false }
+  | { needsMfa: false; passwordInsecure?: boolean; passwordSecurityReasons?: string[] }
   | { needsMfa: true; mfaToken: string; mfaMethods: AuthMfaMethod[] };
 
 export type AuthRegisterInput = {
@@ -15,7 +15,7 @@ export type AuthRegisterInput = {
 export interface AuthClient<User> {
   getCurrentUser: () => Promise<User>;
   login: (email: string, password: string) => Promise<AuthLoginResult>;
-  completeMfaLogin: (mfaToken: string, code: string) => Promise<void>;
+  completeMfaLogin: (mfaToken: string, code: string) => Promise<{ passwordInsecure?: boolean; passwordSecurityReasons?: string[] }>;
   register: (input: AuthRegisterInput) => Promise<string>;
   logout: () => Promise<void>;
   sendLoginMfaEmailCode?: (mfaToken: string) => Promise<{ messageKey?: string }>;

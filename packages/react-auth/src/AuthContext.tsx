@@ -5,7 +5,7 @@ export interface AuthContextValue<User> {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthLoginResult>;
-  completeMfaLogin: (mfaToken: string, code: string) => Promise<void>;
+  completeMfaLogin: (mfaToken: string, code: string) => Promise<{ passwordInsecure?: boolean; passwordSecurityReasons?: string[] }>;
   register: (input: AuthRegisterInput) => Promise<string>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<User | null>;
@@ -46,20 +46,25 @@ export function createAuthProvider<User>(client: AuthClient<User>, normalizeUser
         const result = await client.login(email, password);
         if (result.needsMfa) return result;
         await refreshUser();
-        return { needsMfa: false };
+        return result;
       },
       [refreshUser]
     );
 
     const completeMfaLogin = useCallback(
       async (mfaToken: string, code: string) => {
-        await client.completeMfaLogin(mfaToken, code);
+        const result = await client.completeMfaLogin(mfaToken, code);
         await refreshUser();
+        return result;
       },
       [refreshUser]
     );
 
-    const register = useCallback((input: AuthRegisterInput) => client.register(input), []);
+    const register = useCallback(async (input: AuthRegisterInput) => {
+      const msg = await client.register(input);
+      await refreshUser();
+      return msg;
+    }, [refreshUser]);
 
     const logout = useCallback(async () => {
       try {

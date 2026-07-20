@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { VeitCountBadge } from './VeitCountBadge.js';
 
 export type VeitTabBarItem<T extends string = string> = {
   id: T;
@@ -20,10 +21,6 @@ function tabButtonClass(active: boolean): string {
   return `rounded-lg px-3 py-2 text-sm ${
     active ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground'
   }`;
-}
-
-function formatBadge(n: number): string {
-  return n > 99 ? '99+' : String(n);
 }
 
 export function VeitTabBar<T extends string = string>({
@@ -53,11 +50,7 @@ export function VeitTabBar<T extends string = string>({
             onClick={() => onChange(item.id)}
           >
             {item.label}
-            {showBadge ? (
-              <span className="ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                {formatBadge(item.badge!)}
-              </span>
-            ) : null}
+            {showBadge ? <VeitCountBadge count={item.badge!} size="tab" className="ml-1.5" /> : null}
           </button>
         );
       })}

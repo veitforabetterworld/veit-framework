@@ -16,7 +16,7 @@ export type VeitPasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>,
   toggleButtonClassName?: string;
 };
 
-const toggleBtnDefault =
+export const veitPasswordToggleButtonClass =
   'inline-flex shrink-0 items-center justify-center self-stretch rounded-md border border-input bg-background px-2.5 text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50';
 
 export const VeitPasswordField = forwardRef<HTMLInputElement, VeitPasswordFieldProps>(
@@ -54,7 +54,7 @@ export const VeitPasswordField = forwardRef<HTMLInputElement, VeitPasswordFieldP
         />
         <button
           type="button"
-          className={`${toggleBtnDefault} ${toggleButtonClassName}`.trim()}
+          className={`${veitPasswordToggleButtonClass} ${toggleButtonClassName}`.trim()}
           aria-label={toggleLabel}
           title={toggleLabel}
           aria-pressed={visible}

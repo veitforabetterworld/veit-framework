@@ -18,7 +18,11 @@ export {
 export { VeitDataTableHeaderCell, type VeitDataTableHeaderCellProps } from './VeitDataTableHeaderCell.js';
 export { veitTableHeaderIconBtn, veitTableHeaderIconBtnActive } from './veitTableStyles.js';
 export { VeitDeleteButton, type VeitDeleteButtonProps } from './VeitDeleteButton.js';
-export { VeitPasswordField, type VeitPasswordFieldProps } from './VeitPasswordField.js';
+export {
+  VeitPasswordField,
+  veitPasswordToggleButtonClass,
+  type VeitPasswordFieldProps,
+} from './VeitPasswordField.js';
 export type { VeitDeleteConfirmConfig } from '@veit/react-dialog';
 export { VeitSkipToMain } from './VeitSkipToMain.js';
 export { VeitBackButton, type VeitBackButtonProps } from './VeitBackButton.js';

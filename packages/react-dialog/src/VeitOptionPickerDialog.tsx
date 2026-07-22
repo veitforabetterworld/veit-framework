@@ -1,5 +1,5 @@
 import { useId, useMemo, type ReactNode } from 'react';
-import { useVeitDialogDismiss, useVeitDialogNestedZIndexBase, VeitDialog, VeitDialogFooter } from './VeitDialog.js';
+import { useVeitDialogDismiss, VeitDialog, VeitDialogFooter } from './VeitDialog.js';
 
 export type VeitOptionPickerItem<T extends string | number = number> = {
   value: T;
@@ -22,7 +22,6 @@ export type VeitOptionPickerDialogProps<T extends string | number = number> = {
   noneLabel?: string;
   closeAriaLabel: string;
   backdropDismissLabel?: string;
-  zIndexBase?: number;
   disabled?: boolean;
 };
 
@@ -127,12 +126,9 @@ export function VeitOptionPickerDialog<T extends string | number = number>({
   noneLabel = '—',
   closeAriaLabel,
   backdropDismissLabel,
-  zIndexBase: zIndexBaseProp,
   disabled = false,
 }: VeitOptionPickerDialogProps<T>) {
   const listId = useId();
-  const nestedZ = useVeitDialogNestedZIndexBase();
-  const zIndexBase = zIndexBaseProp ?? nestedZ ?? 220;
 
   const rows = useMemo(() => {
     const out: { key: string; kind: 'none' | 'item'; item?: VeitOptionPickerItem<T> }[] = [];
@@ -152,7 +148,6 @@ export function VeitOptionPickerDialog<T extends string | number = number>({
       title={title}
       closeAriaLabel={closeAriaLabel}
       backdropDismissLabel={backdropDismissLabel ?? closeAriaLabel}
-      zIndexBase={zIndexBase}
       disabled={disabled}
       variant="centered"
       size="sm"

@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { VeitDialog, VeitDialogFooter, useVeitDialogNestedZIndexBase } from './VeitDialog.js';
+import { VeitDialog, VeitDialogFooter } from './VeitDialog.js';
 
 export type VeitConfirmDialogProps = {
   open: boolean;
@@ -14,7 +14,6 @@ export type VeitConfirmDialogProps = {
   /** Fallback: {@link cancelLabel} */
   closeAriaLabel?: string;
   backdropDismissLabel?: string;
-  zIndexBase?: number;
   disabled?: boolean;
   blockBackdropClose?: boolean;
 };
@@ -30,13 +29,10 @@ export function VeitConfirmDialog({
   destructive = false,
   closeAriaLabel,
   backdropDismissLabel,
-  zIndexBase: zIndexBaseProp,
   disabled = false,
   blockBackdropClose = false,
 }: VeitConfirmDialogProps) {
   const closeLabel = closeAriaLabel ?? cancelLabel;
-  const nestedZ = useVeitDialogNestedZIndexBase();
-  const zIndexBase = zIndexBaseProp ?? nestedZ ?? 240;
 
   return (
     <VeitDialog
@@ -45,7 +41,6 @@ export function VeitConfirmDialog({
       title={title}
       closeAriaLabel={closeLabel}
       backdropDismissLabel={backdropDismissLabel ?? closeLabel}
-      zIndexBase={zIndexBase}
       disabled={disabled}
       blockBackdropClose={blockBackdropClose}
       variant="centered"

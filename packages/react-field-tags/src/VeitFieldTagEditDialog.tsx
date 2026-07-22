@@ -32,7 +32,6 @@ export type VeitFieldTagEditDialogProps =
       defaultHex: string;
       strings: VeitFieldTagListStrings & VeitFieldTagEditDialogStrings;
       deleteConfirm: (item: FlatTagDraft) => VeitDeleteConfirmConfig;
-      zIndexBase?: number;
       unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
       dialogTitle?: never;
     }
@@ -50,12 +49,11 @@ export type VeitFieldTagEditDialogProps =
       deleteConfirm: (item: NestedTagDraft) => VeitDeleteConfirmConfig;
       deleteButtonClassName?: string;
       deleteButtonLabel: React.ReactNode;
-      zIndexBase?: number;
       unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
     };
 
 export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
-  const { open, onClose, title, strings, zIndexBase = 240 } = props;
+  const { open, onClose, title, strings } = props;
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -172,7 +170,6 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
       onClose={onClose}
       title={title}
       closeAriaLabel={strings.close}
-      zIndexBase={zIndexBase}
       unsavedChangesConfirm={unsavedChangesConfirm}
       variant="responsive"
       size="sm"
@@ -231,7 +228,6 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
               disabled={loading || busy}
               defaultHex={props.defaultHex}
               strings={props.strings}
-              confirmZIndexBase={zIndexBase + 10}
               focusRowId={focusRowId}
               onFocusRowIdConsumed={() => setFocusRowId(null)}
               deleteConfirm={props.deleteConfirm}

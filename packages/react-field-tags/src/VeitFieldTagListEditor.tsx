@@ -20,7 +20,6 @@ export type VeitFieldTagListEditorProps =
       disabled?: boolean;
       defaultHex: string;
       strings: VeitFieldTagListStrings;
-      confirmZIndexBase?: number;
       focusRowId?: string | number | null;
       onFocusRowIdConsumed?: () => void;
       deleteConfirm: (item: FlatTagDraft) => VeitDeleteConfirmConfig;
@@ -66,7 +65,6 @@ function VeitFieldTagFlatListEditor({
   disabled,
   defaultHex,
   strings,
-  confirmZIndexBase = 250,
   focusRowId,
   onFocusRowIdConsumed,
   deleteConfirm,
@@ -106,10 +104,10 @@ function VeitFieldTagFlatListEditor({
             getSortId: (item: FlatTagDraft) => String(item.id),
             onReorder: (ids: Array<string | number>) => onReorderRows(ids as Array<FlatTagDraft['id']>),
             dragOverlay: (item: FlatTagDraft) => <span className="truncate">{item.name}</span>,
-            dragOverlayZIndex: Math.max(confirmZIndexBase + 55, 320),
+            dragOverlayZIndex: 10_000,
           }
         : undefined,
-    [confirmZIndexBase, items.length, onReorderRows],
+    [items.length, onReorderRows],
   );
 
   return (
@@ -127,7 +125,6 @@ function VeitFieldTagFlatListEditor({
         deleteRowSrLabel: strings.deleteRowSrLabel,
         emptyHint: strings.emptyHint,
       }}
-      confirmZIndexBase={confirmZIndexBase}
       focusRowId={focusRowId}
       onFocusRowIdConsumed={onFocusRowIdConsumed}
       primaryInputIdPrefix={primaryInputIdPrefix}

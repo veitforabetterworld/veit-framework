@@ -35,7 +35,6 @@ export type VeitImagePickerI18n = {
     cancelLabel: string;
     closeAriaLabel: string;
     backdropDismissLabel: string;
-    zIndexBase?: number;
     disabled?: boolean;
     blockBackdropClose?: boolean;
   };
@@ -386,7 +385,6 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
                           destructive
                           closeAriaLabel={overlayDeleteConfirm.closeAriaLabel}
                           backdropDismissLabel={overlayDeleteConfirm.backdropDismissLabel}
-                          zIndexBase={overlayDeleteConfirm.zIndexBase ?? Z_LIGHTBOX + 50}
                           disabled={disabled || overlayDeleteConfirm.disabled}
                           blockBackdropClose={overlayDeleteConfirm.blockBackdropClose}
                           onConfirm={() => void runRemove()}

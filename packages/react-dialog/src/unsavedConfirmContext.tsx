@@ -13,7 +13,6 @@ export type VeitDialogUnsavedConfirmStrings = {
   closeAriaLabel?: string;
   backdropDismissLabel?: string;
   destructive?: boolean;
-  zIndexBase?: number;
 };
 
 export function createVeitDialogUnsavedConfirm(
@@ -28,7 +27,6 @@ export function createVeitDialogUnsavedConfirm(
     closeAriaLabel: strings.closeAriaLabel ?? strings.cancelLabel,
     backdropDismissLabel: strings.backdropDismissLabel ?? strings.closeAriaLabel ?? strings.cancelLabel,
     destructive: strings.destructive ?? true,
-    zIndexBase: strings.zIndexBase,
   };
 }
 

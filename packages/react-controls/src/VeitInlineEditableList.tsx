@@ -59,7 +59,6 @@ type BaseCommon<T extends { id: string | number }> = {
   error?: string | null;
   className?: string;
   listClassName?: string;
-  confirmZIndexBase?: number;
   focusRowId?: string | number | null;
   onFocusRowIdConsumed?: () => void;
   primaryInputIdPrefix?: string;
@@ -206,11 +205,6 @@ function primaryInputDomId(prefix: string, rowId: string | number) {
   return `${prefix}-${String(rowId).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 }
 
-function mergeConfirmZ(cfg: VeitDeleteConfirmConfig, z?: number): VeitDeleteConfirmConfig {
-  if (z == null) return cfg;
-  return { ...cfg, zIndexBase: cfg.zIndexBase ?? z };
-}
-
 function partitionBySortId<T extends { id: string | number }>(
   items: readonly T[],
   getSortId: (item: T) => string | null | undefined,
@@ -331,7 +325,6 @@ export function VeitInlineEditableList<T extends { id: string | number }>(props:
     className = '',
     surface = 'card',
     listClassName,
-    confirmZIndexBase,
     focusRowId,
     onFocusRowIdConsumed,
     primaryInputIdPrefix: prefixProp,
@@ -473,7 +466,7 @@ export function VeitInlineEditableList<T extends { id: string | number }>(props:
   const toggleVisible = toggle == null || toggle.show !== false;
 
   const resolveDeleteCfg = (item: T) =>
-    mergeConfirmZ(typeof deleteConfirm === 'function' ? deleteConfirm(item) : deleteConfirm, confirmZIndexBase);
+    typeof deleteConfirm === 'function' ? deleteConfirm(item) : deleteConfirm;
 
   const deleteBtn = (item: T) => (
     <VeitDeleteButton

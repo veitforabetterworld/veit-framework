@@ -17,7 +17,6 @@ export type VeitTabbedOverlayEditDialogProps<TTab extends string = string> = {
   dirty: boolean;
   formBaseline: DialogFormBaselineBinding;
   saving?: boolean;  busy?: boolean;
-  zIndexBase?: number;
   localError?: string | null;
   tabs?: VeitTabbedEditDialogTab<TTab>[];
   tabsAriaLabel?: string;
@@ -37,7 +36,6 @@ export function VeitTabbedOverlayEditDialog<TTab extends string = string>({
   dirty,
   formBaseline,
   saving = false,  busy = false,
-  zIndexBase = 320,
   localError,
   tabs,
   tabsAriaLabel,
@@ -60,7 +58,6 @@ export function VeitTabbedOverlayEditDialog<TTab extends string = string>({
       title={title}
       titleClassName="heading-2 pr-2"
       closeAriaLabel={closeAriaLabel}
-      zIndexBase={zIndexBase}
       variant="responsive"
       size="sm"
       className="max-h-[92vh] sm:max-h-[90vh]"

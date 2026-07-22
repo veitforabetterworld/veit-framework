@@ -10,6 +10,7 @@ import {
   type MutableRefObject,
   type ReactNode,
 } from 'react';
+import { useVeitOverlayLayer } from './overlayLayerStack.js';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import {
@@ -300,7 +301,6 @@ export type VeitDialogUnsavedChangesConfirm = {
   confirmLabel: string;
   closeAriaLabel?: string;
   backdropDismissLabel?: string;
-  zIndexBase?: number;
   destructive?: boolean;
 };
 
@@ -344,22 +344,7 @@ export function useVeitDialogRegisterUnsavedSave(onSave: (() => void | Promise<v
   }, [onSave, register]);
 }
 
-/**
- * Abstand zwischen übereinanderliegenden Dialog-Ebenen: Backdrop des Kindes liegt über Panel des Parents
- * ({@link VeitDialog} nutzt `zIndexBase` für Backdrop und `zIndexBase + 5` für die Panel-Schicht).
- */
-export const VEIT_DIALOG_Z_STACK_STEP = 50;
-
-const VeitDialogZStackContext = createContext<number | null>(null);
-
-/**
- * Empfohlener `zIndexBase` für einen weiteren `VeitDialog` / Portal, der **innerhalb** eines geöffneten
- * `VeitDialog` (oder dessen `children`-Portalen) gerendert wird. Außerhalb eines Eltern-Dialogs: `undefined`.
- */
-export function useVeitDialogNestedZIndexBase(): number | undefined {
-  const v = useContext(VeitDialogZStackContext);
-  return v ?? undefined;
-}
+export { VEIT_DIALOG_Z_STACK_STEP } from './overlayLayerStack.js';
 
 /**
  * Use in custom `footer` or body actions so „Abbrechen“ dasselbe Verhalten wie X/Backdrop hat
@@ -406,11 +391,6 @@ export type VeitDialogProps = {
    * Standard: gleich {@link closeAriaLabel} (auch für den X-Button).
    */
   backdropDismissLabel?: string;
-  /**
-   * Z-Index der Backdrop-Schicht; Panel liegt bei `zIndexBase + 5`.
-   * Weglassen: übernimmt automatisch einen Wert über dem **direkt** umgebenden `VeitDialog` (Verschachtelung).
-   */
-  zIndexBase?: number;
   blockBackdropClose?: boolean;
   /** Disables Escape and backdrop close (e.g. while saving). */
   disabled?: boolean;
@@ -502,7 +482,6 @@ export function VeitDialog({
   footer,
   closeAriaLabel,
   backdropDismissLabel,
-  zIndexBase: zIndexBaseProp,
   blockBackdropClose = false,
   disabled = false,
   size = 'sm',
@@ -560,9 +539,7 @@ export function VeitDialog({
   const headerRef = useRef<HTMLDivElement>(null);
   const bodyHasVerticalScrollRef = useRef(false);
 
-  const parentNestedZ = useContext(VeitDialogZStackContext);
-  const resolvedZIndexBase = zIndexBaseProp ?? parentNestedZ ?? 200;
-  const nestedZForChildren = resolvedZIndexBase + VEIT_DIALOG_Z_STACK_STEP;
+  const resolvedZIndexBase = useVeitOverlayLayer(open);
 
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -792,7 +769,6 @@ export function VeitDialog({
         backdropDismissLabel={
           resolvedUnsavedConfirm.backdropDismissLabel ?? resolvedUnsavedConfirm.cancelLabel
         }
-        zIndexBase={resolvedUnsavedConfirm.zIndexBase}
         unsavedChangesConfirm={null}
         variant="centered"
         size="sm"
@@ -893,7 +869,6 @@ export function VeitDialog({
       `flex flex-col w-full ${DIALOG_BOTTOM_DOCK_MAX_H} overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-[0_-4px_20px_rgba(0,0,0,0.12)] ${className}`.trim();
 
     const node = (
-      <VeitDialogZStackContext.Provider value={nestedZForChildren}>
         <VeitDialogUnsavedDirtyRegistrationContext.Provider value={registerUnsavedDirty}>
           <VeitDialogUnsavedSaveRegistrationContext.Provider value={registerUnsavedSave}>
           <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
@@ -934,7 +909,6 @@ export function VeitDialog({
           </VeitDialogDismissContext.Provider>
           </VeitDialogUnsavedSaveRegistrationContext.Provider>
         </VeitDialogUnsavedDirtyRegistrationContext.Provider>
-      </VeitDialogZStackContext.Provider>
     );
 
     return createPortal(node, portalTarget);
@@ -951,7 +925,6 @@ export function VeitDialog({
       : `${DIALOG_PANEL_MAX_H} w-full ${sizeMax[size]} overflow-hidden rounded-t-[1.25rem] border border-border/80 bg-surface text-foreground shadow-2xl sm:rounded-2xl`;
 
   const node = (
-    <VeitDialogZStackContext.Provider value={nestedZForChildren}>
       <VeitDialogUnsavedDirtyRegistrationContext.Provider value={registerUnsavedDirty}>
         <VeitDialogUnsavedSaveRegistrationContext.Provider value={registerUnsavedSave}>
         <VeitDialogDismissContext.Provider value={dismissFromCloseButton}>
@@ -1009,7 +982,6 @@ export function VeitDialog({
         </VeitDialogDismissContext.Provider>
         </VeitDialogUnsavedSaveRegistrationContext.Provider>
       </VeitDialogUnsavedDirtyRegistrationContext.Provider>
-    </VeitDialogZStackContext.Provider>
   );
 
   return createPortal(node, portalTarget);

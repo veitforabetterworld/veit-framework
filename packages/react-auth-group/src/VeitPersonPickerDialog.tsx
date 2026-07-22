@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { VeitPersonListRowProfile } from '@veit/react-controls';
-import { useVeitDialogNestedZIndexBase, VeitOverlayActionDialog, useManagedOverlayDialogBinding } from '@veit/react-dialog';
+import { VeitOverlayActionDialog, useManagedOverlayDialogBinding } from '@veit/react-dialog';
 
 import type { VeitPersonRef } from './types.js';
 
@@ -25,7 +25,6 @@ export type VeitPersonPickerDialogProps = {
   excludeUserIds?: ReadonlySet<number>;
   loadCandidates: (query: string) => Promise<VeitPersonRef[]>;
   onConfirm: (selectedIds: number[]) => void | Promise<void>;
-  zIndexBase?: number;
   /** Texte für {@link VeitPersonListRowProfile} in jeder Zeile. */
   personRowLabels: VeitPersonPickerPersonRowLabels;
   renderPersonRow?: (props: {
@@ -90,14 +89,11 @@ export function VeitPersonPickerDialog({
   excludeUserIds,
   loadCandidates,
   onConfirm,
-  zIndexBase: zIndexBaseProp,
   personRowLabels,
   renderPersonRow = defaultRow,
 }: VeitPersonPickerDialogProps) {
   const binding = useManagedOverlayDialogBinding(open, onClose);
   const listId = useId();
-  const nestedZ = useVeitDialogNestedZIndexBase();
-  const zIndexBase = zIndexBaseProp ?? nestedZ ?? 260;
   const radioName = `veit-person-picker-${listId}`;
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);
@@ -157,7 +153,6 @@ export function VeitPersonPickerDialog({
       title={title}
       closeAriaLabel={closeAriaLabel}
       backdropDismissLabel={closeAriaLabel}
-      zIndexBase={zIndexBase}
       variant="centered"
       size="lg"
       className="max-w-lg"

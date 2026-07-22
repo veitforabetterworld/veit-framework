@@ -61,7 +61,6 @@ export function VeitDeleteButton({
           destructive={deleteConfirm.destructive ?? true}
           closeAriaLabel={deleteConfirm.closeAriaLabel}
           backdropDismissLabel={deleteConfirm.backdropDismissLabel}
-          zIndexBase={deleteConfirm.zIndexBase}
           disabled={disabled ?? deleteConfirm.disabled}
           blockBackdropClose={deleteConfirm.blockBackdropClose}
           onConfirm={runAction}

@@ -9,7 +9,6 @@ export type VeitDeleteConfirmConfig = {
   destructive?: boolean;
   closeAriaLabel?: string;
   backdropDismissLabel?: string;
-  zIndexBase?: number;
   disabled?: boolean;
   blockBackdropClose?: boolean;
 };

@@ -90,7 +90,11 @@ Dev mode: unmounting an overlay dialog without `binding.open = false` logs a con
 
 - `useVeitDialogDismiss` — dismiss from nested content
 - `useVeitDialogDismissAfterSave` — programmatic close after save (for `submitFormId` forms)
-- `useVeitDialogNestedZIndexBase` — z-index for nested dialogs
+- `useVeitOverlayLayerZIndex` / `VeitOverlayShell` — automatic z-index for non-dialog full-screen overlays
+
+## Z-index stacking
+
+Each open `VeitDialog` (and `VeitOverlayShell`) acquires the next layer from a global stack (`VEIT_DIALOG_Z_STACK_STEP` = 50, floor 200). No `zIndexBase` prop — open order determines stacking.
 
 ## Unsaved changes
 

@@ -143,7 +143,6 @@ function VeitDialogEditActionsFooterDeleteTrigger({
           destructive={confirm.destructive ?? true}
           closeAriaLabel={confirm.closeAriaLabel}
           backdropDismissLabel={confirm.backdropDismissLabel}
-          zIndexBase={confirm.zIndexBase}
           disabled={mergedDisabled || (confirm.disabled ?? false)}
           blockBackdropClose={confirm.blockBackdropClose}
           onConfirm={runDelete}

@@ -99,7 +99,7 @@ function useVeitDialogSwipeDismissEffect(opts: {
 
     const parseTranslatePx = (): number => {
       const m = /translateY\(([-\d.]+)px\)/.exec(panel.style.transform);
-      return m ? parseFloat(m[1]) : 0;
+      return m?.[1] ? parseFloat(m[1]) : 0;
     };
 
     const resetVelocityTracker = () => {
@@ -179,18 +179,20 @@ function useVeitDialogSwipeDismissEffect(opts: {
     };
 
     const onHeaderStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      startY = e.touches[0].clientY;
-      startX = e.touches[0].clientX;
+      const touch = e.touches[0];
+      if (!touch || e.touches.length !== 1) return;
+      startY = touch.clientY;
+      startX = touch.clientX;
       dragging = false;
       resetVelocityTracker();
     };
 
     const onHeaderMove = (e: TouchEvent) => {
-      if (swipeDisabledRef.current || e.touches.length !== 1) return;
-      const y = e.touches[0].clientY;
+      const touch = e.touches[0];
+      if (swipeDisabledRef.current || !touch || e.touches.length !== 1) return;
+      const y = touch.clientY;
       const dy = y - startY;
-      const dx = e.touches[0].clientX - startX;
+      const dx = touch.clientX - startX;
       if (dy <= 0 || !dominantVertical(dy, dx)) return;
       if (!dragging) {
         dragging = true;
@@ -204,15 +206,17 @@ function useVeitDialogSwipeDismissEffect(opts: {
     };
 
     const onBodyStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      startY = e.touches[0].clientY;
-      startX = e.touches[0].clientX;
+      const touch = e.touches[0];
+      if (!touch || e.touches.length !== 1) return;
+      startY = touch.clientY;
+      startX = touch.clientX;
       dragging = false;
       resetVelocityTracker();
     };
 
     const onBodyMove = (e: TouchEvent) => {
-      if (swipeDisabledRef.current || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      if (swipeDisabledRef.current || !touch || e.touches.length !== 1) return;
       const scr = bodyScrollRef.current;
       const atTop = !scr || scr.scrollTop <= 0;
 
@@ -222,14 +226,14 @@ function useVeitDialogSwipeDismissEffect(opts: {
           dragging = false;
           resetVelocityTracker();
         }
-        startY = e.touches[0].clientY;
-        startX = e.touches[0].clientX;
+        startY = touch.clientY;
+        startX = touch.clientX;
         return;
       }
 
-      const y = e.touches[0].clientY;
+      const y = touch.clientY;
       const dy = y - startY;
-      const dx = e.touches[0].clientX - startX;
+      const dx = touch.clientX - startX;
       if (dy <= 0 || !dominantVertical(dy, dx)) return;
 
       if (!dragging) {

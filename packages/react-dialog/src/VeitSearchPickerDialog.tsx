@@ -31,6 +31,7 @@ export type VeitSearchPickerDialogProps<T> = Readonly<{
   resultsClassName?: string;
   errorClassName?: string;
   emptyClassName?: string;
+  loadingClassName?: string;
   showSearchIcon?: boolean;
   dialogProps?: Partial<
     Pick<
@@ -65,6 +66,7 @@ export function VeitSearchPickerDialog<T>({
   resultsClassName = 'max-h-[min(50vh,20rem)] space-y-1 overflow-y-auto',
   errorClassName = 'text-sm text-destructive',
   emptyClassName = 'text-sm text-muted-foreground',
+  loadingClassName = 'text-sm text-muted-foreground',
   showSearchIcon = true,
   dialogProps,
 }: VeitSearchPickerDialogProps<T>) {
@@ -117,6 +119,7 @@ export function VeitSearchPickerDialog<T>({
         filtersSlot={filtersSlot}
         loading={loading}
         loadingLabel={loadingLabel}
+        loadingClassName={loadingClassName}
         error={error}
         errorClassName={errorClassName}
         empty={showEmpty}

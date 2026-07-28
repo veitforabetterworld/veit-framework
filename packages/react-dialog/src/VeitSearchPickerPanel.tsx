@@ -15,6 +15,7 @@ export type VeitSearchPickerPanelProps<T> = Readonly<{
   filtersSlot?: ReactNode;
   loading?: boolean;
   loadingLabel?: ReactNode;
+  loadingClassName?: string;
   error?: string | null;
   errorClassName?: string;
   empty?: boolean;
@@ -68,6 +69,7 @@ export function VeitSearchPickerPanel<T>({
   filtersSlot,
   loading = false,
   loadingLabel,
+  loadingClassName = 'text-sm text-muted-foreground',
   error = null,
   errorClassName = 'text-sm text-destructive',
   empty = false,
@@ -107,7 +109,7 @@ export function VeitSearchPickerPanel<T>({
       {queryHint}
       {filtersSlot}
       {error ? <p className={errorClassName}>{error}</p> : null}
-      {loading && loadingLabel ? <p className="text-sm text-muted-foreground">{loadingLabel}</p> : null}
+      {loading && loadingLabel ? <p className={loadingClassName}>{loadingLabel}</p> : null}
       {empty && emptyLabel ? <p className={emptyClassName}>{emptyLabel}</p> : null}
       {showResults && !loading && !error && items.length > 0 ? (
         renderResults ? (

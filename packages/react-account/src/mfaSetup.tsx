@@ -1,6 +1,6 @@
 import type { FormEvent, ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { VEIT_SETTINGS_ACTIONS, VEIT_SETTINGS_ACTIONS_ROW } from '@veit/react-controls';
+import { VEIT_SETTINGS_ACTIONS_ROW } from '@veit/react-controls';
 
 export type VeitTotpSetupPanelProps = {
   otpauthUri: string;

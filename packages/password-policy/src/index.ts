@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomInt } from 'node:crypto';
 
 import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
 import { adjacencyGraphs, dictionary } from '@zxcvbn-ts/language-common';
@@ -155,4 +155,47 @@ export async function assertStrongPassword(password: string): Promise<void> {
 /** Test hook: clear in-memory HIBP prefix cache. */
 export function clearPasswordPolicyCachesForTests(): void {
   hibpRangeCache.clear();
+}
+
+export type GenerateSuggestedPassphraseOptions = {
+  /** Lowercase dictionary words to sample from. */
+  dictionary: readonly string[];
+  wordCount?: number;
+  minTotalLength?: number;
+  maxAttempts?: number;
+  minDictionarySize?: number;
+};
+
+/**
+ * Builds a human-readable passphrase from random dictionary words and asserts
+ * it against {@link assertStrongPassword}.
+ */
+export async function generateSuggestedPassphrase(
+  options: GenerateSuggestedPassphraseOptions,
+): Promise<string> {
+  const wordCount = options.wordCount ?? 4;
+  const minTotalLength = options.minTotalLength ?? 10;
+  const maxAttempts = options.maxAttempts ?? 24;
+  const minDictionarySize = options.minDictionarySize ?? 50_000;
+
+  if (options.dictionary.length < minDictionarySize) {
+    throw new Error(
+      `Dictionary too small for password suggestions (${options.dictionary.length} < ${minDictionarySize})`,
+    );
+  }
+
+  const pickWord = (): string => options.dictionary[randomInt(options.dictionary.length)]!;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const password = Array.from({ length: wordCount }, pickWord).join('');
+    if (password.length < minTotalLength) continue;
+    try {
+      await assertStrongPassword(password);
+      return password;
+    } catch {
+      // Retry on policy rejection (very rare with a large dictionary).
+    }
+  }
+
+  throw new PasswordPolicyError('check_unavailable', 500, 'suggest_password_failed');
 }

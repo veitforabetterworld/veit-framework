@@ -26,8 +26,11 @@ Also: `VeitConfirmDialog`, `VeitPromptDialog`, `VeitOptionPickerDialog`.
 ## Edit dialog pattern (required)
 
 ```tsx
-import { useDialogFormBaseline, useManagedOverlayDialog } from '@veit/react-dialog';
-import { OverlayEditDialog } from '@/components/ui/AppDialog';
+import {
+  VeitOverlayEditDialog,
+  useDialogFormBaseline,
+  useManagedOverlayDialog,
+} from '@veit/react-dialog';
 
 const dialog = useManagedOverlayDialog();
 const [draft, setDraft] = useState(initial);
@@ -38,7 +41,7 @@ const { dirty, formBaseline } = useDialogFormBaseline({
   track: dialog.binding.open,
 });
 
-<OverlayEditDialog
+<VeitOverlayEditDialog
   binding={dialog.binding}
   footerProps={{
     busy: saving,
@@ -53,7 +56,7 @@ const { dirty, formBaseline } = useDialogFormBaseline({
   }}
 >
   …
-</OverlayEditDialog>
+</VeitOverlayEditDialog>
 ```
 
 ### Overlay `binding` (required)
@@ -69,7 +72,7 @@ Overlay presets (`VeitOverlayEditDialog`, `VeitOverlayActionDialog`, `VeitOverla
 
 ### Rules
 
-1. **Keep the dialog mounted** — toggle `binding.open` only; never `{open && <OverlayEditDialog …>}`.
+1. **Keep the dialog mounted** — toggle `binding.open` only; never `{open && <VeitOverlayEditDialog …>}`.
 2. **`dirty` + `formBaseline`** — both required in `*EditDialog` `footerProps` (use `useDialogFormBaseline`).
 3. **`onSave` only persists** — do not call `onClose`/`dismiss` in `onSave`; the footer calls `dismissAfterSave` after success.
 4. **`submitFormId` exception** — when using `submitFormId`, the form's `onSubmit` must close the dialog itself (e.g. via `useVeitDialogDismissAfterSave()`), because the footer only calls `requestSubmit()`.

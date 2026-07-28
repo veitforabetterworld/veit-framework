@@ -9,7 +9,7 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 | Paket | Fertiges Modul |
 |-------|----------------|
 | **`@veit/react-dialog`** | Popups: Presets (Entity/Overlay/Sheet/Picker/Wizard), Confirm/Prompt, Unsaved, History-Back, Search-Picker |
-| **`@veit/react-controls`** | Controls + **Form-Primitives** (`VeitField`/`Input`/`Textarea`/`Select`, Dialog-Form-Helfer), Settings-Sections, Choice-Primitives, DataTable, Password, Delete-Button, Person-Rows, Inline-Listen |
+| **`@veit/react-controls`** | Controls + **Form-Primitives**, StatusBadge, EmptyState, PageHeader, ListItem, ResponsiveInlineActionBar, Settings/Choice, DataTable, Password, Delete-Button, Person-Rows |
 | **`@veit/react-auth`** | Login/Register/Reset + `AuthClient` / `ProtectedRoute` |
 | **`@veit/react-account`** | Account-Sections (Profil, Passwort, Sessions, MFA, Löschung) + `AccountClient` |
 | **`@veit/react-auth-group`** | Auth-Gruppen-Editor / Person-Picker |
@@ -19,8 +19,9 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 | **`@veit/react-invite`** | Invite-Einlösung, Invite-Liste, Share-Link-Actions |
 | **`@veit/react-navigation`** | Back-Button / Navigations-Scope |
 | **`@veit/react-dialog-router`** | Deep-Link-Hooks für Entity-Dialoge |
-| **`@veit/node-server`** | Fastify-Bootstrap (`createApp`, Health, `listen`, `HttpError`) |
-| **`@veit/db`** | Postgres-Pool + Drizzle |
+| **`@veit/node-server`** | Fastify-Bootstrap (`createApp`, Health, `listen`, `HttpError`, `publicAppOrigin`) |
+| **`@veit/db`** | Postgres-Pool + Drizzle + `rowsFromExecute` |
+| **`@veit/password-policy`** | Passwort-Stärke (zxcvbn + HIBP), `assertStrongPassword` / `evaluatePasswordSecurity` |
 
 ## Low-Level / Server-Logik (meist nur Backend oder intern)
 
@@ -42,6 +43,7 @@ cd veit-framework
 pnpm install
 pnpm --filter @veit/db build
 pnpm --filter @veit/node-server build
+pnpm --filter @veit/password-policy build
 ```
 
 ## In anderen Repos nutzen

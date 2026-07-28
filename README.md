@@ -9,7 +9,7 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 | Paket | Fertiges Modul |
 |-------|----------------|
 | **`@veit/react-dialog`** | Popups: Presets (Entity/Overlay/Sheet/Picker/Wizard), Confirm/Prompt, Unsaved, History-Back, Search-Picker |
-| **`@veit/react-controls`** | Controls + Settings-Sections, Choice-Primitives, DataTable, Password, Person-Rows, Inline-Listen |
+| **`@veit/react-controls`** | Controls + **Form-Primitives** (`VeitField`/`Input`/`Textarea`/`Select`, Dialog-Form-Helfer), Settings-Sections, Choice-Primitives, DataTable, Password, Delete-Button, Person-Rows, Inline-Listen |
 | **`@veit/react-auth`** | Login/Register/Reset + `AuthClient` / `ProtectedRoute` |
 | **`@veit/react-account`** | Account-Sections (Profil, Passwort, Sessions, MFA, Löschung) + `AccountClient` |
 | **`@veit/react-auth-group`** | Auth-Gruppen-Editor / Person-Picker |

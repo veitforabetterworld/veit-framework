@@ -62,3 +62,28 @@ export {
   type VeitHandwritingStroke,
   type VeitHandwritingPoint,
 } from './VeitHandwritingInput.js';
+export {
+  VeitSettingsSection,
+  VeitSettingsSubsection,
+  VeitSettingsPageGroup,
+  VEIT_SETTINGS_ACTIONS,
+  VEIT_SETTINGS_ACTIONS_ROW,
+  VEIT_SETTINGS_ACTIONS_STACK,
+  VEIT_SETTINGS_ACTIONS_ITEM,
+  type VeitSettingsSectionProps,
+  type VeitSettingsSubsectionProps,
+  type VeitSettingsPageGroupProps,
+} from './VeitSettingsSection.js';
+export {
+  choiceButtonClass,
+  ChoiceButtonGroup,
+  ChoiceButton,
+  pickerChoiceRowClass,
+  PickerChoiceRow,
+  wizardChoiceTileClassFor,
+  WizardChoiceTile,
+  SettingsActionRow,
+  InboxListItem,
+  type ChoiceButtonVariant,
+  type PickerChoiceRowVariant,
+} from './VeitChoicePrimitives.js';

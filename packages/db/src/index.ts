@@ -25,3 +25,12 @@ export function createDrizzle<TSchema extends Record<string, unknown>>(
 ) {
   return drizzle(pool, { schema });
 }
+
+/** Drizzle `db.execute(sql\`...\`)` liefert driverabhängig `{ rows: T[] }`. */
+export function rowsFromExecute<R>(result: unknown): R[] {
+  if (typeof result !== 'object' || result === null || !('rows' in result)) {
+    return [];
+  }
+  const { rows } = result as { rows?: unknown };
+  return Array.isArray(rows) ? (rows as R[]) : [];
+}

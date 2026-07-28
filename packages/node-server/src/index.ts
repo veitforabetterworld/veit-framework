@@ -13,6 +13,10 @@ export {
   internalError,
   toRouteError,
 } from './http-error.js';
+export {
+  publicAppOrigin,
+  type PublicAppOriginOptions,
+} from './public-origin.js';
 
 export type CreateAppOptions = {
   /**

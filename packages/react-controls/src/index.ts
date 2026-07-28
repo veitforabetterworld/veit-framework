@@ -141,3 +141,48 @@ export {
   type VeitDialogDashedCtaProps,
   type VeitDialogStickyActionsProps,
 } from './VeitFormPrimitives.js';
+export {
+  VeitStatusBadge,
+  type VeitStatusBadgeProps,
+  type VeitStatusBadgeVariant,
+} from './VeitStatusBadge.js';
+export {
+  VeitEmptyState,
+  type VeitEmptyStateProps,
+} from './VeitEmptyState.js';
+export {
+  VeitPageHeader,
+  type VeitPageHeaderProps,
+} from './VeitPageHeader.js';
+export {
+  VeitList,
+  VeitListItem,
+  type VeitListItemProps,
+} from './VeitListItem.js';
+export {
+  VeitResponsiveInlineActionBar,
+  type VeitResponsiveInlineActionBarProps,
+} from './VeitResponsiveInlineActionBar.js';
+export {
+  VeitInlineActionLayoutProvider,
+  useVeitInlineActionLayout,
+} from './VeitInlineActionLayoutContext.js';
+export {
+  VeitInlineActionMenuProvider,
+  useVeitInlineActionMenu,
+  VeitInlineActionMenuOnly,
+  VeitInlineActionInlineOnly,
+  type VeitInlineActionSurface,
+} from './VeitInlineActionMenuContext.js';
+export {
+  HEADER_LAYOUT_SAFETY_PX,
+  HEADER_LABEL_HYSTERESIS_PX,
+  measureEndContentWidth,
+  rowGapPx,
+  rowFixedOccupiedWidth,
+  resolveShowInlineLabels,
+  resolveNeedsMenuBySpace,
+  siblingOccupiedWidth,
+  stableLeadingWidth,
+  resetHeaderLayoutMeasureRefs,
+} from './veitInlineActionBarMeasure.js';

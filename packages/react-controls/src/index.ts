@@ -186,3 +186,4 @@ export {
   stableLeadingWidth,
   resetHeaderLayoutMeasureRefs,
 } from './veitInlineActionBarMeasure.js';
+export { useVeitMediaQuery, useMediaQuery } from './useVeitMediaQuery.js';

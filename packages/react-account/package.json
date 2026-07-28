@@ -12,10 +12,15 @@
   },
   "peerDependencies": {
     "@veit/react-controls": "workspace:*",
+    "qrcode.react": ">=3.0.0",
     "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "qrcode.react": { "optional": true }
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.8",
     "@veit/react-controls": "workspace:*",
     "typescript": "^5.7.2"

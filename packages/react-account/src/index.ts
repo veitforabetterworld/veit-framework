@@ -9,3 +9,11 @@ export {
   VeitAccountDeletionSection,
   veitAccountChangePassword,
 } from './sections.js';
+export {
+  VeitTotpSetupPanel,
+  VeitEmailMfaSetupPanel,
+  VeitMfaSetupStartActions,
+  type VeitTotpSetupPanelProps,
+  type VeitEmailMfaSetupPanelProps,
+  type VeitMfaSetupStartActionsProps,
+} from './mfaSetup.js';

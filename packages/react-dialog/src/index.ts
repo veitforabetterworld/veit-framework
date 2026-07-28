@@ -89,3 +89,20 @@ export {
   type ManagedOverlayDialog,
   type ManagedOverlayDialogBinding,
 } from './managedOverlayDialog.js';
+export { useDebouncedValue } from './useDebouncedValue.js';
+export {
+  useVeitSearchPickerQuery,
+  VEIT_SEARCH_DEBOUNCE_MS,
+  type UseVeitSearchPickerQueryArgs,
+  type UseVeitSearchPickerQueryResult,
+} from './useVeitSearchPickerQuery.js';
+export {
+  VeitSearchPickerPanel,
+  renderVeitPickerChoiceRow,
+  veitSearchInputClass,
+  type VeitSearchPickerPanelProps,
+} from './VeitSearchPickerPanel.js';
+export {
+  VeitSearchPickerDialog,
+  type VeitSearchPickerDialogProps,
+} from './VeitSearchPickerDialog.js';

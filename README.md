@@ -54,6 +54,10 @@ pnpm --filter @veit/intl build
    `veit-framework/packages/*`.
 3. In `package.json`: `"@veit/react-dialog": "workspace:*"` (usw.).
 4. Vite/TS-Aliases auf `veit-framework/packages/*/src/index.ts` (siehe Plenivo).
+5. **React-Singleton (Pflicht bei Source-Aliases):** Host pinnt eine React-18-Linie und eine `react-router-dom`-Kopie — sonst entstehen doppelte Router-Contexts (`useLocation` außerhalb von `<Router>`). Empfohlen:
+   - `pnpm.overrides` für `react` / `react-dom` / `react-router` / `react-router-dom`
+   - Vite `resolve.dedupe` + absolute Aliases auf die Host-`node_modules`-Kopien
+   - Framework-`devDependencies` nutzen React **18** (Peers bleiben `>=18`)
 
 ## Styling
 

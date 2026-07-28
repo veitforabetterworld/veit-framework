@@ -106,3 +106,7 @@ export {
   VeitSearchPickerDialog,
   type VeitSearchPickerDialogProps,
 } from './VeitSearchPickerDialog.js';
+export {
+  VeitLanguagePickerDialog,
+  type VeitLanguagePickerDialogProps,
+} from './VeitLanguagePickerDialog.js';

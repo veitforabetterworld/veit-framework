@@ -8,10 +8,10 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 
 | Paket | Fertiges Modul |
 |-------|----------------|
-| **`@veit/react-dialog`** | Popups: Presets (Entity/Overlay/Sheet/Picker/Wizard), Confirm/Prompt, Unsaved, History-Back, Search-Picker |
-| **`@veit/react-controls`** | Controls + **Form-Primitives**, StatusBadge, EmptyState, PageHeader, ListItem, ResponsiveInlineActionBar, Settings/Choice, DataTable, Password, Delete-Button, Person-Rows |
+| **`@veit/react-dialog`** | Popups: Presets, Confirm/Prompt, Search-Picker, **LanguagePicker**, `VeitOverlayShell` (inkl. Loading) |
+| **`@veit/react-controls`** | Controls + Form-Primitives, StatusBadge, EmptyState, PageHeader, ListItem, ResponsiveInlineActionBar, DataTable, Password, Delete-Button, Person-Rows, **`useVeitMediaQuery`** |
 | **`@veit/react-auth`** | Login/Register/Reset + `AuthClient` / `ProtectedRoute` |
-| **`@veit/react-account`** | Account-Sections (Profil, Passwort, Sessions, MFA, Löschung) + `AccountClient` |
+| **`@veit/react-account`** | Account-Sections (Profil, Passwort, Sessions, MFA inkl. **TOTP/E-Mail-Setup**, Löschung) + `AccountClient` |
 | **`@veit/react-auth-group`** | Auth-Gruppen-Editor / Person-Picker |
 | **`@veit/react-field-tags`** | Tag-Editor, Picker, Filter-Bar |
 | **`@veit/react-upload`** | Image-Picker / Upload |
@@ -29,7 +29,7 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 |-------|--------|
 | **`@veit/address`** | Adress-Typen, Nominatim-Suche |
 | **`@veit/field-tags`** | Tag-Baum-Logik (ohne UI) |
-| **`@veit/intl`** | Locale-/Zahlen-/Geld-Formatierung |
+| **`@veit/intl`** | Locale-/Zahlen-/Geld-Formatierung + **Sprach-Anzeigenamen** (`uiLanguageAutonym` / `uiLanguageDisplayName`) |
 | **`@veit/tesseract-ocr`** | Tesseract.js für Node |
 | **`@veit/react-dnd`** | DnD-Kit-Abstraktionen (Primitiv-Kit) |
 
@@ -44,6 +44,7 @@ pnpm install
 pnpm --filter @veit/db build
 pnpm --filter @veit/node-server build
 pnpm --filter @veit/password-policy build
+pnpm --filter @veit/intl build
 ```
 
 ## In anderen Repos nutzen

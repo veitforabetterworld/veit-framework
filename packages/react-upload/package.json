@@ -17,11 +17,12 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "@veit/react-dialog": "workspace:*",
     "lucide-react": "^0.454.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "typescript": "^5.7.2"
   }
 }

@@ -9,7 +9,7 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 | Paket | Fertiges Modul |
 |-------|----------------|
 | **`@veit/react-dialog`** | Popups: Presets, Confirm/Prompt, Search-Picker, **LanguagePicker**, `VeitOverlayShell` (inkl. Loading) |
-| **`@veit/react-controls`** | Controls + Form-Primitives, StatusBadge, EmptyState, PageHeader, ListItem, ResponsiveInlineActionBar, DataTable, Password, Delete-Button, Person-Rows, **`useVeitMediaQuery`** |
+| **`@veit/react-controls`** | Controls + Form-Primitives, StatusBadge, EmptyState, PageHeader, ProgressBar/PanelCard, ListItem, ResponsiveInlineActionBar, DataTable, Password, Delete-Button, Person-Rows, **`useVeitMediaQuery`** |
 | **`@veit/react-auth`** | Login/Register/Reset + `AuthClient` / `ProtectedRoute` |
 | **`@veit/react-account`** | Account-Sections (Profil, Passwort, Sessions, MFA inkl. **TOTP/E-Mail-Setup**, Löschung) + `AccountClient` |
 | **`@veit/react-auth-group`** | Auth-Gruppen-Editor / Person-Picker |
@@ -19,9 +19,9 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 | **`@veit/react-invite`** | Invite-Einlösung, Invite-Liste, Share-Link-Actions |
 | **`@veit/react-navigation`** | Back-Button / Navigations-Scope |
 | **`@veit/react-dialog-router`** | Deep-Link-Hooks für Entity-Dialoge |
-| **`@veit/node-server`** | Fastify-Bootstrap (`createApp`, Health, `listen`, `HttpError`, `publicAppOrigin`) |
+| **`@veit/password-policy`** | Passwort-Stärke (zxcvbn + HIBP), `assertStrongPassword` / `evaluatePasswordSecurity` / `generateSuggestedPassphrase` |
+| **`@veit/node-server`** | Fastify-Bootstrap (`createApp`, Health, `listen`, `HttpError`, `publicAppOrigin`, `publicOriginFromHost`) |
 | **`@veit/db`** | Postgres-Pool + Drizzle + `rowsFromExecute` |
-| **`@veit/password-policy`** | Passwort-Stärke (zxcvbn + HIBP), `assertStrongPassword` / `evaluatePasswordSecurity` |
 
 ## Low-Level / Server-Logik (meist nur Backend oder intern)
 
@@ -58,3 +58,11 @@ pnpm --filter @veit/intl build
 ## Styling
 
 React-Pakete nutzen Tailwind-orientierte Klassen (`btn-primary`, `card`, `input`, Utility-Klassen). Host-Apps mappen Design-Tokens darauf (wie Plenivo) bzw. stellen eine Kompatibilitäts-CSS-Schicht bereit (wie ScanGut).
+
+## Host-Integration (Wrapper-Regel)
+
+1. **Generische UI/Server-Logik zuerst ins Framework** — nicht parallel in Plenivo und ScanGut duplizieren.
+2. **Host-Dateien sind Adapter:** i18n, Branding, Env, API-Client, `bemPrefix` / Token-CSS. Keine zweite Implementierung neben einem Framework-Export.
+3. **Domain bleibt im Host:** Billing, Kanban, Shop-Flows, Push/Firebase-Produktlogik usw.
+4. **SiteShell-Chrome** (App-Header mit Branding/Navigation) bleibt host-spezifisch; nur Measure/Inline-Action-Primitives liegen im Framework (`@veit/react-controls`).
+5. Branches: `deploy` ist Integrationsbranch; nach stabilen Modul-Wellen nach `development` mergen (beide Hosts pinnen denselben Tip).

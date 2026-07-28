@@ -35,3 +35,12 @@ export function publicAppOrigin(req: FastifyRequest, options: PublicAppOriginOpt
   }
   return options.fallback.replace(/\/$/, '');
 }
+
+/**
+ * Normalize a configured public host (with or without scheme) to an https origin.
+ * Use when the public URL comes from config rather than the current request.
+ */
+export function publicOriginFromHost(publicHost: string, scheme = 'https'): string {
+  const host = publicHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  return `${scheme}://${host}`;
+}

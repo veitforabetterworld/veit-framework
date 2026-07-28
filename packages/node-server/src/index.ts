@@ -15,6 +15,7 @@ export {
 } from './http-error.js';
 export {
   publicAppOrigin,
+  publicOriginFromHost,
   type PublicAppOriginOptions,
 } from './public-origin.js';
 

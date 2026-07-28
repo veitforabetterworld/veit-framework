@@ -155,6 +155,14 @@ export {
   type VeitPageHeaderProps,
 } from './VeitPageHeader.js';
 export {
+  VeitProgressBar,
+  VeitPanelCard,
+  veitProgressBarTrackClass,
+  veitProgressBarFillClass,
+  type VeitProgressBarProps,
+  type VeitPanelCardProps,
+} from './VeitProgressBar.js';
+export {
   VeitList,
   VeitListItem,
   type VeitListItemProps,

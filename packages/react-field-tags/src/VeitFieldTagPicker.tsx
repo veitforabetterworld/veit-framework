@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { Check, Pencil, Plus } from 'lucide-react';
 import {
   buildTagPickerOptions,
@@ -45,7 +45,6 @@ export function VeitFieldTagPicker({
   renderTagManager,
 }: VeitFieldTagPickerProps) {
   const listboxId = useId();
-  const inputRef = useRef<HTMLInputElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [highlight, setHighlight] = useState(0);
@@ -73,12 +72,6 @@ export function VeitFieldTagPicker({
     if (disabled) return;
     setDialogOpen(true);
   }, [disabled]);
-
-  useEffect(() => {
-    if (!dialogOpen) return;
-    const id = window.requestAnimationFrame(() => inputRef.current?.focus());
-    return () => window.cancelAnimationFrame(id);
-  }, [dialogOpen]);
 
   useEffect(() => {
     setHighlight((i) => (filtered.length === 0 ? 0 : Math.min(i, filtered.length - 1)));
@@ -187,7 +180,6 @@ export function VeitFieldTagPicker({
               </button>
             ) : null}
             <input
-              ref={inputRef}
               type="search"
               className="input"
               value={query}

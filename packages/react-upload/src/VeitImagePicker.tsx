@@ -8,9 +8,8 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { ImageUp, Loader2, Trash2, X } from 'lucide-react';
-import { VeitConfirmDialog } from '@veit/react-dialog';
+import { VeitConfirmDialog, useVeitOverlayLayer } from '@veit/react-dialog';
 
-const Z_LIGHTBOX = 12000;
 const Z_PICK_MENU = 12100;
 
 export type VeitImagePickerShape = 'circle' | 'rounded';
@@ -110,6 +109,7 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
   const fileGalleryRef = useRef<HTMLInputElement>(null);
   const fileCameraRef = useRef<HTMLInputElement>(null);
   const pickWrapRef = useRef<HTMLDivElement>(null);
+  const previewLayerZ = useVeitOverlayLayer(previewOpen);
 
   useEffect(() => {
     if (!previewOpen) {
@@ -338,7 +338,7 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
         ? createPortal(
             <div
               className="fixed inset-0 flex items-center justify-center bg-black/75 p-4"
-              style={{ zIndex: Z_LIGHTBOX }}
+              style={{ zIndex: previewLayerZ }}
               role="dialog"
               aria-modal="true"
               aria-label={editable ? strings?.closeLightbox : viewOpenLabel}
@@ -365,31 +365,15 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
                       <ImageUp className="h-5 w-5" strokeWidth={2} aria-hidden />
                     </button>
                     {overlayDeleteConfirm ? (
-                      <>
-                        <button
-                          type="button"
-                          className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/35 bg-red-600/90 text-white shadow-lg hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-                          aria-label={strings.deleteSr}
-                          title={strings.deleteSr}
-                          onClick={() => setDeleteConfirmOpen(true)}
-                        >
-                          <Trash2 className="h-5 w-5" strokeWidth={2} aria-hidden />
-                        </button>
-                        <VeitConfirmDialog
-                          open={deleteConfirmOpen}
-                          onClose={() => setDeleteConfirmOpen(false)}
-                          title={overlayDeleteConfirm.title}
-                          message={overlayDeleteConfirm.message}
-                          confirmLabel={overlayDeleteConfirm.confirmLabel}
-                          cancelLabel={overlayDeleteConfirm.cancelLabel}
-                          destructive
-                          closeAriaLabel={overlayDeleteConfirm.closeAriaLabel}
-                          backdropDismissLabel={overlayDeleteConfirm.backdropDismissLabel}
-                          disabled={disabled || overlayDeleteConfirm.disabled}
-                          blockBackdropClose={overlayDeleteConfirm.blockBackdropClose}
-                          onConfirm={() => void runRemove()}
-                        />
-                      </>
+                      <button
+                        type="button"
+                        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/35 bg-red-600/90 text-white shadow-lg hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                        aria-label={strings.deleteSr}
+                        title={strings.deleteSr}
+                        onClick={() => setDeleteConfirmOpen(true)}
+                      >
+                        <Trash2 className="h-5 w-5" strokeWidth={2} aria-hidden />
+                      </button>
                     ) : (
                       <button
                         type="button"
@@ -416,6 +400,23 @@ export function VeitImagePicker(props: VeitImagePickerProps) {
             document.body,
           )
         : null}
+
+      {editable && overlayDeleteConfirm && deleteConfirmOpen ? (
+        <VeitConfirmDialog
+          open={deleteConfirmOpen}
+          onClose={() => setDeleteConfirmOpen(false)}
+          title={overlayDeleteConfirm.title}
+          message={overlayDeleteConfirm.message}
+          confirmLabel={overlayDeleteConfirm.confirmLabel}
+          cancelLabel={overlayDeleteConfirm.cancelLabel}
+          destructive
+          closeAriaLabel={overlayDeleteConfirm.closeAriaLabel}
+          backdropDismissLabel={overlayDeleteConfirm.backdropDismissLabel}
+          disabled={disabled || overlayDeleteConfirm.disabled}
+          blockBackdropClose={overlayDeleteConfirm.blockBackdropClose}
+          onConfirm={() => void runRemove()}
+        />
+      ) : null}
     </div>
   );
 }

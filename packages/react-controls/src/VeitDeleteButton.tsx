@@ -1,6 +1,7 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Trash2 } from 'lucide-react';
 import { VeitConfirmDialog, type VeitDeleteConfirmConfig } from '@veit/react-dialog';
+import { VEIT_DELETE_ICON_BUTTON_CLASS } from './VeitFormPrimitives.js';
 
 export type { VeitDeleteConfirmConfig };
 
@@ -30,10 +31,13 @@ export function VeitDeleteButton({
     );
   };
 
+  const isIconOnly = className.includes(VEIT_DELETE_ICON_BUTTON_CLASS);
+  const sizeClass = isIconOnly ? '' : 'min-h-[2.5rem]';
+
   return (
     <>
       <button
-        className={`inline-flex min-h-[2.5rem] items-center justify-center gap-2 btn-destructive ${className}`.trim()}
+        className={`inline-flex ${sizeClass} items-center justify-center gap-2 btn-destructive ${className}`.trim()}
         disabled={disabled}
         onClick={
           deleteConfirm

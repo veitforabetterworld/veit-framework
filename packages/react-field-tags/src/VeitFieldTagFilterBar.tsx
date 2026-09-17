@@ -34,7 +34,7 @@ export function VeitFieldTagFilterBar({
   if (options.length === 0) return null;
 
   return (
-    <div className={`rounded-xl border border-border/60 bg-card p-3 ${className}`.trim()}>
+    <div className={`rounded-xl border border-border/60 bg-surface p-3 ${className}`.trim()}>
       <div className="mb-2 flex items-center gap-2">
         <Filter className="h-4 w-4 shrink-0 text-primary" aria-hidden />
         <span className="text-sm font-medium">{title}</span>
@@ -64,24 +64,21 @@ export function VeitFieldTagFilterBar({
           {allLabel}
         </button>
         {options.map((opt) => {
-          const on = value === opt.id;
+          const active = value === opt.id;
+          const color = tagColor({ hex_color: opt.hex_color });
           return (
             <button
               key={opt.id}
               type="button"
               disabled={disabled}
               title={opt.path}
-              className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                on
-                  ? 'border-transparent font-medium text-white shadow-sm'
-                  : 'border-border/70 bg-background text-foreground hover:border-border'
-              }`}
-              style={
-                on
-                  ? { backgroundColor: tagColor({ hex_color: opt.hex_color }) }
-                  : undefined
+              className={
+                active
+                  ? 'rounded-full border border-transparent px-2.5 py-1 text-xs font-medium text-white shadow-sm transition-colors'
+                  : 'rounded-full border-2 bg-background px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-muted/30'
               }
-              onClick={() => onChange(on ? null : opt.id)}
+              style={active ? { backgroundColor: color } : { borderColor: color }}
+              onClick={() => onChange(active ? null : opt.id)}
             >
               <span className={opt.depth > 0 ? 'opacity-90' : undefined}>{opt.path}</span>
             </button>

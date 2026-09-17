@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { GripVertical, Plus } from 'lucide-react';
 import {
   buildTagChildrenMap,
@@ -13,7 +13,7 @@ import {
   tagTreeMoveUnchanged,
   type FieldTag,
 } from '@veit/field-tags';
-import { VeitDeleteButton, VeitInlineListRowFrame, veitInlineEditableListRowClass } from '@veit/react-controls';
+import { VeitDeleteIconButton, VeitInlineListRowFrame, veitInlineEditableListRowClass } from '@veit/react-controls';
 import {
   type DragEndEvent,
   useVeitDndSensors,
@@ -39,8 +39,6 @@ type NestedTreeProps = {
   defaultHex?: string;
   strings: VeitFieldTagListStrings;
   deleteConfirm: (item: NestedTagDraft) => VeitDeleteConfirmConfig;
-  deleteButtonClassName?: string;
-  deleteButtonLabel: ReactNode;
 };
 
 function applySiblingOrder(
@@ -67,8 +65,6 @@ function NestedTagRow({
   sortDisabled,
   strings,
   deleteConfirm,
-  deleteButtonClassName,
-  deleteButtonLabel,
   onRename,
   onColorChange,
   onDelete,
@@ -79,8 +75,6 @@ function NestedTagRow({
   sortDisabled: boolean;
   strings: VeitFieldTagListStrings;
   deleteConfirm: (item: NestedTagDraft) => VeitDeleteConfirmConfig;
-  deleteButtonClassName?: string;
-  deleteButtonLabel: ReactNode;
   onRename: (tagId: number, name: string) => void;
   onColorChange: (tagId: number, hexColor: string) => void;
   onDelete: (tagId: number) => void;
@@ -88,14 +82,13 @@ function NestedTagRow({
 }) {
   const hex = tag.hex_color?.trim() || tagColorHexForIndex(colorIndex);
   const deleteBtn = (
-    <VeitDeleteButton
-      className={deleteButtonClassName ?? 'h-9 w-9 shrink-0 self-end p-0 sm:self-center'}
+    <VeitDeleteIconButton
+      className="self-end sm:self-center"
+      label={strings.deleteRowSrLabel}
       disabled={sortDisabled}
       deleteConfirm={deleteConfirm(tag)}
       onClick={() => onDelete(tag.id)}
-    >
-      {deleteButtonLabel}
-    </VeitDeleteButton>
+    />
   );
 
   const rowFields = (
@@ -177,8 +170,6 @@ function TagSiblingList({
   dragOverZoneId,
   strings,
   deleteConfirm,
-  deleteButtonClassName,
-  deleteButtonLabel,
 }: {
   byParent: Map<number | null, FieldTag[]>;
   parentId: number | null;
@@ -193,8 +184,6 @@ function TagSiblingList({
   dragOverZoneId: string | null;
   strings: VeitFieldTagListStrings;
   deleteConfirm: (item: NestedTagDraft) => VeitDeleteConfirmConfig;
-  deleteButtonClassName?: string;
-  deleteButtonLabel: ReactNode;
 }) {
   const nodes = byParent.get(parentId) ?? [];
   const colorIndexById = useMemo(() => buildTagColorIndexMap(rows), [rows]);
@@ -294,8 +283,6 @@ function TagSiblingList({
                 sortDisabled={sortDisabled}
                 strings={strings}
                 deleteConfirm={deleteConfirm}
-                deleteButtonClassName={deleteButtonClassName}
-                deleteButtonLabel={deleteButtonLabel}
                 onRename={renameTag}
                 onColorChange={updateTagColor}
                 onDelete={deleteTag}
@@ -319,8 +306,6 @@ function TagSiblingList({
                 dragOverZoneId={dragOverZoneId}
                 strings={strings}
                 deleteConfirm={deleteConfirm}
-                deleteButtonClassName={deleteButtonClassName}
-                deleteButtonLabel={deleteButtonLabel}
               />
             </li>
           ))}
@@ -359,8 +344,6 @@ export function VeitFieldTagNestedListEditor({
   defaultHex,
   strings,
   deleteConfirm,
-  deleteButtonClassName,
-  deleteButtonLabel,
 }: NestedTreeProps) {
   const [dndBusy, setDndBusy] = useState(false);
   const [activeDragId, setActiveDragId] = useState<number | null>(null);
@@ -432,8 +415,6 @@ export function VeitFieldTagNestedListEditor({
         dragOverZoneId={dragOverZoneId}
         strings={strings}
         deleteConfirm={deleteConfirm}
-        deleteButtonClassName={deleteButtonClassName}
-        deleteButtonLabel={deleteButtonLabel}
       />
     </VeitDndContext>
   );

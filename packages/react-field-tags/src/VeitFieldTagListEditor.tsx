@@ -34,8 +34,6 @@ export type VeitFieldTagListEditorProps =
       defaultHex?: string;
       strings: VeitFieldTagListStrings;
       deleteConfirm: (item: NestedTagDraft) => VeitDeleteConfirmConfig;
-      deleteButtonClassName?: string;
-      deleteButtonLabel: React.ReactNode;
     };
 
 export function VeitFieldTagListEditor(props: VeitFieldTagListEditorProps) {
@@ -49,8 +47,6 @@ export function VeitFieldTagListEditor(props: VeitFieldTagListEditorProps) {
         defaultHex={props.defaultHex}
         strings={props.strings}
         deleteConfirm={props.deleteConfirm}
-        deleteButtonClassName={props.deleteButtonClassName}
-        deleteButtonLabel={props.deleteButtonLabel}
       />
     );
   }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pencil } from 'lucide-react';
 import type { FieldDef } from '@veit/field-tags';
-import { VeitDeleteButton, VeitSettingsToggleRow } from '@veit/react-controls';
+import { VeitDeleteIconButton, VeitSettingsToggleRow } from '@veit/react-controls';
 
 import type { VeitFieldTagFieldsStrings } from './types.js';
 
@@ -10,8 +10,6 @@ export type VeitFieldTagFieldsEditorProps = {
   disabled?: boolean;
   busy?: boolean;
   strings: VeitFieldTagFieldsStrings;
-  deleteButtonClassName?: string;
-  deleteButtonLabel: React.ReactNode;
   newFieldName: string;
   onNewFieldNameChange: (value: string) => void;
   onAddField: () => void | Promise<void>;
@@ -33,8 +31,6 @@ export function VeitFieldTagFieldsEditor({
   disabled,
   busy,
   strings,
-  deleteButtonClassName,
-  deleteButtonLabel,
   newFieldName,
   onNewFieldNameChange,
   onAddField,
@@ -108,8 +104,8 @@ export function VeitFieldTagFieldsEditor({
                   {strings.tagEditButton}
                 </button>
                 {field.system_key == null ? (
-                  <VeitDeleteButton
-                    className={deleteButtonClassName}
+                  <VeitDeleteIconButton
+                    label={strings.delete}
                     disabled={disabled || busy}
                     deleteConfirm={{
                       title: strings.fieldDeleteConfirmTitle,
@@ -119,9 +115,7 @@ export function VeitFieldTagFieldsEditor({
                       destructive: true,
                     }}
                     onClick={() => void onDeleteField(field.id)}
-                  >
-                    {deleteButtonLabel}
-                  </VeitDeleteButton>
+                  />
                 ) : null}
               </div>
               {field.system_key == null ? (

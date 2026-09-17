@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import { Trash2 } from 'lucide-react';
-import { VeitDeleteButton, VeitPersonListRowProfile, type VeitDeleteConfirmConfig } from '@veit/react-controls';
+import { VeitDeleteIconButton, VeitPersonListRowProfile, type VeitDeleteConfirmConfig } from '@veit/react-controls';
 
 import type { VeitPersonRef } from './types.js';
 
@@ -64,17 +63,13 @@ export function VeitPersonRefRowList({
               closeAriaLabel={rowLabels.closeAriaLabel}
             />
             {onRemove && !removeHidden?.(p.id) ? (
-              <VeitDeleteButton
+              <VeitDeleteIconButton
+                className="shrink-0"
+                label={removePersonAria}
                 deleteConfirm={removeConfirm}
                 disabled={disabled}
-                aria-label={removePersonAria || undefined}
-                title={removePersonAria || undefined}
                 onClick={() => onRemove(p.id)}
-                icon={<Trash2 className="h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />}
-                className="!h-10 !min-h-10 !w-10 !min-w-10 shrink-0 !gap-0 !px-0 !py-0 rounded-xl shadow-sm disabled:pointer-events-none disabled:opacity-40"
-              >
-                {removePersonAria ? <span className="sr-only">{removePersonAria}</span> : null}
-              </VeitDeleteButton>
+              />
             ) : null}
           </li>
         ))}

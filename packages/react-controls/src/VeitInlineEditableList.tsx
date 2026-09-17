@@ -26,7 +26,7 @@ import {
 } from '@veit/react-dnd';
 import { GripVertical, Plus } from 'lucide-react';
 import type { VeitDeleteConfirmConfig } from '@veit/react-dialog';
-import { VeitDeleteButton } from './VeitDeleteButton.js';
+import { VeitDeleteIconButton } from './VeitDeleteIconButton.js';
 import { VeitSwitch } from './VeitSwitch.js';
 
 /** Gemeinsame Zeilenoptik (inline bearbeitbare Listen, z. B. Typwerte, Labels). */
@@ -469,14 +469,13 @@ export function VeitInlineEditableList<T extends { id: string | number }>(props:
     typeof deleteConfirm === 'function' ? deleteConfirm(item) : deleteConfirm;
 
   const deleteBtn = (item: T) => (
-    <VeitDeleteButton
-      className="h-9 w-9 shrink-0 self-end p-0 sm:self-center"
+    <VeitDeleteIconButton
+      className="shrink-0 self-end sm:self-center"
+      label={strings.deleteRowSrLabel}
       disabled={disabled || !canWrite}
       deleteConfirm={resolveDeleteCfg(item)}
       onClick={() => void Promise.resolve(onDeleteRow(item))}
-    >
-      <span className="sr-only">{strings.deleteRowSrLabel}</span>
-    </VeitDeleteButton>
+    />
   );
 
   const empty = items.length === 0 && strings.emptyHint != null && strings.emptyHint !== '';

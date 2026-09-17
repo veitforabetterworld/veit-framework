@@ -18,6 +18,7 @@ export {
 export { VeitDataTableHeaderCell, type VeitDataTableHeaderCellProps } from './VeitDataTableHeaderCell.js';
 export { veitTableHeaderIconBtn, veitTableHeaderIconBtnActive } from './veitTableStyles.js';
 export { VeitDeleteButton, type VeitDeleteButtonProps } from './VeitDeleteButton.js';
+export { VeitDeleteIconButton, type VeitDeleteIconButtonProps } from './VeitDeleteIconButton.js';
 export {
   VeitPasswordField,
   veitPasswordToggleButtonClass,

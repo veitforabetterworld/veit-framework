@@ -47,8 +47,6 @@ export type VeitFieldTagEditDialogProps =
       defaultHex?: string;
       strings: VeitFieldTagListStrings & VeitFieldTagEditDialogStrings;
       deleteConfirm: (item: NestedTagDraft) => VeitDeleteConfirmConfig;
-      deleteButtonClassName?: string;
-      deleteButtonLabel: React.ReactNode;
       unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
     };
 
@@ -213,8 +211,6 @@ export function VeitFieldTagEditDialog(props: VeitFieldTagEditDialogProps) {
               defaultHex={props.defaultHex}
               strings={props.strings}
               deleteConfirm={props.deleteConfirm}
-              deleteButtonClassName={props.deleteButtonClassName}
-              deleteButtonLabel={props.deleteButtonLabel}
             />
           ) : (
             <VeitFieldTagListEditor

@@ -19,6 +19,11 @@ export function tagIdFromTableColumnFilter(raw: string): number | null {
   return first != null && Number.isFinite(first) ? first : null;
 }
 
+/** Toggle a single-tag filter (same id again clears). */
+export function toggleTagFilterId(current: number | null, tagId: number): number | null {
+  return current === tagId ? null : tagId;
+}
+
 export function setTableColumnTagFilter(
   columnFilters: Record<string, string>,
   columnId: string,

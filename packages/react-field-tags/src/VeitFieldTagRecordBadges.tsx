@@ -16,6 +16,9 @@ export type VeitFieldTagRecordBadgesProps = {
   className?: string;
   badgeClassName?: string;
   empty?: ReactNode;
+  /** Apply tag filter when a badge is clicked. */
+  onTagClick?: (tagId: number) => void;
+  filterByTagAriaLabel?: (tagName: string) => string;
 };
 
 /**
@@ -30,6 +33,8 @@ export function VeitFieldTagRecordBadges({
   className = 'flex flex-wrap gap-1',
   badgeClassName,
   empty = null,
+  onTagClick,
+  filterByTagAriaLabel,
 }: VeitFieldTagRecordBadgesProps) {
   const tags =
     storedTags != null
@@ -49,6 +54,8 @@ export function VeitFieldTagRecordBadges({
           hex_color={tag.hex_color}
           className={badgeClassName}
           title={tag.name}
+          onClick={onTagClick ? () => onTagClick(tag.id) : undefined}
+          filterAriaLabel={filterByTagAriaLabel?.(tag.name)}
         />
       ))}
     </div>

@@ -41,4 +41,5 @@ export {
   serializeTableMultiFilter,
   setTableColumnTagFilter,
   tagIdFromTableColumnFilter,
+  toggleTagFilterId,
 } from './tableFilter.js';

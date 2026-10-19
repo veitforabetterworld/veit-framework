@@ -1,9 +1,10 @@
+import { ChevronDown } from 'lucide-react';
+import * as Select from '@radix-ui/react-select';
 import {
   forwardRef,
   useId,
   type InputHTMLAttributes,
   type ReactNode,
-  type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
   type ButtonHTMLAttributes,
 } from 'react';
@@ -14,43 +15,27 @@ import {
 
 /** Haupt-Stack für Formulare in Detail-Dialogen. */
 export const veitDialogFormStackClass = 'space-y-4';
-/** @deprecated Alias — use {@link veitDialogFormStackClass} */
-export const dialogDetailFormStackClass = veitDialogFormStackClass;
 
 export const veitInputClass = 'input min-h-[44px] w-full text-base sm:text-sm';
-/** @deprecated Alias — use {@link veitInputClass} */
-export const dialogDetailInputClass = veitInputClass;
 
 export const veitTextareaClass = 'input min-h-[5rem] w-full resize-y text-sm';
-/** @deprecated Alias — use {@link veitTextareaClass} */
-export const dialogDetailTextareaClass = veitTextareaClass;
 
 export const veitSelectClass = 'input min-h-[44px] w-full text-base sm:text-sm';
-/** @deprecated Alias — use {@link veitSelectClass} */
-export const dialogDetailSelectClass = veitSelectClass;
 
 /** Kompakte Tabellen-/Matrix-Eingaben. */
 export const veitInputCompactClass = 'input w-full min-h-0 px-2 py-1 text-sm';
-/** @deprecated Alias — use {@link veitInputCompactClass} */
-export const inputCompactClass = veitInputCompactClass;
 
 /** Picker-Trigger in Dialog-Formularen. */
 export const veitPickerTriggerClass =
   'input min-h-[44px] w-full flex items-center justify-between text-left text-sm';
-/** @deprecated Alias — use {@link veitPickerTriggerClass} */
-export const dialogDetailPickerTriggerClass = veitPickerTriggerClass;
 
 /** Dialog-Feldbeschriftungen (klein, uppercase, muted). */
 export const veitFieldLabelClass =
   'text-xs font-semibold uppercase tracking-wide text-muted-foreground';
-/** @deprecated Alias — use {@link veitFieldLabelClass} */
-export const dialogDetailLabelClass = veitFieldLabelClass;
 
 /** Icon-only delete button size (pairs with {@link VeitDeleteButton}). */
 export const VEIT_DELETE_ICON_BUTTON_CLASS =
   'btn-destructive inline-flex h-9 min-h-9 w-9 min-w-9 shrink-0 items-center justify-center gap-0 rounded-md !px-0 !py-0';
-/** @deprecated Alias — use {@link VEIT_DELETE_ICON_BUTTON_CLASS} */
-export const DELETE_ICON_BUTTON_CLASS = VEIT_DELETE_ICON_BUTTON_CLASS;
 
 /* -------------------------------------------------------------------------- */
 /* VeitField — label + hint + error                                            */
@@ -150,25 +135,74 @@ export const VeitTextarea = forwardRef<HTMLTextAreaElement, VeitTextareaProps>(
   },
 );
 
-export type VeitSelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
-  invalid?: boolean;
+export type VeitSelectOption = {
+  value: string;
+  label: ReactNode;
+  disabled?: boolean;
 };
 
-export const VeitSelect = forwardRef<HTMLSelectElement, VeitSelectProps>(function VeitSelect(
-  { className = '', invalid, children, ...rest },
-  ref,
-) {
+export type VeitSelectProps = {
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+  options: readonly VeitSelectOption[];
+  placeholder?: string;
+  disabled?: boolean;
+  invalid?: boolean;
+  id?: string;
+  name?: string;
+  className?: string;
+  'aria-label'?: string;
+};
+
+export function VeitSelect({
+  value,
+  defaultValue,
+  onValueChange,
+  options,
+  placeholder,
+  disabled,
+  invalid,
+  id,
+  name,
+  className = '',
+  'aria-label': ariaLabel,
+}: VeitSelectProps) {
   return (
-    <select
-      ref={ref}
-      className={`${veitSelectClass} ${invalid ? 'border-destructive' : ''} ${className}`.trim()}
-      aria-invalid={invalid || undefined}
-      {...rest}
-    >
-      {children}
-    </select>
+    <Select.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} name={name}>
+      <Select.Trigger
+        id={id}
+        aria-label={ariaLabel}
+        aria-invalid={invalid || undefined}
+        className={`${veitSelectClass} inline-flex items-center justify-between gap-2 ${invalid ? 'border-destructive' : ''} ${className}`.trim()}
+      >
+        <Select.Value placeholder={placeholder} />
+        <Select.Icon>
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        </Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Content
+          position="popper"
+          className="z-50 max-h-72 overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-lg"
+        >
+          <Select.Viewport className="p-1">
+            {options.map((option) => (
+              <Select.Item
+                key={option.value}
+                value={option.value}
+                disabled={option.disabled}
+                className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-muted"
+              >
+                <Select.ItemText>{option.label}</Select.ItemText>
+              </Select.Item>
+            ))}
+          </Select.Viewport>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
   );
-});
+}
 
 /* -------------------------------------------------------------------------- */
 /* Dialog detail helpers (from Plenivo DetailDialogPrimitives)                 */
@@ -211,11 +245,6 @@ export function VeitDialogFormField(props: VeitDialogDetailFieldProps) {
   return <VeitDialogDetailField {...props} />;
 }
 
-/** @deprecated Prefer {@link VeitDialogDetailField} */
-export const DialogDetailField = VeitDialogDetailField;
-/** @deprecated Prefer {@link VeitDialogFormField} */
-export const DialogFormField = VeitDialogFormField;
-
 export type VeitDialogDetailSectionProps = {
   children: ReactNode;
   className?: string;
@@ -230,9 +259,6 @@ export function VeitDialogDetailSection({
   const gap = spacing === 'comfortable' ? 'space-y-4' : 'space-y-2';
   return <div className={`${gap} border-t border-border/40 pt-4 ${className}`.trim()}>{children}</div>;
 }
-
-/** @deprecated Prefer {@link VeitDialogDetailSection} */
-export const DialogDetailSection = VeitDialogDetailSection;
 
 export type VeitDialogDetailSectionTitleProps = {
   children: ReactNode;
@@ -253,9 +279,6 @@ export function VeitDialogDetailSectionTitle({
     </p>
   );
 }
-
-/** @deprecated Prefer {@link VeitDialogDetailSectionTitle} */
-export const DialogDetailSectionTitle = VeitDialogDetailSectionTitle;
 
 export type VeitDialogToolbarButtonProps = {
   children: ReactNode;
@@ -287,9 +310,6 @@ export function VeitDialogToolbarButton({
   );
 }
 
-/** @deprecated Prefer {@link VeitDialogToolbarButton} */
-export const DialogToolbarButton = VeitDialogToolbarButton;
-
 export type VeitDialogInsetScrollProps = {
   children: ReactNode;
   className?: string;
@@ -310,9 +330,6 @@ export function VeitDialogInsetScroll({
   );
 }
 
-/** @deprecated Prefer {@link VeitDialogInsetScroll} */
-export const DialogInsetScroll = VeitDialogInsetScroll;
-
 export type VeitDialogSoftPanelProps = {
   children: ReactNode;
   className?: string;
@@ -325,9 +342,6 @@ export function VeitDialogSoftPanel({ children, className = '' }: VeitDialogSoft
     </div>
   );
 }
-
-/** @deprecated Prefer {@link VeitDialogSoftPanel} */
-export const DialogSoftPanel = VeitDialogSoftPanel;
 
 export type VeitDialogDashedCtaProps = {
   title: string;
@@ -365,9 +379,6 @@ export function VeitDialogDashedCta({
   );
 }
 
-/** @deprecated Prefer {@link VeitDialogDashedCta} */
-export const DialogDashedCta = VeitDialogDashedCta;
-
 export type VeitDialogStickyActionsProps = {
   leading?: ReactNode;
   children: ReactNode;
@@ -395,13 +406,7 @@ export function VeitDialogStickyActions({
   );
 }
 
-/** @deprecated Prefer {@link VeitDialogStickyActions} */
-export const DialogStickyActions = VeitDialogStickyActions;
-
 /** Screenreader-only label for icon delete buttons. */
 export function VeitDeleteIconButtonLabel({ label }: { label: string }) {
   return <span className="sr-only">{label}</span>;
 }
-
-/** @deprecated Prefer {@link VeitDeleteIconButtonLabel} */
-export const DeleteIconButtonLabel = VeitDeleteIconButtonLabel;

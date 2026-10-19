@@ -61,7 +61,7 @@ pnpm --filter @veit/intl build
 
 ## Styling
 
-React-Pakete nutzen Tailwind-orientierte Klassen (`btn-primary`, `card`, `input`, Utility-Klassen). Host-Apps mappen Design-Tokens darauf (wie Plenivo) bzw. stellen eine Kompatibilitäts-CSS-Schicht bereit (wie ScanGut).
+`@veit/react-controls/theme.css` ist der Tailwind-4-Einstieg (shadcn-Variablen, `.btn`, `.input`, `.card`). Hosts importieren die Datei und überschreiben die Variablen. Siehe `CHANGES.md` für brechende Umstellungen auf Radix.
 
 ## Host-Integration (Wrapper-Regel)
 

@@ -1,3 +1,5 @@
+import * as Switch from '@radix-ui/react-switch';
+
 export type VeitSwitchProps = {
   checked: boolean;
   onCheckedChange: (value: boolean) => void;
@@ -20,29 +22,20 @@ export function VeitSwitch({
   className = '',
 }: VeitSwitchProps) {
   return (
-    <button
-      type="button"
-      role="switch"
+    <Switch.Root
       id={id}
-      aria-checked={checked}
+      checked={checked}
+      onCheckedChange={onCheckedChange}
+      disabled={disabled}
       aria-labelledby={ariaLabelledby}
       aria-describedby={ariaDescribedby}
       aria-label={ariaLabel}
-      disabled={disabled}
-      onClick={() => onCheckedChange(!checked)}
       className={
-        'inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border border-border/80 p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 ' +
-        (checked ? 'border-primary/40 bg-primary' : 'bg-muted') +
-        (className ? ` ${className}` : '')
+        'inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border border-border/80 p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 data-[state=checked]:border-primary/40 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted ' +
+        className
       }
     >
-      <span
-        aria-hidden
-        className={
-          'pointer-events-none block h-5 w-5 shrink-0 rounded-full bg-primary-foreground shadow-sm ring-1 ring-black/5 transition-transform motion-reduce:transition-none dark:ring-white/10 ' +
-          (checked ? 'translate-x-5' : 'translate-x-0')
-        }
-      />
-    </button>
+      <Switch.Thumb className="block h-5 w-5 rounded-full bg-background shadow transition-transform data-[state=checked]:translate-x-5" />
+    </Switch.Root>
   );
 }

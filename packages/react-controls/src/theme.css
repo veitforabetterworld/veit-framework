@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-card: var(--card);
+  --color-ring: var(--ring);
+  --color-surface: var(--card);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --primary: #0369a1;
+  --primary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #cbd5e1;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --card: #ffffff;
+  --ring: #0369a1;
+  --radius: 0.625rem;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:opacity-90;
+  }
+
+  .btn-secondary {
+    @apply border border-border bg-muted text-foreground hover:bg-border/40;
+  }
+
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:opacity-90;
+  }
+
+  .btn-lg {
+    @apply px-4 py-2.5 text-base;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-border bg-background px-3 text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+
+  .label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .card {
+    @apply rounded-xl border border-border bg-card p-4 text-foreground;
+  }
+
+  .settings-section-title {
+    @apply flex items-center gap-2 text-base font-semibold text-foreground;
+  }
+
+  .settings-section-icon {
+    @apply h-4 w-4 shrink-0;
+  }
+}

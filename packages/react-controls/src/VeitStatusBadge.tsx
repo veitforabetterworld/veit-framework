@@ -20,7 +20,7 @@ const VARIANT_CLASS: Record<VeitStatusBadgeVariant, string> = {
 };
 
 const SIZE_CLASS: Record<'sm' | 'md', string> = {
-  sm: 'text-[11px] font-medium uppercase tracking-wide',
+  sm: 'text-xs font-medium uppercase tracking-wide',
   md: 'text-xs font-medium',
 };
 

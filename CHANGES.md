@@ -52,4 +52,8 @@ Der Standard von `:root` ist dunkel. `[data-theme="light"]` setzt dieselben Name
 
 `.map-surface` färbt MapLibre-Controls und Popups über die Token. `VeitPanel` darf `ul` und `li` sein. `VeitStatusBadge` in `sm` nutzt `text-xs`.
 
-`VeitAppHeader` und `VeitAppFooter` sind Slot-Leisten ohne Markennamen. Die Leiste liegt auf `z-40`, damit eine Suche über dem Seiteninhalt aufgeht. `VeitCombobox` ist eine Kopfzeilen-Suche, kein Dialog. `VeitDescriptionList` / `VeitDescriptionRow` sind Label-Wert-Zeilen. `VeitLog` ist vorformatierter Lauf-Text. Theme setzt `--warning`, `--warning-foreground` und `--info`. `.btn-sm` liegt neben `.btn-lg`.
+`@source` zeigt auf das Framework-Paket, sonst fehlen dessen Utilities (`w-12`, `top-1/2`, `h-5`) in der Host-CSS. Wahlflächen nutzen `rounded-lg` wie `.btn` und `.input`, Kacheln `rounded-xl` wie `.card`. Segment-Wahl hängt an `.btn`, sonst fehlt der Radius. `.btn-primary`, `.btn-secondary` und `.btn-destructive` tragen `rounded-lg` auch ohne `.btn`. `.input` setzt `appearance: none`, damit `type="search"` keine Browser-Lupe zeichnet. `VeitList` setzt `list-none`. Leere Zustände stapeln mit `flex`. `settings-subsection` und `settings-page-group` haben Token-Klassen. `--color-on-primary` zeigt auf `--primary-foreground`.
+
+`VeitAppHeader` stapelt unter `sm` Marke, Navigation und Werkzeuge. Ab `sm` liegen sie in einer Zeile. Die Werkzeugleiste bricht um. `density="compact"` hält die Leiste auch schmal in einer Zeile.
+
+`@veit/address` und `@veit/field-tags` liefern Typen aus `src/index.ts`. Der Typecheck braucht dafür keinen vorherigen `dist`-Build. Der Laufzeit-Import bleibt `dist/index.js`.

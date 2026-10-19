@@ -779,12 +779,12 @@ export function VeitDialog({
         size="sm"
         footer={({ dismiss }) => (
           <VeitDialogFooter className="sm:flex-nowrap">
-            <button type="button" className="btn-secondary" onClick={dismiss}>
+            <button type="button" className="btn btn-secondary" onClick={dismiss}>
               {resolvedUnsavedConfirm.cancelLabel}
             </button>
             <button
               type="button"
-              className="btn-destructive"
+              className="btn btn-destructive"
               onClick={() => {
                 /**
                  * Kein eigenes `dismiss()` hier: `performDismiss()` schließt den Hauptdialog via History
@@ -798,7 +798,7 @@ export function VeitDialog({
             </button>
             <button
               type="button"
-              className="btn-primary"
+              className="btn btn-primary"
               autoFocus={unsavedSaveRef.current != null}
               disabled={unsavedSaveRef.current == null}
               onClick={() => {

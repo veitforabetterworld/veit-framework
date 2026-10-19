@@ -52,11 +52,13 @@ export type CreateAppOptions = {
 export async function createApp(options?: CreateAppOptions): Promise<FastifyInstance> {
   const loggerLevel = process.env.LOG_LEVEL ?? 'error';
   const logger = options?.logger ?? { level: loggerLevel };
+  const requestedTrust = options?.trustProxy ?? true;
+  const trustProxy = typeof requestedTrust === 'number' ? requestedTrust !== 0 : requestedTrust;
   const app = Fastify({
     logger,
     // Avoid per-request noise; errors are still logged via error handlers.
     disableRequestLogging: true,
-    trustProxy: options?.trustProxy ?? true,
+    trustProxy,
     ...(options?.bodyLimit !== undefined ? { bodyLimit: options.bodyLimit } : {}),
   });
 

@@ -62,5 +62,8 @@
     "@veit/react-upload": "workspace:*",
     "lucide-react": "^0.454.0",
     "typescript": "^5.7.2"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }

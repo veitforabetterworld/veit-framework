@@ -26,7 +26,7 @@ export function VeitEmptyState({
 }: VeitEmptyStateProps) {
   return (
     <div
-      className={`${bemPrefix}${embedded ? ` ${bemPrefix}--embedded` : ''} ${className}`.trim()}
+      className={`${bemPrefix}${embedded ? ` ${bemPrefix}--embedded` : ''} flex flex-col gap-1 ${className}`.trim()}
       role="status"
     >
       {icon ? (

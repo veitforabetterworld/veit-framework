@@ -299,7 +299,7 @@ export function VeitDialogToolbarButton({
   return (
     <button
       type="button"
-      className={`btn-secondary btn-sm inline-flex items-center gap-1.5 ${className}`.trim()}
+      className={`btn btn-secondary btn-sm inline-flex items-center gap-1.5 ${className}`.trim()}
       disabled={disabled}
       onClick={onClick}
       {...rest}

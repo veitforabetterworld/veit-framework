@@ -9,7 +9,7 @@ type ChoiceButtonClassOptions = {
   extra?: string;
 };
 
-/** Einheitlicher Toggle-Button (segment = btn-primary/btn-secondary btn-sm). */
+/** Einheitlicher Toggle-Button (segment = btn + btn-primary/btn-secondary + btn-sm). */
 export function choiceButtonClass(
   active: boolean,
   options?: ChoiceButtonClassOptions,
@@ -18,10 +18,10 @@ export function choiceButtonClass(
   const extra = options?.extra ?? '';
 
   if (variant === 'segment') {
-    return `${active ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'} ${extra}`.trim();
+    return `${active ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} ${extra}`.trim();
   }
   if (variant === 'compact') {
-    return `flex-1 rounded-button border px-2 py-2 text-xs font-medium transition-colors ${
+    return `flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
       active
         ? 'border-primary bg-primary/10 text-foreground'
         : 'border-border bg-surface/90 text-foreground hover:bg-muted/30'

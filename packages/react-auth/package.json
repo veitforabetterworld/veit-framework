@@ -21,5 +21,8 @@
     "@veit/react-controls": "workspace:*",
     "typescript": "^5.7.2",
     "react-router-dom": "^6.22.0"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }

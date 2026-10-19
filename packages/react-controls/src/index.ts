@@ -9,6 +9,7 @@ export {
 } from './VeitDescriptionList.js';
 export { VeitLog, type VeitLogProps } from './VeitLog.js';
 export { VeitPanel, type VeitPanelProps } from './VeitPanel.js';
+export { VeitRange, type VeitRangeProps } from './VeitRange.js';
 export { VeitSwitch, type VeitSwitchProps } from './VeitSwitch.js';
 export { VeitTabBar, type VeitTabBarItem, type VeitTabBarProps } from './VeitTabBar.js';
 export {

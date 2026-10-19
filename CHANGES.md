@@ -4,7 +4,7 @@ Hosts (Plenivo, ScanGut) müssen diese Schnitte nachziehen. Hochwasserdienst nut
 
 ## Theme
 
-`@veit/react-controls/theme.css` ist der Tailwind-4-Einstieg. Er setzt die shadcn-Variablen `--background`, `--foreground`, `--primary`, `--primary-foreground`, `--muted`, `--muted-foreground`, `--border`, `--destructive`, `--destructive-foreground`, `--card`, `--ring`, `--radius` und die Klassen `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-destructive`, `.input`, `.label`, `.card`.
+`@veit/react-controls/theme.css` setzt die shadcn-Variablen und die Klassen `.btn`, `.input`, `.card`. Der Host lädt davor Tailwind (`@import "tailwindcss"`) und setzt `@source` auf App und Framework. Danach importiert er `theme.css`.
 
 Vorher: Hosts haben `.btn-primary` und `.input` selbst definiert.
 Nachher: Theme importieren und die Variablen überschreiben. Eigene Kopien der Klassen entfernen, sonst gewinnen sie je nach Reihenfolge.

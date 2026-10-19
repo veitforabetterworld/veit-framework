@@ -11,6 +11,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
   --color-ring: var(--ring);
   --color-surface: var(--card);
   --radius-lg: var(--radius);

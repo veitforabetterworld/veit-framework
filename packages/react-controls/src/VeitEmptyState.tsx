@@ -34,8 +34,8 @@ export function VeitEmptyState({
           {icon}
         </div>
       ) : null}
-      <p className={`${bemPrefix}__title`}>{title}</p>
-      {description ? <p className={`${bemPrefix}__text`}>{description}</p> : null}
+      <p className={`${bemPrefix}__title m-0 text-sm font-medium text-foreground`}>{title}</p>
+      {description ? <p className={`${bemPrefix}__text mt-1 text-sm text-muted-foreground`}>{description}</p> : null}
       {action ? <div className={`${bemPrefix}__action`}>{action}</div> : null}
     </div>
   );

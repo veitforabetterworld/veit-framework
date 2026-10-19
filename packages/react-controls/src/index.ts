@@ -1,4 +1,13 @@
+export { VeitAppFooter, VeitAppHeader, type VeitAppFooterProps, type VeitAppHeaderProps } from './VeitAppHeader.js';
 export { VeitButton, type VeitButtonProps, type VeitButtonVariant } from './VeitButton.js';
+export { VeitCombobox, type VeitComboboxProps } from './VeitCombobox.js';
+export {
+  VeitDescriptionList,
+  VeitDescriptionRow,
+  type VeitDescriptionListProps,
+  type VeitDescriptionRowProps,
+} from './VeitDescriptionList.js';
+export { VeitLog, type VeitLogProps } from './VeitLog.js';
 export { VeitPanel, type VeitPanelProps } from './VeitPanel.js';
 export { VeitSwitch, type VeitSwitchProps } from './VeitSwitch.js';
 export { VeitTabBar, type VeitTabBarItem, type VeitTabBarProps } from './VeitTabBar.js';

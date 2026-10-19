@@ -40,3 +40,12 @@ Peer bleibt `>=18`. Der Typecheck im Repository nutzt React 19, damit Lucide und
 ## Icons
 
 `VeitBackButton` zeigt ohne eigenes `icon` ein Lucide-`ArrowLeft` statt des Textpfeils.
+
+## `VeitPageHeader`
+
+Vorher: BEM-Klassen `veit-page-header__title` und `bemPrefix`.
+Nachher: Tailwind-Tokens. `bemPrefix` gibt es nicht mehr. Optik kommt aus dem Theme.
+
+## Neu
+
+`VeitAppHeader` und `VeitAppFooter` sind Slot-Leisten ohne Markennamen. `VeitCombobox` ist eine Kopfzeilen-Suche, kein Dialog. `VeitDescriptionList` / `VeitDescriptionRow` sind Label-Wert-Zeilen. `VeitLog` ist vorformatierter Lauf-Text. Theme setzt `--warning`, `--warning-foreground` und `--info`. `.btn-sm` liegt neben `.btn-lg`.

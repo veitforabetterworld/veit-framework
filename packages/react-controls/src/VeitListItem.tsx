@@ -38,16 +38,18 @@ export function VeitListItem({
 }: VeitListItemProps) {
   const body = (
     <>
-      {leading ? <div className={`${bemPrefix}__leading`}>{leading}</div> : null}
-      <div className={`${bemPrefix}__body`}>
-        <div className={`${bemPrefix}__title`}>
+      {leading ? <div className={`${bemPrefix}__leading shrink-0`}>{leading}</div> : null}
+      <div className={`${bemPrefix}__body min-w-0 flex-1`}>
+        <div className={`${bemPrefix}__title flex items-center gap-2 text-sm font-medium text-foreground`}>
           {title}
           {badge}
         </div>
-        {meta != null && meta !== false ? <div className={`${bemPrefix}__meta`}>{meta}</div> : null}
+        {meta != null && meta !== false ? (
+          <div className={`${bemPrefix}__meta text-xs text-muted-foreground`}>{meta}</div>
+        ) : null}
       </div>
-      {trailing ? <div className={`${bemPrefix}__trailing`}>{trailing}</div> : null}
-      {actions ? <div className={`${bemPrefix}__actions`}>{actions}</div> : null}
+      {trailing ? <div className={`${bemPrefix}__trailing shrink-0`}>{trailing}</div> : null}
+      {actions ? <div className={`${bemPrefix}__actions shrink-0`}>{actions}</div> : null}
     </>
   );
 
@@ -56,7 +58,7 @@ export function VeitListItem({
       {onClick ? (
         <button
           type={type}
-          className={`${bemPrefix}__row ${bemPrefix}__row--button`}
+          className={`${bemPrefix}__row ${bemPrefix}__row--button flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left hover:bg-muted disabled:opacity-50`}
           disabled={disabled}
           onClick={onClick}
           {...buttonProps}
@@ -64,7 +66,7 @@ export function VeitListItem({
           {body}
         </button>
       ) : (
-        <div className={`${bemPrefix}__row`}>{body}</div>
+        <div className={`${bemPrefix}__row flex items-start gap-2`}>{body}</div>
       )}
       {footer}
     </li>

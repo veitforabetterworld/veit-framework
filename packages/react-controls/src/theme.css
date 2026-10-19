@@ -138,6 +138,18 @@
     @apply rounded-xl border border-border bg-card p-4 text-foreground;
   }
 
+  .map-surface .maplibregl-ctrl-group {
+    overflow: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--border) !important;
+    background-color: var(--card) !important;
+  }
+
+  .map-surface .maplibregl-popup-content {
+    background-color: var(--card) !important;
+    color: var(--foreground) !important;
+  }
+
   .settings-section-title {
     @apply flex items-center gap-2 text-base font-semibold text-foreground;
   }

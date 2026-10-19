@@ -50,4 +50,6 @@ Nachher: Tailwind-Tokens. `bemPrefix` gibt es nicht mehr. Optik kommt aus dem Th
 
 Der Standard von `:root` ist dunkel. `[data-theme="light"]` setzt dieselben Namen auf die helle Fläche. Produktfarben (`band`, `catchment`, `series`, `depth-ramp`, `temp-ramp`) und `animate-ticker` liegen im Theme. `VeitButton` hat `ghost`. `VeitRange` zeichnet den Füllstand.
 
+`.map-surface` färbt MapLibre-Controls und Popups über die Token. `VeitPanel` darf `ul` und `li` sein. `VeitStatusBadge` in `sm` nutzt `text-xs`.
+
 `VeitAppHeader` und `VeitAppFooter` sind Slot-Leisten ohne Markennamen. Die Leiste liegt auf `z-40`, damit eine Suche über dem Seiteninhalt aufgeht. `VeitCombobox` ist eine Kopfzeilen-Suche, kein Dialog. `VeitDescriptionList` / `VeitDescriptionRow` sind Label-Wert-Zeilen. `VeitLog` ist vorformatierter Lauf-Text. Theme setzt `--warning`, `--warning-foreground` und `--info`. `.btn-sm` liegt neben `.btn-lg`.

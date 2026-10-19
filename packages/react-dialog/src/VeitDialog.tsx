@@ -47,7 +47,7 @@ const sizeMax: Record<'sm' | 'lg', string> = {
 const DIALOG_PANEL_MAX_H =
   'max-h-[min(96dvh,calc(100svh-2rem))]';
 
-const DIALOG_BOTTOM_DOCK_MAX_H = 'max-h-[min(96dvh,calc(100svh-1rem))]';
+const DIALOG_BOTTOM_DOCK_MAX_H = 'max-h-dvh';
 
 /** Loslassen: diese Verschiebung (px) oder Anteil Panelhöhe reicht zum Schließen ohne Fling. */
 const VEIT_DIALOG_SWIPE_CLOSE_MIN_PX = 88;
@@ -871,7 +871,7 @@ export function VeitDialog({
     const dockUsesFixed = portalTarget === document.body;
     const posClass = dockUsesFixed ? 'fixed bottom-0 left-0 right-0' : 'absolute bottom-0 left-0 right-0';
     const bottomShellClass =
-      `flex flex-col w-full ${DIALOG_BOTTOM_DOCK_MAX_H} overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-[0_-4px_20px_rgba(0,0,0,0.12)] ${className}`.trim();
+      `flex flex-col w-full ${DIALOG_BOTTOM_DOCK_MAX_H} overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-lg ${className}`.trim();
 
     const node = (
         <VeitDialogUnsavedDirtyRegistrationContext.Provider value={registerUnsavedDirty}>

@@ -16,17 +16,47 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-surface-elevated: var(--card);
+  --color-band-0: #1a7f37;
+  --color-band-1: #bf8700;
+  --color-band-2: #cf222e;
+  --color-band-3: #64748b;
+  --color-catchment-direct: #2171b5;
+  --color-catchment-upstream: #9ecae1;
+  --color-series-observed: #38bdf8;
+  --color-series-forecast: #c4b5fd;
+  --color-series-warn: #f87171;
+  --background-image-depth-ramp: linear-gradient(90deg, rgb(244, 250, 255) 0%, rgb(147, 197, 242) 38%, rgb(8, 37, 92) 100%);
+  --background-image-temp-ramp: linear-gradient(90deg, rgb(30, 60, 180) 0%, rgb(70, 180, 220) 25%, rgb(100, 230, 100) 50%, rgb(255, 200, 20) 75%, rgb(255, 40, 20) 100%);
+  --animate-ticker: ticker 40s linear infinite;
   --radius-lg: var(--radius);
 }
 
 :root {
-  --background: #ffffff;
+  --background: #0b1220;
+  --foreground: #e8eef7;
+  --primary: #38bdf8;
+  --primary-foreground: #0b1220;
+  --muted: rgba(255, 255, 255, 0.08);
+  --muted-foreground: #93a0b5;
+  --border: rgba(255, 255, 255, 0.08);
+  --destructive: #f87171;
+  --destructive-foreground: #0b1220;
+  --card: #121a2b;
+  --ring: #38bdf8;
+  --warning: #d97706;
+  --warning-foreground: #fcd34d;
+  --info: #38bdf8;
+  --radius: 0.625rem;
+}
+
+[data-theme="light"] {
+  --background: #f4f7fb;
   --foreground: #0f172a;
   --primary: #0369a1;
   --primary-foreground: #ffffff;
-  --muted: #f1f5f9;
+  --muted: #e8eef6;
   --muted-foreground: #64748b;
-  --border: #cbd5e1;
+  --border: rgba(15, 23, 42, 0.1);
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --card: #ffffff;
@@ -34,7 +64,11 @@
   --warning: #d97706;
   --warning-foreground: #92400e;
   --info: #0284c7;
-  --radius: 0.625rem;
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 @layer components {
@@ -60,6 +94,36 @@
 
   .btn-sm {
     @apply px-2 py-1 text-xs;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent px-2 text-primary underline-offset-4 hover:underline disabled:no-underline disabled:opacity-40;
+  }
+
+  .veit-range {
+    appearance: none;
+    height: 0.35rem;
+    width: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--primary) var(--slider-fill, 0%), var(--muted) var(--slider-fill, 0%));
+    cursor: pointer;
+  }
+
+  .veit-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--card);
+    border-radius: 999px;
+    background: var(--primary);
+  }
+
+  .veit-range::-moz-range-thumb {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--card);
+    border-radius: 999px;
+    background: var(--primary);
   }
 
   .input {

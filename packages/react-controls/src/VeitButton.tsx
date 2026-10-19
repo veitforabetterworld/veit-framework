@@ -1,7 +1,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
-export type VeitButtonVariant = 'primary' | 'secondary' | 'destructive';
+export type VeitButtonVariant = 'primary' | 'secondary' | 'destructive' | 'ghost';
 
 export type VeitButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: VeitButtonVariant;
@@ -13,6 +13,7 @@ const VARIANT: Record<VeitButtonVariant, string> = {
   primary: 'btn btn-primary',
   secondary: 'btn btn-secondary',
   destructive: 'btn btn-destructive',
+  ghost: 'btn btn-ghost',
 };
 
 export const VeitButton = forwardRef<HTMLButtonElement, VeitButtonProps>(function VeitButton(

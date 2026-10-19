@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 type VeitBackButtonProps = {
@@ -24,7 +25,7 @@ export function VeitBackButton({
       className={className ?? 'p-2 -m-2 rounded-button text-muted-foreground hover:bg-muted hover:text-foreground'}
       {...rest}
     >
-      {icon ?? <span aria-hidden>←</span>}
+      {icon ?? <ArrowLeft className="h-5 w-5" aria-hidden />}
     </button>
   );
 }

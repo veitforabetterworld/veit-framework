@@ -9,10 +9,17 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./theme.css": "./src/theme.css",
     "./VeitBackButton": {
       "types": "./src/VeitBackButton.tsx",
       "default": "./src/VeitBackButton.tsx"
     }
+  },
+  "dependencies": {
+    "@radix-ui/react-select": "^2.1.6",
+    "@radix-ui/react-slot": "^1.1.2",
+    "@radix-ui/react-switch": "^1.1.3",
+    "tailwindcss": "^4.1.16"
   },
   "peerDependencies": {
     "@dnd-kit/core": "^6.0.0",
@@ -46,10 +53,10 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "@veit/react-dialog": "workspace:*",
     "@veit/react-dnd": "workspace:*",
     "@veit/react-upload": "workspace:*",

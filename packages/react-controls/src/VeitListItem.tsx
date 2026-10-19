@@ -82,5 +82,5 @@ export function VeitList({
   className?: string;
   bemPrefix?: string;
 }) {
-  return <ul className={`${bemPrefix} ${className}`.trim()}>{children}</ul>;
+  return <ul className={`${bemPrefix} m-0 list-none p-0 ${className}`.trim()}>{children}</ul>;
 }

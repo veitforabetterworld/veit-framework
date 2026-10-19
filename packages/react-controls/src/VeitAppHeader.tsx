@@ -11,7 +11,7 @@ export type VeitAppHeaderProps = {
 export function VeitAppHeader({ brand, nav, tools, className = '' }: VeitAppHeaderProps) {
   return (
     <header
-      className={`flex flex-wrap items-end justify-between gap-4 border-b border-border bg-card px-6 py-4 text-foreground ${className}`.trim()}
+      className={`relative z-40 flex flex-wrap items-end justify-between gap-4 border-b border-border bg-card px-6 py-4 text-foreground ${className}`.trim()}
     >
       {brand ? <div className="min-w-0">{brand}</div> : null}
       {nav}

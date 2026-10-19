@@ -48,4 +48,4 @@ Nachher: Tailwind-Tokens. `bemPrefix` gibt es nicht mehr. Optik kommt aus dem Th
 
 ## Neu
 
-`VeitAppHeader` und `VeitAppFooter` sind Slot-Leisten ohne Markennamen. `VeitCombobox` ist eine Kopfzeilen-Suche, kein Dialog. `VeitDescriptionList` / `VeitDescriptionRow` sind Label-Wert-Zeilen. `VeitLog` ist vorformatierter Lauf-Text. Theme setzt `--warning`, `--warning-foreground` und `--info`. `.btn-sm` liegt neben `.btn-lg`.
+`VeitAppHeader` und `VeitAppFooter` sind Slot-Leisten ohne Markennamen. Die Leiste liegt auf `z-40`, damit eine Suche über dem Seiteninhalt aufgeht. `VeitCombobox` ist eine Kopfzeilen-Suche, kein Dialog. `VeitDescriptionList` / `VeitDescriptionRow` sind Label-Wert-Zeilen. `VeitLog` ist vorformatierter Lauf-Text. Theme setzt `--warning`, `--warning-foreground` und `--info`. `.btn-sm` liegt neben `.btn-lg`.

@@ -7,7 +7,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type MutableRefObject,
+  type RefObject,
   type ReactNode,
 } from 'react';
 import { useVeitOverlayLayer } from './overlayLayerStack.js';
@@ -71,9 +71,9 @@ function useVeitDialogSwipeDismissEffect(opts: {
   open: boolean;
   swipeDisabled: boolean;
   attemptDismiss: () => void;
-  panelRef: MutableRefObject<HTMLDivElement | null>;
-  headerRef: MutableRefObject<HTMLDivElement | null>;
-  bodyScrollRef: MutableRefObject<HTMLDivElement | null>;
+  panelRef: RefObject<HTMLDivElement | null>;
+  headerRef: RefObject<HTMLDivElement | null>;
+  bodyScrollRef: RefObject<HTMLDivElement | null>;
 }) {
   const { open, swipeDisabled, attemptDismiss, panelRef, headerRef, bodyScrollRef } = opts;
   const attemptDismissRef = useRef(attemptDismiss);
@@ -479,7 +479,12 @@ export function VeitDialogCloseButton({
   );
 }
 
-export function VeitDialog({
+export function VeitDialog(props: VeitDialogProps) {
+  const legacyHistory = props as {
+    historyCoalesce?: boolean;
+    historyNested?: boolean;
+  };
+  const {
   open,
   onClose,
   title,
@@ -503,13 +508,11 @@ export function VeitDialog({
   titleClassName = '',
   historyStateKey: historyStateKeyProp = VEIT_DIALOG_DEFAULT_HISTORY_KEY,
   historyMode: historyModeProp,
-  historyCoalesce = false,
-  historyNested = false,
   bodyScrollable = true,
   presentation = 'modal',
   bottomDockRoot = null,
   unsavedChangesConfirm,
-}: VeitDialogProps) {
+  } = props;
   const resolvedUnsavedConfirm =
     unsavedChangesConfirm === null
       ? null
@@ -578,8 +581,8 @@ export function VeitDialog({
 
   const resolvedHistoryMode = resolveVeitDialogHistoryMode({
     historyMode: historyModeProp,
-    historyCoalesce,
-    historyNested,
+    historyCoalesce: legacyHistory.historyCoalesce,
+    historyNested: legacyHistory.historyNested,
   });
   const historyFlags = veitDialogHistoryFlags(resolvedHistoryMode);
   const resolvedHistoryCoalesce = historyFlags.historyCoalesce;
@@ -780,7 +783,7 @@ export function VeitDialog({
       <VeitDialog
         open={unsavedPromptOpen}
         onClose={() => setUnsavedPromptOpen(false)}
-        historyNested
+        historyMode="overlay"
         title={resolvedUnsavedConfirm.title}
         closeAriaLabel={
           resolvedUnsavedConfirm.closeAriaLabel ?? resolvedUnsavedConfirm.cancelLabel

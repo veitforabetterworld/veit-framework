@@ -1,5 +1,11 @@
 # Änderungen
 
+## `@veit/map`, `@veit/react-map`
+
+Neu. Gemeinsame Karte für Hochwasserdienst und Plenivo, siehe `packages/map/README.md`.
+
+Plenivo nutzt noch Leaflet. Für die Migration auf `<VeitMap>` gilt: Leaflet-Zoom = MapLibre-Zoom + 1, Hintergründe werden über `basemap` gesteuert (IDs `osm`, `satellite`, `topo`, `official`, `cadastral`), und die Flurkarten-Quellen kommen aus `@veit/map` statt aus `mapCadastralSources.ts`.
+
 Hosts (Plenivo, ScanGut) müssen diese Schnitte nachziehen. Hochwasserdienst nutzt den neuen Stand.
 
 ## Theme

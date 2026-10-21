@@ -1,3 +1,4 @@
+export { AppShell, type AppShellVariant } from './AppShell.js';
 export { VeitAppFooter, VeitAppHeader, type VeitAppFooterProps, type VeitAppHeaderProps } from './VeitAppHeader.js';
 export { VeitButton, type VeitButtonProps, type VeitButtonVariant } from './VeitButton.js';
 export { VeitCombobox, type VeitComboboxProps } from './VeitCombobox.js';

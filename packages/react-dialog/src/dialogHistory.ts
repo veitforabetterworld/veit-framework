@@ -6,8 +6,11 @@ export type HistoryEntryMode = 'push' | 'coalesce';
 
 const dialogHistoryStack: HistoryCloseFn[] = [];
 const dialogHistoryEntryMode = new Map<HistoryCloseFn, HistoryEntryMode>();
+const dialogHistoryStateKeyFor = new Map<HistoryCloseFn, string>();
 let dialogPopStateAttached = false;
 let dialogPopStateSeq = 0;
+/** True vom Capture-`popstate` bis nach den Listenern. Verhindert Marker-Stempel auf den Ziel-Eintrag. */
+let dialogPopInProgress = false;
 /** `dialogHistorySyncBack`: suppress the next popstate handler (sync back without onClose). */
 let dialogSuppressNextPopHandler = false;
 
@@ -26,12 +29,29 @@ export function veitDialogHistoryStateKey(reactId: string, explicitKey?: string)
 function attachGlobalDialogPopState(): void {
   if (dialogPopStateAttached || typeof window === 'undefined') return;
   dialogPopStateAttached = true;
+  window.addEventListener(
+    'popstate',
+    () => {
+      dialogPopInProgress = true;
+      setTimeout(() => {
+        dialogPopInProgress = false;
+      }, 0);
+    },
+    true,
+  );
   window.addEventListener('popstate', () => {
     dialogPopStateSeq++;
     if (dialogSuppressNextPopHandler) {
       dialogSuppressNextPopHandler = false;
       return;
     }
+    const top = dialogHistoryStack[dialogHistoryStack.length - 1];
+    if (!top) return;
+    const mode = dialogHistoryEntryMode.get(top) ?? 'push';
+    const markerKey = dialogHistoryStateKeyFor.get(top);
+    // Entity-Coalesce: Marker liegt auf jedem `?id=`-Eintrag. Zurück auf einen
+    // anderen Entity-Eintrag lässt den Dialog offen; die URL-Sync schaltet die Entity.
+    if (mode === 'coalesce' && markerKey != null && historyStateHasDialogMarker(markerKey)) return;
     const close = dialogHistoryStack.pop();
     close?.();
   });
@@ -46,7 +66,8 @@ function buildDialogHistoryStateEntry(historyStateKey: string): unknown {
 }
 
 /** Coalesce-Entity-Einträge liegen unter verschachtelten Overlay-Dialogen im Stack. */
-function dialogHistoryStackInsert(close: HistoryCloseFn, mode: HistoryEntryMode): void {
+function dialogHistoryStackInsert(close: HistoryCloseFn, mode: HistoryEntryMode, historyStateKey: string): void {
+  dialogHistoryStateKeyFor.set(close, historyStateKey);
   if (dialogHistoryIndexOf(close) !== -1) return;
   if (mode === 'coalesce' && dialogHistoryStack.length > 0) {
     dialogHistoryStack.unshift(close);
@@ -69,10 +90,10 @@ export function dialogHistoryPush(
   if (typeof window === 'undefined') return;
   attachGlobalDialogPopState();
   if (mode === 'coalesce' && historyStateHasDialogMarker(historyStateKey)) {
-    dialogHistoryStackInsert(close, mode);
+    dialogHistoryStackInsert(close, mode, historyStateKey);
     return;
   }
-  dialogHistoryStackInsert(close, mode);
+  dialogHistoryStackInsert(close, mode, historyStateKey);
   const state = buildDialogHistoryStateEntry(historyStateKey);
   if (mode === 'coalesce') {
     window.history.replaceState(state, '', window.location.href);
@@ -85,6 +106,11 @@ export function dialogHistoryRemove(close: HistoryCloseFn): void {
   const i = dialogHistoryStack.lastIndexOf(close);
   if (i !== -1) dialogHistoryStack.splice(i, 1);
   dialogHistoryEntryMode.delete(close);
+  dialogHistoryStateKeyFor.delete(close);
+}
+
+export function isDialogHistoryPopInProgress(): boolean {
+  return dialogPopInProgress;
 }
 
 export function historyStateHasDialogMarker(historyStateKey: string): boolean {
@@ -193,6 +219,8 @@ export function navigateHistoryToClose(close: HistoryCloseFn, historyStateKey: s
 export function _resetDialogHistoryForTests(): void {
   dialogHistoryStack.length = 0;
   dialogHistoryEntryMode.clear();
+  dialogHistoryStateKeyFor.clear();
   dialogPopStateSeq = 0;
+  dialogPopInProgress = false;
   dialogSuppressNextPopHandler = false;
 }

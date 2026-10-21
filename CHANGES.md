@@ -1,5 +1,58 @@
 # Änderungen
 
+## Module statt Baukasten
+
+Stand 2026-10-21. Neue Bausteine und die gestrichenen Paket-Exporte liegen im selben Stand. Kein `@deprecated`-Re-Export. Hosts, die die alten Namen importieren, müssen vorher auf die Module umstellen. Plenivo behält seine Kartenfassade, bis dieses Repo den Gitlink zieht.
+
+### `@veit/react-map`
+
+Neu: `VeitPolyline`, `VeitPolygon`, `VeitCircle` (Radius in Metern), `VeitMarker`, `VeitPopup`. Positionen sind `{ lng, lat }` oder `[lng, lat]`. `veitLngLat`, `veitLngLatPair` und `veitLngLatFromEvent` lesen die Position. `useVeitMapPointer` hängt Klick und Hover an die Karte. `useMap` und `useMapLayer` bleiben für Layer, die kein fertiges Shape sind.
+
+### `@veit/map`
+
+Weg vom Paketindex, intern weiter von `VeitMap` benutzt:
+
+- `applyGlobe`
+- `bindLiveSunLight`, `lightPositionForSun`, `setFixedLight`, `subsolarPoint`, `FIXED_LIGHT`
+- `applyMapTerrain`, `clearMapTerrain`, `terrainDemSourceSpec`, `terrainExaggeration`, `terrainTilesUrl`
+- `ensureBuildings3dLayer`, `removeBuildings3dLayer`
+- `firstAnchorLayer`, `raiseAnchorLayers`
+
+`mapTerrainEnabled` und `world3dAttribution` bleiben exportiert. `configureMap`, `bindMapConfig` und `getMapConfig` bleiben der Einstieg für Host-Daten.
+
+### `@veit/react-controls`
+
+Die Überlauf-Messung bleibt in `VeitResponsiveInlineActionBar`. Weg vom Paketindex:
+
+- `measureEndContentWidth`, `rowGapPx`, `rowFixedOccupiedWidth`, `resolveShowInlineLabels`, `resolveNeedsMenuBySpace`, `siblingOccupiedWidth`, `stableLeadingWidth`, `resetHeaderLayoutMeasureRefs`
+- `HEADER_LAYOUT_SAFETY_PX`, `HEADER_LABEL_HYSTERESIS_PX`
+- `VeitInlineActionLayoutProvider`, `useVeitInlineActionLayout`
+- `VeitInlineActionMenuProvider`, `useVeitInlineActionMenu`, `VeitInlineActionSurface`
+
+`VeitInlineActionMenuOnly`, `VeitInlineActionInlineOnly` und `useMediaQuery` bleiben.
+
+### `@veit/react-dnd`
+
+Neu: `veitKanbanNestedBoardCollision` (`list-*` / `card-*`). Andere Prefix-Sätze bleiben im Host. `createVeitNestedBoardCollisionDetection` und `VeitNestedBoardCollisionConfig` bleiben.
+
+Weg vom Paketindex. Kontext und Sensoren stecken in `VeitNestedBoardDndShell` und den Sortable-Listen:
+
+- `VeitDndContext`, `useVeitDndSensors`
+- Re-Exports aus `@dnd-kit/core` und `@dnd-kit/sortable` (`closestCenter`, `closestCorners`, `defaultDropAnimationSideEffects`, `DragOverlay`, `pointerWithin`, Drag-Event-Typen, `arrayMove`, die Sorting-Strategies)
+
+### `@veit/react-address`
+
+`VeitAddressFields` hat deutsche Default-Labels. `labels` ist `Partial` und überschreibt nur die gesetzten Schlüssel.
+
+### `@veit/react-dialog`
+
+Weg vom Paketindex. Die Dateien bleiben intern, die Presets und `VeitImagePicker` nutzen sie weiter:
+
+- `acquireOverlayLayer`, `releaseOverlayLayer`, `useVeitOverlayLayer`, `useVeitOverlayLayerZIndex`
+- `EntityDialogDismissBridge`
+
+`@veit/react-dialog-router` exportiert `EntityDialogDismissBridge` weiter. Der Alias `EntityDialogDismissRef` ist weg. `useFormDirty` und `useDebouncedValue` bleiben.
+
 ## Pin
 
 Stand 2026-10-21. Gemeinsamer Tip ist `origin/development`. ScanGut hat keine Karte. Plenivo und Hochwasser ziehen den Gitlink nach, ohne `deploy` zu pushen.

@@ -8,7 +8,8 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { ImageUp, Loader2, Trash2, X } from 'lucide-react';
-import { VeitConfirmDialog, useVeitOverlayLayer } from '@veit/react-dialog';
+import { VeitConfirmDialog } from '@veit/react-dialog';
+import { useVeitOverlayLayer } from '../../react-dialog/src/overlayLayerStack.js';
 
 const Z_PICK_MENU = 12100;
 

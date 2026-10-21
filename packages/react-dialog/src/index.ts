@@ -11,15 +11,8 @@ export {
   type VeitDialogFooterContext,
   type VeitDialogUnsavedChangesConfirm,
 } from './VeitDialog.js';
-export {
-  useVeitOverlayLayer,
-  useVeitOverlayLayerZIndex,
-  acquireOverlayLayer,
-  releaseOverlayLayer,
-} from './overlayLayerStack.js';
 export { VeitOverlayShell, type VeitOverlayShellProps } from './VeitOverlayShell.js';
 export type { VeitDialogHistoryMode } from './dialogHistoryMode.js';
-export { EntityDialogDismissBridge } from './VeitDialogPresets.js';
 export {
   resolveVeitDialogHistoryMode,
   veitDialogHistoryFlags,

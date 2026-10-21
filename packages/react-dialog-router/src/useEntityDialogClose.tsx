@@ -2,10 +2,7 @@ import { useCallback, useRef } from 'react';
 import type { RefObject } from 'react';
 import { isEntityDeepLinkId, type EntityDeepLinkId, type EntityDeepLinkIdMode } from './useEntityDeepLinkUrlSync.js';
 
-export { EntityDialogDismissBridge } from '@veit/react-dialog';
-
-/** @deprecated Use {@link EntityDialogDismissBridge} from `@veit/react-dialog`. */
-export { EntityDialogDismissBridge as EntityDialogDismissRef } from '@veit/react-dialog';
+export { EntityDialogDismissBridge } from '../../react-dialog/src/VeitDialogPresets.js';
 
 /**
  * Einheitliches Schließen für Deep-Link-Entity-Dialoge:

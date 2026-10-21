@@ -1,0 +1,33 @@
+{
+  "name": "@veit/react-map",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "React map component on MapLibre: basemap switching (vector first), globe, terrain and host layers that survive style changes.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@veit/map": "workspace:*",
+    "@veit/react-controls": "workspace:*",
+    "maplibre-gl": "^6.4.1",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "@veit/map": "workspace:*",
+    "@veit/react-controls": "workspace:*",
+    "maplibre-gl": "^6.4.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.2"
+  }
+}

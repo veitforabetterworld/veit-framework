@@ -20,6 +20,8 @@ import {
   dialogHistoryIndexOf,
   dialogHistoryPush,
   dialogHistoryRemove,
+  historyStateHasDialogMarker,
+  isDialogHistoryPopInProgress,
   dialogHistoryStackLength,
   dialogHistoryStripMarker,
   dialogHistorySuppressNextPopstate,
@@ -623,6 +625,18 @@ export function VeitDialog({
       dialogHistorySyncBack(stableClose, resolvedHistoryStateKey);
     };
   }, [open, resolvedHistoryStateKey, resolvedHistoryCoalesce, syncDialogHistory, resolvedHistoryMode, stableClose]);
+
+  /**
+   * `setSearchParams({ replace: true })` ersetzt `history.state` und nimmt den Marker mit.
+   * Während `popstate` nicht stempeln — sonst landet der Marker auf dem Zurück-Ziel.
+   */
+  useLayoutEffect(() => {
+    if (!open || !syncDialogHistory || !resolvedHistoryCoalesce) return;
+    if (typeof window === 'undefined' || isDialogHistoryPopInProgress()) return;
+    if (dialogHistoryIndexOf(stableClose) === -1) return;
+    if (historyStateHasDialogMarker(resolvedHistoryStateKey)) return;
+    dialogHistoryPush(stableClose, resolvedHistoryStateKey, 'coalesce');
+  });
 
   const performDismiss = useCallback(() => {
     if (typeof window === 'undefined') {

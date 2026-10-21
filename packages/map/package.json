@@ -1,0 +1,44 @@
+{
+  "name": "@veit/map",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-agnostic MapLibre toolkit: basemaps (vector first), official cadastral maps of the German states, live sun light, terrain, elevation profile and an optional three.js 3D world.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./world3d": {
+      "types": "./src/world3d/index.ts",
+      "default": "./src/world3d/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test \"src/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@mapbox/vector-tile": "^3.0.0",
+    "pbf": "^5.1.2"
+  },
+  "peerDependencies": {
+    "maplibre-gl": "^6.4.1",
+    "three": "^0.186.1"
+  },
+  "peerDependenciesMeta": {
+    "three": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^22.10.5",
+    "@types/pbf": "^3.0.5",
+    "@types/three": "^0.186.0",
+    "maplibre-gl": "^6.4.1",
+    "three": "^0.186.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

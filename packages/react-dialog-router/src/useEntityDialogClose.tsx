@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { MutableRefObject } from 'react';
+import { isEntityDeepLinkId, type EntityDeepLinkId, type EntityDeepLinkIdMode } from './useEntityDeepLinkUrlSync.js';
 
 export { EntityDialogDismissBridge } from '@veit/react-dialog';
 
@@ -14,7 +15,8 @@ export { EntityDialogDismissBridge as EntityDialogDismissRef } from '@veit/react
 export function useEntityDialogClose(opts: {
   clearUi: () => void;
   onCrossStackClose?: () => void;
-  getEntityId?: () => number | null;
+  getEntityId?: () => EntityDeepLinkId | null;
+  idMode?: EntityDeepLinkIdMode;
 }) {
   const clearUiRef = useRef(opts.clearUi);
   clearUiRef.current = opts.clearUi;
@@ -22,13 +24,15 @@ export function useEntityDialogClose(opts: {
   onCrossStackCloseRef.current = opts.onCrossStackClose;
   const getEntityIdRef = useRef(opts.getEntityId);
   getEntityIdRef.current = opts.getEntityId;
+  const idModeRef = useRef<EntityDeepLinkIdMode>(opts.idMode ?? 'number');
+  idModeRef.current = opts.idMode ?? 'number';
 
-  const dismissedEntityIdRef = useRef<number | null>(null);
+  const dismissedEntityIdRef = useRef<EntityDeepLinkId | null>(null);
   const dismissRef = useRef<(() => void) | null>(null);
 
   const onClose = useCallback(() => {
     const id = getEntityIdRef.current?.() ?? null;
-    if (id != null && id >= 1) {
+    if (isEntityDeepLinkId(id, idModeRef.current)) {
       dismissedEntityIdRef.current = id;
     }
     clearUiRef.current();
@@ -39,15 +43,15 @@ export function useEntityDialogClose(opts: {
     dismissRef.current?.();
   }, []);
 
-  const ackEntityOpen = useCallback((id: number) => {
-    if (id >= 1) dismissedEntityIdRef.current = null;
+  const ackEntityOpen = useCallback((id: EntityDeepLinkId) => {
+    if (isEntityDeepLinkId(id, idModeRef.current)) dismissedEntityIdRef.current = null;
   }, []);
 
   const resetDismissedForUrl = useCallback(() => {
     dismissedEntityIdRef.current = null;
   }, []);
 
-  const shouldOpenFromUrl = useCallback((urlEntityId: number) => {
+  const shouldOpenFromUrl = useCallback((urlEntityId: EntityDeepLinkId) => {
     return dismissedEntityIdRef.current !== urlEntityId;
   }, []);
 

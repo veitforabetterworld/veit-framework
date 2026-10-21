@@ -148,6 +148,13 @@ export {
   type VeitEmptyStateProps,
 } from './VeitEmptyState.js';
 export {
+  VeitSpinner,
+  VeitSpinnerProvider,
+  type VeitSpinnerMark,
+  type VeitSpinnerProps,
+  type VeitSpinnerSize,
+} from './VeitSpinner.js';
+export {
   VeitPageHeader,
   type VeitPageHeaderProps,
 } from './VeitPageHeader.js';

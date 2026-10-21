@@ -2,13 +2,13 @@
 
 ## Pin
 
-Stand 2026-10-21. Framework-`development` ist `877efbb`. Plenivo liegt auf `de5654a63737c5e7f8a25dac2d36a8f7041d265d` (`origin/deploy`), nutzt noch Leaflet und wird auf `<VeitMap>` umgestellt. ScanGut hat keine Karte.
+Stand 2026-10-21. Gemeinsamer Tip ist `origin/development`. ScanGut hat keine Karte. Plenivo und Hochwasser ziehen den Gitlink nach, ohne `deploy` zu pushen.
 
 Flurkarte-Tests aus Plenivo (`mapCadastralSources`, `mapCadastralStateLookup`, `mapCadastralZoom`) sind in `@veit/map` vorhanden. GPX, GeoJSON-Import, Geodäsie und Kartensuche bleiben in Plenivo, die Funktionen liegen nicht im Paket.
 
 ## Host-Werkzeuge
 
-`scripts/no-custom-css.mjs` prüft einen Host-`src`-Pfad (Argument). `@veit/react-controls` exportiert `AppShell`.
+`scripts/no-custom-css.mjs` prüft einen Host-`src`-Pfad (Argument oder `--src`). `--allow-css` darf nur Variablen und `@font-face` enthalten. `@veit/react-controls` exportiert `AppShell`.
 
 ## MapLibre 6
 
@@ -18,7 +18,7 @@ Peer und Abhängigkeit sind `maplibre-gl` ^6.4.1 (schließt Advisory 1193680). E
 
 Neu. Gemeinsame Karte für Hochwasserdienst und Plenivo, siehe `packages/map/README.md`.
 
-Plenivo nutzt noch Leaflet und wird auf `<VeitMap>` umgestellt. Dabei gilt: Leaflet-Zoom = MapLibre-Zoom + 1, Hintergründe werden über `basemap` gesteuert (IDs `osm`, `satellite`, `topo`, `official`, `cadastral`), und die Flurkarten-Quellen kommen aus `@veit/map` statt aus `mapCadastralSources.ts`. ScanGut hat keine Karte. Hochwasserdienst nutzt den neuen Stand.
+Hintergründe werden über `basemap` gesteuert (IDs `osm`, `satellite`, `topo`, `official`, `cadastral`). Die Flurkarten-Quellen kommen aus `@veit/map`. ScanGut hat keine Karte. Hochwasserdienst und Plenivo nutzen den MapLibre-Stand.
 
 `configureMap` gilt für Karten, die danach entstehen. Jede Karte hält ihre eigene Kopie. `config` an `<VeitMap>` überschreibt sie für diese Karte. Custom-Layer überleben einen Style-Wechsel nicht und werden nicht mitkopiert. `useMapLayer` setzt Host-Ebenen nach jedem Style-Load neu. `devHandle` wird beim Unmount von `window` gelöscht. Die 3D-Welt kippt die Kamera nur einmal. three.js liegt hinter `@veit/map/world3d` und wird vom Host per `import()` geladen.
 

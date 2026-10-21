@@ -1,20 +1,78 @@
+/**
+ * Host-CSS-Disziplin für Tailwind-4-Apps.
+ * Ohne Flags: Hochwasser-Pfad (ein Positionsargument = src).
+ *   --src <dir>
+ *   --source <glob>          @source-Zeile, wiederholbar. Default: Controls + Dialog.
+ *   --allow-import <line>    zusätzliche Zeile in tailwind.css, wiederholbar
+ *   --allow-css <rel>        weitere CSS-Datei unter src (nur Brand-Tokens)
+ *   --allow-style <rel>      style= bleibt erlaubt
+ *   --allow-shell <rel>      Viewport-Höhe bleibt erlaubt (AppShell ist Default)
+ */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
-const src = process.argv[2] ?? join(import.meta.dirname, "..", "src");
+const DEFAULT_SOURCES = [
+  './**/*.{tsx,ts}',
+  '../../../veit-framework/packages/react-controls/src',
+  '../../../veit-framework/packages/react-dialog/src',
+];
+
+function parseArgs(argv) {
+  const sources = [];
+  const allowImports = [];
+  const allowCss = new Set();
+  const allowStyle = new Set();
+  const allowShell = new Set(["components/AppShell.tsx"]);
+  let src;
+  const positionals = [];
+  for (let i = 2; i < argv.length; i += 1) {
+    const flag = argv[i];
+    const value = argv[i + 1];
+    if (flag === "--src" && value) {
+      src = value;
+      i += 1;
+    } else if (flag === "--source" && value) {
+      sources.push(value);
+      i += 1;
+    } else if (flag === "--allow-import" && value) {
+      allowImports.push(value);
+      i += 1;
+    } else if (flag === "--allow-css" && value) {
+      allowCss.add(value.replaceAll("\\", "/"));
+      i += 1;
+    } else if (flag === "--allow-style" && value) {
+      allowStyle.add(value.replaceAll("\\", "/"));
+      i += 1;
+    } else if (flag === "--allow-shell" && value) {
+      allowShell.add(value.replaceAll("\\", "/"));
+      i += 1;
+    } else if (!flag.startsWith("--")) {
+      positionals.push(flag);
+    }
+  }
+  return {
+    src: src ?? positionals[0] ?? join(import.meta.dirname, "..", "src"),
+    sources: sources.length > 0 ? sources : DEFAULT_SOURCES,
+    allowImports,
+    allowCss,
+    allowStyle,
+    allowShell,
+  };
+}
+
+const { src, sources, allowImports, allowCss, allowStyle, allowShell } = parseArgs(process.argv);
 const errors = [];
 
 const tailwind = readFileSync(join(src, "tailwind.css"), "utf8").replace(/\r\n/g, "\n");
 const allowedTailwind = [
   '@import "tailwindcss";',
-  '@source "./**/*.{tsx,ts}";',
-  '@source "../../../veit-framework/packages/react-controls/src";',
-  '@source "../../../veit-framework/packages/react-dialog/src";',
+  ...sources.map((glob) => `@source "${glob}";`),
   '@import "@veit/react-controls/theme.css";',
+  ...allowImports,
   "",
 ].join("\n");
 if (tailwind.trim() !== allowedTailwind.trim()) {
-  errors.push("src/tailwind.css darf nur Tailwind, @source und theme.css laden");
+  errors.push("src/tailwind.css darf nur Tailwind, @source, theme.css und erlaubte Extra-Imports laden");
 }
 
 function readBalanced(text, open) {
@@ -106,6 +164,12 @@ function classStrings(text) {
   return found;
 }
 
+function cssImportAllowed(trimmed) {
+  if (trimmed.includes("tailwind.css")) return true;
+  if (trimmed.includes("maplibre-gl/dist/maplibre-gl.css")) return true;
+  return allowImports.some((line) => trimmed.includes(line.replace(/['"]/g, "").trim()) || trimmed === line);
+}
+
 function walk(dir) {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
@@ -114,19 +178,19 @@ function walk(dir) {
       continue;
     }
     const rel = relative(src, path).replaceAll("\\", "/");
-    if (name.endsWith(".css") && rel !== "tailwind.css") {
+    if (name.endsWith(".css") && rel !== "tailwind.css" && !allowCss.has(rel)) {
       errors.push(`${rel}: keine Stylesheet-Datei im Host`);
     }
     if (!name.endsWith(".ts") && !name.endsWith(".tsx")) continue;
     const text = readFileSync(path, "utf8");
-    if (/style\s*=\s*[{["']/.test(text)) errors.push(`${rel}: kein style-Attribut`);
+    if (!allowStyle.has(rel) && /style\s*=\s*[{["']/.test(text)) errors.push(`${rel}: kein style-Attribut`);
     if (/<(?:button|input|select|textarea)\b/.test(text)) {
       errors.push(`${rel}: natives Formular-Element, Veit-Baustein nehmen`);
     }
     if (/rounded-xl border border-border bg-card/.test(text)) {
       errors.push(`${rel}: Karte ist VeitPanel, nicht eine eigene Klassenkette`);
     }
-    if (rel !== "components/AppShell.tsx" && /\b(?:h-dvh|min-h-dvh|min-h-screen)\b/.test(text)) {
+    if (!allowShell.has(rel) && /\b(?:h-dvh|min-h-dvh|min-h-screen)\b/.test(text)) {
       errors.push(`${rel}: Seitenhülle nur über AppShell`);
     }
     for (const raw of classStrings(text)) {
@@ -143,8 +207,7 @@ function walk(dir) {
     for (const line of text.split("\n")) {
       const trimmed = line.trim();
       if (!trimmed.includes(".css")) continue;
-      if (trimmed.includes("tailwind.css")) continue;
-      if (trimmed.includes("maplibre-gl/dist/maplibre-gl.css")) continue;
+      if (cssImportAllowed(trimmed)) continue;
       if (/import\s+["'].+\.css["']/.test(trimmed) || /@import\s+["'].+\.css["']/.test(trimmed)) {
         errors.push(`${rel}: CSS-Import nicht erlaubt (${trimmed})`);
       }

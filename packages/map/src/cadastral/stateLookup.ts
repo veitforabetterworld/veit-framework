@@ -1,4 +1,9 @@
-import { STATE_BOUNDARIES } from './stateBoundaries.js';
+import {
+  STATE_BOUNDARIES,
+  type PolygonCoords,
+  type Ring,
+  type StateFeature,
+} from './stateBoundaries.js';
 
 /** ISO 3166-2:DE-Kürzel ohne Präfix, passend zu CadastralStateId. */
 export type GermanStateCode =
@@ -19,20 +24,7 @@ export type GermanStateCode =
   | 'SH'
   | 'TH';
 
-type Position = [number, number];
-type Ring = Position[];
-type PolygonCoords = Ring[];
-type MultiPolygonCoords = PolygonCoords[];
-
-type StateFeature = {
-  properties: { id: string };
-  geometry: {
-    type: 'Polygon' | 'MultiPolygon';
-    coordinates: PolygonCoords | MultiPolygonCoords;
-  };
-};
-
-const STATE_FEATURES = (STATE_BOUNDARIES as unknown as { features: StateFeature[] }).features;
+const STATE_FEATURES = STATE_BOUNDARIES.features;
 
 const stateIdByIso = new Map<string, GermanStateCode>();
 for (const feature of STATE_FEATURES) {
@@ -71,9 +63,9 @@ function pointInGeometry(
   geometry: StateFeature['geometry'],
 ): boolean {
   if (geometry.type === 'Polygon') {
-    return pointInPolygonCoords(lng, lat, geometry.coordinates as PolygonCoords);
+    return pointInPolygonCoords(lng, lat, geometry.coordinates);
   }
-  for (const polygon of geometry.coordinates as MultiPolygonCoords) {
+  for (const polygon of geometry.coordinates) {
     if (pointInPolygonCoords(lng, lat, polygon)) return true;
   }
   return false;

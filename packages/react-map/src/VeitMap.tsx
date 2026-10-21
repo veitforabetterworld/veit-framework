@@ -1,19 +1,17 @@
 import {
   BUILTIN_BASEMAPS,
-  applyGlobe,
-  applyMapTerrain,
   bindMapConfig,
-  clearMapTerrain,
   createBasemapController,
-  ensureBuildings3dLayer,
   initialBasemapStyle,
-  removeBuildings3dLayer,
   type BasemapController,
   type BasemapDefinition,
   type BasemapSwitchReason,
   type MapConfigPatch,
   type MapTheme,
 } from '@veit/map';
+import { ensureBuildings3dLayer, removeBuildings3dLayer } from '../../map/src/buildings3d.js';
+import { applyGlobe } from '../../map/src/globe.js';
+import { applyMapTerrain, clearMapTerrain } from '../../map/src/terrain.js';
 import * as maplibregl from 'maplibre-gl';
 import type { Map as MapLibreMap, MapOptions } from 'maplibre-gl';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react';

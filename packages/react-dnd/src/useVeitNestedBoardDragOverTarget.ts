@@ -1,9 +1,9 @@
-import { useCallback, useRef, type MutableRefObject } from 'react';
+import { useCallback, useRef, type RefObject } from 'react';
 import type { DragOverEvent } from '@dnd-kit/core';
 
 export type VeitNestedBoardDragOverTarget = {
   /** Latest `over.id` from `onDragOver`; `null` if none. */
-  overIdRef: MutableRefObject<string | null>;
+  overIdRef: RefObject<string | null>;
   onDragOver: (e: DragOverEvent) => void;
   resetOverId: () => void;
 };

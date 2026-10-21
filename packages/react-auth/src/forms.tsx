@@ -78,7 +78,7 @@ export function LoginForm<User>({
     }
   }, [searchParams, setSearchParams]);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError(null);
     setMfaEmailHint(null);
@@ -251,7 +251,7 @@ export function RegisterForm<User>({
     }
   };
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError(null);
     if (!agreePrivacy) return setError(t('auth.privacy_agree_required'));
@@ -333,7 +333,7 @@ export function ForgotPasswordForm<User>({
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
@@ -390,7 +390,7 @@ export function ResetPasswordForm({
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError(null);
     if (!effectiveToken) return setError(t('auth.password_reset_invalid'));
@@ -457,7 +457,7 @@ export function PasswordLoginForm({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const submit = async (event: React.FormEvent) => {
+  const submit = async (event: React.SubmitEvent) => {
     event.preventDefault();
     setSubmitting(true);
     setError(null);

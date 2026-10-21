@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 import { isEntityDeepLinkId, type EntityDeepLinkId, type EntityDeepLinkIdMode } from './useEntityDeepLinkUrlSync.js';
 
 export { EntityDialogDismissBridge } from '@veit/react-dialog';
@@ -57,7 +57,7 @@ export function useEntityDialogClose(opts: {
 
   return {
     onClose,
-    dismissRef: dismissRef as MutableRefObject<(() => void) | null>,
+    dismissRef: dismissRef as RefObject<(() => void) | null>,
     dismissEntity,
     ackEntityOpen,
     resetDismissedForUrl,

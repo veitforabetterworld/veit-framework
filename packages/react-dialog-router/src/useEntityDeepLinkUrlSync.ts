@@ -1,4 +1,4 @@
-import { useEffect, type MutableRefObject } from 'react';
+import { useEffect, type RefObject } from 'react';
 
 /** `number`: Plenivo-Ids (`>= 1`). `slug`: Zeichenkette in der Query, z. B. `?pegel=`. */
 export type EntityDeepLinkIdMode = 'number' | 'slug';
@@ -30,7 +30,7 @@ export function isEntityDeepLinkPushInFlight(opts: {
   idMode?: EntityDeepLinkIdMode;
   param: string;
   searchParams: URLSearchParams;
-  openedFromUrlRef: MutableRefObject<string | null>;
+  openedFromUrlRef: RefObject<string | null>;
 }): boolean {
   const { toolId, entityId, idMode = 'number', param, searchParams, openedFromUrlRef } = opts;
   if (!isEntityDeepLinkId(entityId, idMode) || Number.isNaN(toolId)) return false;
@@ -46,7 +46,7 @@ export function useEntityDeepLinkUrlSync(opts: {
   param: string;
   entityId: EntityDeepLinkId | null;
   searchParams: URLSearchParams;
-  openedFromUrlRef: MutableRefObject<string | null>;
+  openedFromUrlRef: RefObject<string | null>;
   isParamPushPending: () => boolean;
   resetDismissedForUrl: () => void;
   shouldOpenFromUrl: (id: EntityDeepLinkId) => boolean;

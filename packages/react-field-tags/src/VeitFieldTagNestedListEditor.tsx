@@ -14,15 +14,11 @@ import {
   type FieldTag,
 } from '@veit/field-tags';
 import { VeitDeleteIconButton, VeitInlineListRowFrame, veitInlineEditableListRowClass } from '@veit/react-controls';
-import {
-  type DragEndEvent,
-  useVeitDndSensors,
-  VeitDndContext,
-  VeitDroppableZone,
-  VeitSortableActivatorRow,
-  VeitSortableRegion,
-  verticalListSortingStrategy,
-} from '@veit/react-dnd';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { VeitDroppableZone, VeitSortableActivatorRow, VeitSortableRegion } from '@veit/react-dnd';
+import { VeitDndContext } from '../../react-dnd/src/VeitDndContext.js';
+import { useVeitDndSensors } from '../../react-dnd/src/useVeitDndSensors.js';
 import type { VeitDeleteConfirmConfig } from '@veit/react-dialog';
 
 import { allocNestedTempTagId, type NestedTagDraft, type VeitFieldTagListStrings } from './types.js';

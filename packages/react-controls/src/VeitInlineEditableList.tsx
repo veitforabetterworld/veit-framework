@@ -17,13 +17,11 @@ import {
   type DragEndEvent,
   type DragStartEvent,
   type DropAnimation,
-  arrayMove,
-  useVeitDndSensors,
-  VeitDndContext,
-  VeitSortableRegion,
-  VeitSortableActivatorRow,
-  verticalListSortingStrategy,
-} from '@veit/react-dnd';
+} from '@dnd-kit/core';
+import { arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { VeitSortableActivatorRow, VeitSortableRegion } from '@veit/react-dnd';
+import { VeitDndContext } from '../../react-dnd/src/VeitDndContext.js';
+import { useVeitDndSensors } from '../../react-dnd/src/useVeitDndSensors.js';
 import { GripVertical, Plus } from 'lucide-react';
 import type { VeitDeleteConfirmConfig } from '@veit/react-dialog';
 import { VeitDeleteIconButton } from './VeitDeleteIconButton.js';

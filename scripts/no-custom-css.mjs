@@ -170,6 +170,35 @@ function cssImportAllowed(trimmed) {
   return allowImports.some((line) => trimmed.includes(line.replace(/['"]/g, "").trim()) || trimmed === line);
 }
 
+function assertBrandFile(rel) {
+  const text = readFileSync(join(src, rel), "utf8")
+    .replace(/\r\n/g, "\n")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  let rest = text;
+  while (true) {
+    const at = rest.search(/@font-face\s*\{/);
+    if (at < 0) break;
+    const open = rest.indexOf("{", at);
+    const block = readBalanced(rest, open);
+    rest = rest.slice(0, at) + rest.slice(open + block.length);
+  }
+  const ruleRe = /([^{}]+)\{([^{}]*)\}/g;
+  let match;
+  while ((match = ruleRe.exec(rest))) {
+    for (const decl of match[2].split(";")) {
+      const trimmed = decl.trim();
+      if (!trimmed) continue;
+      if (!trimmed.startsWith("--")) {
+        errors.push(`${rel}: Brand-Datei darf nur Variablen und @font-face enthalten (${trimmed})`);
+      }
+    }
+  }
+  const leftover = rest.replace(ruleRe, "").replace(/\s+/g, "");
+  if (leftover) {
+    errors.push(`${rel}: Brand-Datei darf nur Variablen und @font-face enthalten`);
+  }
+}
+
 function walk(dir) {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
@@ -216,6 +245,7 @@ function walk(dir) {
 }
 
 walk(src);
+for (const rel of allowCss) assertBrandFile(rel);
 if (errors.length > 0) {
   console.error(errors.join("\n"));
   process.exit(1);

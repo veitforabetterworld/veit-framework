@@ -126,17 +126,10 @@ export class World3dController {
       if (!this.renderer || !this.scene || !this.camera || !this.map) return;
       const origin = this.worldOrigin;
       if (!origin) return;
-      const input = arg as unknown as
-        | ArrayLike<number>
-        | { defaultProjectionData?: { mainMatrix: ArrayLike<number>; projectionTransition?: number } };
-      let matrix: ArrayLike<number>;
-      if ('defaultProjectionData' in input && input.defaultProjectionData) {
-        // The scene lives in local mercator meters, so it is only valid once the globe has fully flattened.
-        if ((input.defaultProjectionData.projectionTransition ?? 0) > 0) return;
-        matrix = input.defaultProjectionData.mainMatrix;
-      } else {
-        matrix = input as ArrayLike<number>;
-      }
+      // The scene lives in local mercator meters, so it is only valid once the globe has fully flattened.
+      const projection = arg.defaultProjectionData;
+      if (projection.projectionTransition > 0) return;
+      const matrix = projection.mainMatrix;
       if (this.map.getZoom() < WORLD3D_MIN_ZOOM) return;
       const mc = maplibregl.MercatorCoordinate.fromLngLat({ lon: origin.lng, lat: origin.lat }, origin.alt);
       const ppm = mc.meterInMercatorCoordinateUnits();

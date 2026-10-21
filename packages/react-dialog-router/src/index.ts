@@ -1,8 +1,4 @@
-export {
-  EntityDialogDismissBridge,
-  EntityDialogDismissRef,
-  useEntityDialogClose,
-} from './useEntityDialogClose.js';
+export { EntityDialogDismissBridge, useEntityDialogClose } from './useEntityDialogClose.js';
 export {
   entityDeepLinkKey,
   entityIdFromParam,

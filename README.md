@@ -58,26 +58,20 @@ pnpm --filter @veit/intl build
    `veit-framework/packages/*`.
 3. In `package.json`: `"@veit/react-dialog": "workspace:*"` (usw.).
 4. Vite/TS-Aliases auf `veit-framework/packages/*/src/index.ts` (siehe Plenivo).
-5. **React-Singleton (Pflicht bei Source-Aliases):** Host pinnt eine React-18-Linie und eine `react-router-dom`-Kopie — sonst entstehen doppelte Router-Contexts (`useLocation` außerhalb von `<Router>`). Empfohlen:
+5. **React-Singleton (Pflicht bei Source-Aliases):** Host pinnt eine React-Major-Linie und eine `react-router`-Kopie — sonst entstehen doppelte Router-Contexts (`useLocation` außerhalb von `<Router>`). Empfohlen:
    - `pnpm.overrides` für `react` / `react-dom` / `react-router` / `react-router-dom`
    - Vite `resolve.dedupe` + absolute Aliases auf die Host-`node_modules`-Kopien
-   - Framework-`devDependencies` nutzen React **18** (Peers bleiben `>=18`)
+   - Paket-Root nicht auf `index.ts` aliasen, sonst brechen Subpath-Imports wie `theme.css`
 
 ## Styling
 
 `@veit/react-controls/theme.css` enthält die shadcn-Variablen und die Klassen `.btn`, `.input`, `.card`. Der Host lädt Tailwind davor (`@import "tailwindcss"` plus `@source`) und importiert danach die Theme-Datei. Siehe `CHANGES.md` für brechende Umstellungen auf Radix.
 
-### Veit Bridge CSS (Tailwind-3-Host)
+### Brand-Datei
 
-Hosts, die Tailwind 3 behalten, importieren `theme.css` nicht (`@theme` / `@apply` darin ist Tailwind 4). Stattdessen eine Bridge-Datei, die die Framework-Klassennamen auf Host-Tokens mappt:
+Nach `theme.css` darf eine Host-Datei nur Custom Properties und `@font-face` setzen. `scripts/no-custom-css.mjs` prüft das für `--allow-css`. `theme.css` liefert ein dunkles `:root`; die Brand-Datei muss danach kommen, sonst bleibt die Hochwasser-Palette.
 
-- `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-destructive`, `.btn-ghost`
-- `.card`, `.input`, `.label`, `.muted`
-- semantische Text-/Flächenklassen (`.text-foreground`, `.text-muted-foreground`, `.bg-background`)
-
-Die Tailwind-Config des Hosts scannt `veit-framework/packages/react-controls/src` und `react-dialog/src` und setzt `theme.extend.colors` (`background`, `foreground`, `primary`, `muted`, `border`, `card`, `destructive`), damit Utility-Klassen aus den Controls (`bg-primary`, `text-muted-foreground`, `border-border`) die Host-Tokens treffen.
-
-Vorlage: ScanGut `apps/web/src/ui/veit-bridge.css` plus `apps/web/tailwind.config.js`.
+Die Tailwind-3-Brücke (`veit-bridge.css`, `tailwind.config.js`) ist kein Muster mehr. ScanGut und Hochwasser importieren `theme.css` direkt.
 
 ## Host-Integration (Wrapper-Regel)
 
@@ -85,4 +79,4 @@ Vorlage: ScanGut `apps/web/src/ui/veit-bridge.css` plus `apps/web/tailwind.confi
 2. **Host-Dateien sind Adapter:** i18n, Branding, Env, API-Client, `bemPrefix` / Token-CSS. Keine zweite Implementierung neben einem Framework-Export.
 3. **Domain bleibt im Host:** Billing, Kanban, Shop-Flows, Push/Firebase-Produktlogik usw.
 4. **SiteShell-Chrome** (App-Header mit Branding/Navigation) bleibt host-spezifisch; nur Measure/Inline-Action-Primitives liegen im Framework (`@veit/react-controls`).
-5. Branches: `deploy` ist Integrationsbranch; nach stabilen Modul-Wellen nach `development` mergen (beide Hosts pinnen denselben Tip).
+5. Hosts pinnen `origin/development`. Produkt-`deploy` rollt die jeweilige Produktion aus und ist nicht der gemeinsame Framework-Tip.

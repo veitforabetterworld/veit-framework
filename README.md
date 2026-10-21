@@ -17,6 +17,8 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 | **`@veit/react-upload`** | Image-Picker / Upload |
 | **`@veit/react-address`** | Adressformular + Autocomplete |
 | **`@veit/react-invite`** | Invite-Einlösung, Invite-Liste, Share-Link-Actions |
+| **`@veit/react-map`** | `<VeitMap>`: MapLibre-Karte mit Hintergründen (Vektor zuerst, Amtlich, Flurkarte), Globus, Gelände, Host-Ebenen bleiben beim Wechsel erhalten |
+| **`@veit/react-map`** | `<VeitMap>`: MapLibre-Karte mit Hintergründen (Vektor zuerst, Amtlich, Flurkarte), Globus, Gelände, Host-Ebenen bleiben beim Wechsel erhalten |
 | **`@veit/react-navigation`** | Back-Button / Navigations-Scope |
 | **`@veit/react-dialog-router`** | Deep-Link-Hooks für Entity-Dialoge |
 | **`@veit/password-policy`** | Passwort-Stärke (zxcvbn + HIBP), `assertStrongPassword` / `evaluatePasswordSecurity` / `generateSuggestedPassphrase` |
@@ -28,6 +30,8 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 | Paket | Inhalt |
 |-------|--------|
 | **`@veit/address`** | Adress-Typen, Nominatim-Suche |
+| **`@veit/map`** | MapLibre ohne React: Hintergründe, Flurkarten der Länder, Live-Sonne, Gelände, Höhenprofil, 3D-Welt (`@veit/map/world3d`) |
+| **`@veit/map`** | MapLibre ohne React: Hintergründe, Flurkarten der Länder, Live-Sonne, Gelände, Höhenprofil, 3D-Welt (`@veit/map/world3d`) |
 | **`@veit/field-tags`** | Tag-Baum-Logik (ohne UI) |
 | **`@veit/intl`** | Locale-/Zahlen-/Geld-Formatierung + **Sprach-Anzeigenamen** (`uiLanguageAutonym` / `uiLanguageDisplayName`) |
 | **`@veit/tesseract-ocr`** | Tesseract.js für Node |

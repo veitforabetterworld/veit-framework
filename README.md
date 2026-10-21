@@ -63,6 +63,18 @@ pnpm --filter @veit/intl build
 
 `@veit/react-controls/theme.css` enthält die shadcn-Variablen und die Klassen `.btn`, `.input`, `.card`. Der Host lädt Tailwind davor (`@import "tailwindcss"` plus `@source`) und importiert danach die Theme-Datei. Siehe `CHANGES.md` für brechende Umstellungen auf Radix.
 
+### Veit Bridge CSS (Tailwind-3-Host)
+
+Hosts, die Tailwind 3 behalten, importieren `theme.css` nicht (`@theme` / `@apply` darin ist Tailwind 4). Stattdessen eine Bridge-Datei, die die Framework-Klassennamen auf Host-Tokens mappt:
+
+- `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-destructive`, `.btn-ghost`
+- `.card`, `.input`, `.label`, `.muted`
+- semantische Text-/Flächenklassen (`.text-foreground`, `.text-muted-foreground`, `.bg-background`)
+
+Die Tailwind-Config des Hosts scannt `veit-framework/packages/react-controls/src` und `react-dialog/src` und setzt `theme.extend.colors` (`background`, `foreground`, `primary`, `muted`, `border`, `card`, `destructive`), damit Utility-Klassen aus den Controls (`bg-primary`, `text-muted-foreground`, `border-border`) die Host-Tokens treffen.
+
+Vorlage: ScanGut `apps/web/src/ui/veit-bridge.css` plus `apps/web/tailwind.config.js`.
+
 ## Host-Integration (Wrapper-Regel)
 
 1. **Generische UI/Server-Logik zuerst ins Framework** — nicht parallel in Plenivo und ScanGut duplizieren.

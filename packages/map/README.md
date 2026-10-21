@@ -2,17 +2,19 @@
 
 MapLibre toolkit without React. Source-exported like the other packages (`exports` point at `src`).
 
-**Peer dependencies:** `maplibre-gl` (^5.24). `three` only for `@veit/map/world3d`.
+**Peer dependencies:** `maplibre-gl` (^6.4). `three` only for `@veit/map/world3d`.
 
 ## What is in it
 
 - **Basemaps, vector first.** `osm` (OpenFreeMap), `satellite` (Esri + vector labels), `topo` (OpenTopoMap raster), `official` (basemap.de vector, Germany only), `cadastral` (state cadastral maps on basemap.de). Add your own with `rasterBasemap({...})` or a `BasemapDefinition`.
-- **`createBasemapController(map, options)`** switches the whole style for a basemap or theme change and carries everything the host added (layers, sources, terrain, sky, light, projection) into the new style.
+- **`createBasemapController(map, options)`** switches the whole style for a basemap or theme change and carries host layers and sources, terrain, sky, light and projection into the new style. Custom layers are not carried; add them again after `style.load`.
 - **Cadastral maps of the 16 states** with zoom tiers (overview / ALKIS) and state lookup by border polygon. Source: plenivo.
 - **Globe, live sun light, terrain, 3D buildings, elevation profile** (`elevationProfile(map, line)` samples `queryTerrainElevation`).
 - **`@veit/map/world3d`:** three.js scene with trees, fences, hedges, power lines, roads and trains. Host content plugs in as `World3dPlugin`.
 
-## Configure once
+## Configure
+
+`configureMap` sets the defaults for maps created afterwards. `<VeitMap>` snaps that config onto the map. A later `configureMap` does not change maps that already exist. Pass `config` on `<VeitMap>` when one map needs its own terrain, traffic or anchors.
 
 ```ts
 import { configureMap } from '@veit/map';

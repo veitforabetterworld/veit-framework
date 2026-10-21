@@ -5,8 +5,12 @@ export {
 } from './useEntityDialogClose.js';
 export {
   entityDeepLinkKey,
+  entityIdFromParam,
+  isEntityDeepLinkId,
   isEntityDeepLinkPushInFlight,
   useEntityDeepLinkUrlSync,
+  type EntityDeepLinkId,
+  type EntityDeepLinkIdMode,
 } from './useEntityDeepLinkUrlSync.js';
 export { useToolDeepLinkId } from './useToolDeepLinkId.js';
 export {

@@ -14,6 +14,7 @@ const REFRESH_MS = 60_000;
 
 const RAD = Math.PI / 180;
 const refreshers = new WeakMap<MapLibreMap, () => void>();
+const wantLiveSun = new WeakMap<MapLibreMap, boolean>();
 
 /** Subsolar point (where the sun stands at the zenith) for a given instant. */
 export function subsolarPoint(date: Date): { lat: number; lng: number } {
@@ -54,7 +55,18 @@ function liveSunLight(date: Date) {
  * Keeps the globe's day/night shading on the real sun: live light when zoomed out,
  * the fixed building light once the 3D city view takes over.
  */
+/** Stop the live sun and keep the fixed building light, including after a later zoom. */
+export function setFixedLight(map: MapLibreMap): void {
+  wantLiveSun.set(map, false);
+  try {
+    map.setLight({ ...FIXED_LIGHT, position: [...FIXED_LIGHT.position] });
+  } catch {
+    /* older maplibre */
+  }
+}
+
 export function bindLiveSunLight(map: MapLibreMap): void {
+  wantLiveSun.set(map, true);
   // A style swap resets the light, so a repeated call only re-applies it.
   const bound = refreshers.get(map);
   if (bound) {
@@ -63,6 +75,16 @@ export function bindLiveSunLight(map: MapLibreMap): void {
   }
   let mode: 'sun' | 'fixed' | null = null;
   const apply = (force = false) => {
+    if (wantLiveSun.get(map) === false) {
+      if (!force && mode === 'fixed') return;
+      mode = 'fixed';
+      try {
+        map.setLight({ ...FIXED_LIGHT, position: [...FIXED_LIGHT.position] });
+      } catch {
+        /* older maplibre */
+      }
+      return;
+    }
     const next = map.getZoom() < LIVE_SUN_MAX_ZOOM ? 'sun' : 'fixed';
     if (!force && next === mode) return;
     mode = next;

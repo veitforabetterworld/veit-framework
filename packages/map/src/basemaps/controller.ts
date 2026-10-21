@@ -42,8 +42,46 @@ function findBasemap(basemaps: readonly BasemapDefinition[], id: string): Basema
 }
 
 /**
+ * Layers and sources the host added, copied onto the incoming basemap style.
+ * Custom layers are left out: MapLibre keeps their id and drops the implementation,
+ * so the owner (the 3D world, `useMapLayer`) adds them again after `style.load`.
+ */
+export function carryHostStyle(
+  previous: StyleSpecification | undefined,
+  next: StyleSpecification,
+  owned: { layers: ReadonlySet<string>; sources: ReadonlySet<string> },
+): { style: StyleSpecification; own: { layers: Set<string>; sources: Set<string> } } {
+  const own = {
+    layers: new Set(next.layers.map((layer) => layer.id)),
+    sources: new Set(Object.keys(next.sources)),
+  };
+  if (!previous) return { style: next, own };
+  const keptLayers = previous.layers.filter((layer) => {
+    // Custom layers are not in the style spec, but getStyle() still returns them.
+    const type = (layer as { type: string }).type;
+    return type !== 'custom' && !owned.layers.has(layer.id) && !own.layers.has(layer.id);
+  });
+  const keptSources = Object.fromEntries(
+    Object.entries(previous.sources).filter(([id]) => !owned.sources.has(id) && !own.sources.has(id)),
+  );
+  return {
+    own,
+    style: {
+      ...next,
+      sources: { ...next.sources, ...keptSources },
+      layers: [...next.layers, ...keptLayers],
+      terrain: previous.terrain ?? next.terrain,
+      sky: previous.sky ?? next.sky,
+      light: previous.light ?? next.light,
+      projection: previous.projection ?? next.projection,
+    },
+  };
+}
+
+/**
  * Switches the whole style for a basemap or theme change and keeps everything the host added:
  * layers, sources, terrain, sky, light and projection are carried into the new style.
+ * Custom layers are not carried; add them again from `onStyleReady`.
  */
 export function createBasemapController(map: MapLibreMap, options: BasemapControllerOptions): BasemapController {
   let basemapId = findBasemap(options.basemaps, options.basemap).id;
@@ -83,22 +121,9 @@ export function createBasemapController(map: MapLibreMap, options: BasemapContro
   if (map.isStyleLoaded()) onStyleLoad();
 
   const transformStyle = (previous: PreviousStyle | undefined, next: PreviousStyle): PreviousStyle => {
-    nextOwn = { layers: new Set(next.layers.map((l) => l.id)), sources: new Set(Object.keys(next.sources)) };
-    if (!previous) return next;
-    const nextLayerIds = nextOwn.layers;
-    const keptLayers = previous.layers.filter((l) => !ownLayers.has(l.id) && !nextLayerIds.has(l.id));
-    const keptSources = Object.fromEntries(
-      Object.entries(previous.sources).filter(([id]) => !ownSources.has(id) && !nextOwn?.sources.has(id)),
-    );
-    return {
-      ...next,
-      sources: { ...next.sources, ...keptSources },
-      layers: [...next.layers, ...keptLayers],
-      terrain: previous.terrain ?? next.terrain,
-      sky: previous.sky ?? next.sky,
-      light: previous.light ?? next.light,
-      projection: previous.projection ?? next.projection,
-    };
+    const carried = carryHostStyle(previous, next, { layers: ownLayers, sources: ownSources });
+    nextOwn = carried.own;
+    return carried.style;
   };
 
   const swap = (why: BasemapSwitchReason) => {

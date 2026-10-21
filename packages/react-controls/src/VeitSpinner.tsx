@@ -2,7 +2,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 
 export type VeitSpinnerSize = 'sm' | 'md' | 'lg';
 
-/** Host-eigene Marke. Das Framework liefert Status, Größe und die Scan-Bewegung. */
+/** Host ersetzt die Marke. Ohne Provider bleibt der Ring. */
 export type VeitSpinnerMark = (props: { size: VeitSpinnerSize }) => ReactNode;
 
 const VeitSpinnerMarkContext = createContext<VeitSpinnerMark | null>(null);
@@ -17,17 +17,18 @@ export function VeitSpinnerProvider({
   return <VeitSpinnerMarkContext.Provider value={mark}>{children}</VeitSpinnerMarkContext.Provider>;
 }
 
-const TRACK = {
-  sm: 'h-4 w-10',
-  md: 'h-6 w-14',
-  lg: 'h-8 w-20',
+const SIZE = {
+  sm: 'h-4 w-4',
+  md: 'h-6 w-6',
+  lg: 'h-8 w-8',
 } as const;
 
-function DefaultMark({ size }: { size: VeitSpinnerSize }) {
+function RingMark({ size }: { size: VeitSpinnerSize }) {
   return (
-    <span className={`relative inline-block overflow-hidden rounded-sm bg-muted ${TRACK[size]}`} aria-hidden>
-      <span className="absolute inset-x-0 top-0.5 h-0.5 animate-veit-scan rounded-full bg-primary motion-reduce:top-1/2 motion-reduce:animate-none" />
-    </span>
+    <span
+      className={`animate-spin rounded-full border-2 border-muted border-t-primary motion-reduce:animate-none ${SIZE[size]}`}
+      aria-hidden
+    />
   );
 }
 
@@ -47,7 +48,7 @@ export function VeitSpinner({ label, size = 'md' }: VeitSpinnerProps) {
       aria-busy="true"
       aria-label={label}
     >
-      {mark ? mark({ size }) : <DefaultMark size={size} />}
+      {mark ? mark({ size }) : <RingMark size={size} />}
       {label ? <span className="sr-only">{label}</span> : null}
     </div>
   );

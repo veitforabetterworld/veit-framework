@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { Loader2, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { VeitSpinner } from './VeitSpinner.js';
 
 export type VeitComboboxProps<T> = {
   query: string;
@@ -92,7 +93,11 @@ export function VeitCombobox<T>({
         }}
         onKeyDown={onKeyDown}
       />
-      {loading ? <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" aria-hidden /> : null}
+      {loading ? (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2">
+          <VeitSpinner size="sm" />
+        </span>
+      ) : null}
       {showList ? (
         <ul
           id={listId}

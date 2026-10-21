@@ -12,13 +12,25 @@ export type VeitAddressFieldsLabels = VeitAddressStreetAutocompleteLabels & {
   addressExtra?: string;
 };
 
+const VEIT_ADDRESS_LABELS_DE: VeitAddressFieldsLabels = {
+  street: 'Straße',
+  postalCode: 'PLZ',
+  city: 'Ort',
+  countryCode: 'Land',
+  addressExtra: 'Adresszusatz',
+  loading: 'Suche…',
+  noResults: 'Keine Treffer',
+  osmAttribution: '© OpenStreetMap-Mitwirkende',
+};
+
 export type VeitAddressFieldsProps = {
   value: PostalAddress;
   onChange: (next: PostalAddress) => void;
   disabled?: boolean;
   showAddressExtra?: boolean;
   showOsmAttribution?: boolean;
-  labels: VeitAddressFieldsLabels;
+  /** Overrides the German defaults. Omitted keys keep those defaults. */
+  labels?: Partial<VeitAddressFieldsLabels>;
   layout?: 'fieldset' | 'grid';
   legend?: string;
   idPrefix?: string;
@@ -37,7 +49,7 @@ export function VeitAddressFields({
   disabled = false,
   showAddressExtra = false,
   showOsmAttribution = false,
-  labels,
+  labels: labelsProp,
   layout = 'grid',
   legend,
   idPrefix,
@@ -45,6 +57,7 @@ export function VeitAddressFields({
   inputClassName = 'input',
   labelClassName = 'label mb-1 block',
 }: VeitAddressFieldsProps) {
+  const labels = { ...VEIT_ADDRESS_LABELS_DE, ...labelsProp };
   const patch = (partial: Partial<PostalAddress>) => onChange({ ...value, ...partial });
 
   const grid = (

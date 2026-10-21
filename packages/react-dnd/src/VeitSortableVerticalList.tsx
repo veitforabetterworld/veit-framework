@@ -16,8 +16,8 @@ export type VeitSortableVerticalListProps = Omit<DndContextProps, 'sensors' | 'c
 };
 
 /**
- * Vertical sortable list with a shared `VeitDndContext` — simple reorder UIs.
- * Complex boards can use `VeitDndContext` directly.
+ * Vertical sortable list. Context and sensors stay inside this preset.
+ * Nested boards use `VeitNestedBoardDndShell`.
  */
 export function VeitSortableVerticalList({
   sortableIds,

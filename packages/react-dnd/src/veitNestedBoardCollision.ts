@@ -33,6 +33,14 @@ export type VeitNestedBoardCollisionConfig = {
   childCollisionExtraPrefixes?: string[];
 };
 
+/** Kanban columns (`list-*`) and cards (`card-*`). Domain prefixes stay in the host. */
+export const veitKanbanNestedBoardCollision: VeitNestedBoardCollisionConfig = {
+  parentPrefix: 'list-',
+  childPrefix: 'card-',
+  parentListStrategy: 'closestCenter',
+  preferChildHitInPointerWithin: true,
+};
+
 /**
  * Factory for @dnd-kit `collisionDetection` with parent+child+column droppables.
  */

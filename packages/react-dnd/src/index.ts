@@ -10,8 +10,6 @@ export {
   veitSortableSurfaceClassName,
   type VeitSortableDragParts,
 } from './veitSortableSurface.js';
-export { useVeitDndSensors, type VeitDndSensorOptions } from './useVeitDndSensors.js';
-export { VeitDndContext, type VeitDndContextProps } from './VeitDndContext.js';
 export {
   VeitSortableVerticalList,
   type VeitSortableVerticalListProps,
@@ -39,6 +37,7 @@ export {
 } from './VeitSortableSlotRow.js';
 export {
   createVeitNestedBoardCollisionDetection,
+  veitKanbanNestedBoardCollision,
   type VeitNestedBoardCollisionConfig,
 } from './veitNestedBoardCollision.js';
 export {
@@ -72,28 +71,3 @@ export {
   type VeitSortableActivatorRowProps,
   type VeitSortableActivatorRenderProps,
 } from './VeitSortableActivatorRow.js';
-
-/** Direkte @dnd-kit-Helfer — App importiert nur `@veit/react-dnd` / Plenivo-`@/lib/dnd`. */
-export {
-  closestCenter,
-  closestCorners,
-  defaultDropAnimationSideEffects,
-  DragOverlay,
-  pointerWithin,
-} from '@dnd-kit/core';
-export type {
-  DragCancelEvent,
-  DragEndEvent,
-  DragMoveEvent,
-  DragOverEvent,
-  DragStartEvent,
-  DropAnimation,
-  DndContextProps,
-  Over,
-} from '@dnd-kit/core';
-export {
-  arrayMove,
-  horizontalListSortingStrategy,
-  rectSortingStrategy,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';

@@ -10,9 +10,7 @@ Veit building blocks for **@dnd-kit** in React:
 
 - **Tailwind surface helpers** — `veitSortableSurfaceClassName`, `veitSortableDragBindings`, `veitSortableExcludeFromDragProps`
 
-- **Sensors** — `useVeitDndSensors` (MouseSensor + TouchSensor with hold-delay so lists scroll on touch; not PointerSensor, which would steal touch from scrolling)
-
-- **Root** — `VeitDndContext` (same as `DndContext` with default sensors)
+- **Sensors and root** stay inside `VeitSortableVerticalList`, `VeitSortableHorizontalList`, `VeitSortableGrid` and `VeitNestedBoardDndShell`. Hosts do not import the context or `@dnd-kit` helpers from this package.
 
 
 
@@ -20,19 +18,21 @@ Veit building blocks for **@dnd-kit** in React:
 
 
 
-- **`VeitSortableRegion`** — only `SortableContext` + `strategy` + `items`. Use under an existing `VeitDndContext` (nested Kanban / org / map) so you do not open a second DnD root.
+- **`VeitSortableRegion`** — only `SortableContext` + `strategy` + `items`. Use under `VeitNestedBoardDndShell` so you do not open a second DnD root.
 
-- **Presets** (each is `VeitDndContext` + `VeitSortableRegion`):
+- **Presets** (each opens one drag root and a sortable region):
 
-  - **`VeitSortableVerticalList`** — `verticalListSortingStrategy`
+  - **`VeitSortableVerticalList`** — vertical reorder
 
-  - **`VeitSortableHorizontalList`** — `horizontalListSortingStrategy`
+  - **`VeitSortableHorizontalList`** — horizontal reorder
 
-  - **`VeitSortableGrid`** — `rectSortingStrategy`
+  - **`VeitSortableGrid`** — grid reorder
+
+  - **`VeitNestedBoardDndShell`** — nested board. Pass `veitKanbanNestedBoardCollision` (`list-*` / `card-*`) or a host config from `createVeitNestedBoardCollisionDetection`.
 
 
 
-**Decision tree:** Need a full DnD root with one sortable surface? → pick a preset (or `VeitDndContext` + `VeitSortableRegion`). Already inside a board `VeitDndContext`? → only `VeitSortableRegion` (+ overlay/monitor as needed).
+**Decision tree:** One sortable surface? → list, horizontal list or grid. Nested board? → `VeitNestedBoardDndShell`. Already inside that shell? → only `VeitSortableRegion`.
 
 
 
@@ -74,7 +74,7 @@ Veit building blocks for **@dnd-kit** in React:
 
 2. On **`onDragEnd`**, set `overIdRef.current` to the final `e.over?.id` **before** async work if your flow clears state early — the animation reads the ref when the drop animation runs.
 
-3. Pass **`createVeitNestedBoardDropAnimation(() => overIdRef.current)`** as `dropAnimation` on **`DragOverlay`**.
+3. Pass **`createVeitNestedBoardDropAnimation(() => overIdRef.current)`** via `nestedDropAnimation` on **`VeitNestedBoardDndShell`**. The shell owns the overlay.
 
 
 

@@ -430,3 +430,70 @@ export function ResetPasswordForm({
     </AuthFrame>
   );
 }
+
+export type PasswordLoginFormProps = {
+  onSubmit: (password: string) => Promise<void>;
+  parseError: (error: unknown) => string;
+  passwordLabel?: string;
+  submitLabel?: string;
+  busyLabel?: string;
+  showPasswordLabel?: string;
+  hidePasswordLabel?: string;
+  id?: string;
+};
+
+/** Passwort-only Login ohne E-Mail, AuthClient oder MFA. */
+export function PasswordLoginForm({
+  onSubmit,
+  parseError,
+  passwordLabel = 'Passwort',
+  submitLabel = 'Anmelden',
+  busyLabel = 'Prüfen…',
+  showPasswordLabel = 'Passwort anzeigen',
+  hidePasswordLabel = 'Passwort verbergen',
+  id = 'password-login',
+}: PasswordLoginFormProps) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onSubmit(password);
+    } catch (err) {
+      setError(parseError(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={(event) => void submit(event)} className="space-y-4">
+      {error ? (
+        <p className="text-destructive text-sm" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <label className="label" htmlFor={id}>
+        {passwordLabel}
+      </label>
+      <VeitPasswordField
+        id={id}
+        showPasswordLabel={showPasswordLabel}
+        hidePasswordLabel={hidePasswordLabel}
+        autoComplete="current-password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        disabled={submitting}
+        required
+        className="input"
+      />
+      <button type="submit" className="btn-primary w-full" disabled={submitting || password.length === 0}>
+        {submitting ? busyLabel : submitLabel}
+      </button>
+    </form>
+  );
+}

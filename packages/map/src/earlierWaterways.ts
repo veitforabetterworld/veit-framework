@@ -165,6 +165,7 @@ export function attachEarlierWaterways(map: MapLibreMap, color: string): void {
     timer = window.setTimeout(load, 200);
   };
   const load = () => {
+    if (!map.getStyle()) return;
     const band = bandFor(map.getZoom());
     const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
     if (!src) return;

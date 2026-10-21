@@ -9,15 +9,21 @@ export const BUILDINGS3D_ROOF_LAYER_ID = 'osm-buildings-roof';
 
 const OPENFREEMAP_PLANET = 'https://tiles.openfreemap.org/planet';
 
-export function mapBuildings3dEnabled(): boolean {
-  return getMapConfig().buildings3d;
+export function mapBuildings3dEnabled(owner?: object): boolean {
+  return getMapConfig(owner).buildings3d;
 }
 
 export const BUILDINGS3D_ATTRIBUTION = '3D-Gebäude © OpenFreeMap · OpenMapTiles · OSM';
 
 /** OSM building extrusions (Simple 3D Buildings heights), similar in spirit to Organic Maps. */
+export function removeBuildings3dLayer(map: MapLibreMap): void {
+  if (map.getLayer(BUILDINGS3D_ROOF_LAYER_ID)) map.removeLayer(BUILDINGS3D_ROOF_LAYER_ID);
+  if (map.getLayer(BUILDINGS3D_LAYER_ID)) map.removeLayer(BUILDINGS3D_LAYER_ID);
+  if (map.getSource(BUILDINGS3D_SOURCE_ID)) map.removeSource(BUILDINGS3D_SOURCE_ID);
+}
+
 export function ensureBuildings3dLayer(map: MapLibreMap): void {
-  if (!mapBuildings3dEnabled()) return;
+  if (!mapBuildings3dEnabled(map)) return;
 
   if (!map.getSource(BUILDINGS3D_SOURCE_ID)) {
     map.addSource(BUILDINGS3D_SOURCE_ID, {

@@ -1,7 +1,4 @@
-import type { Map as MapLibreMap } from 'maplibre-gl';
-
-/** maplibre-gl 5 does not export ExpressionSpecification. Expressions are passed straight to setPaintProperty. */
-type ExpressionSpecification = [string, ...unknown[]];
+import type { ExpressionSpecification, Map as MapLibreMap } from 'maplibre-gl';
 import {
   BUILDINGS3D_LAYER_ID,
   BUILDINGS3D_SOURCE_ID,
@@ -19,8 +16,8 @@ export const WORLD3D_WOOD_LAYER_ID = 'world3d-wood';
 const CARTOON_IDS = [WORLD3D_WOOD_LAYER_ID, WORLD3D_ROADS_CASING_ID, WORLD3D_ROADS_LAYER_ID] as const;
 const WATER_IDS = [WORLD3D_WATER_LAYER_ID, WORLD3D_WATERWAY_LAYER_ID] as const;
 
-const BUILDING_HEIGHT: ExpressionSpecification = ['max', ['coalesce', ['get', 'render_height'], 0], 5];
-const BUILDING_WALL_COLOR: ExpressionSpecification = [
+const BUILDING_HEIGHT = ['max', ['coalesce', ['get', 'render_height'], 0], 5] as ExpressionSpecification;
+const BUILDING_WALL_COLOR = [
   'case',
   ['has', 'colour'],
   ['to-color', ['get', 'colour']],
@@ -35,7 +32,7 @@ const BUILDING_WALL_COLOR: ExpressionSpecification = [
     28,
     'hsl(220, 6%, 62%)',
   ],
-];
+] as ExpressionSpecification;
 
 function addLayerOnce(map: MapLibreMap, layer: Parameters<MapLibreMap['addLayer']>[0], before?: string): void {
   const id = (layer as { id: string }).id;
@@ -47,7 +44,7 @@ function applyBuildingLook(map: MapLibreMap): void {
   if (!map.getLayer(BUILDINGS3D_LAYER_ID)) return;
   map.setLayerZoomRange(BUILDINGS3D_LAYER_ID, 13, 24);
   map.setPaintProperty(BUILDINGS3D_LAYER_ID, 'fill-extrusion-height', BUILDING_HEIGHT);
-  map.setPaintProperty(BUILDINGS3D_LAYER_ID, 'fill-extrusion-base', ['coalesce', ['get', 'render_min_height'], 0]);
+  map.setPaintProperty(BUILDINGS3D_LAYER_ID, 'fill-extrusion-base', ['coalesce', ['get', 'render_min_height'], 0] as ExpressionSpecification);
   map.setPaintProperty(BUILDINGS3D_LAYER_ID, 'fill-extrusion-opacity', 1);
   map.setPaintProperty(BUILDINGS3D_LAYER_ID, 'fill-extrusion-vertical-gradient', true);
   map.setPaintProperty(BUILDINGS3D_LAYER_ID, 'fill-extrusion-color', BUILDING_WALL_COLOR);

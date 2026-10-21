@@ -39,12 +39,12 @@ const WATERWAY_WIDTH: unknown[] = [
 
 function setPaint(map: MapLibreMap, layerId: string, prop: string, value: string | number | unknown[]): void {
   if (!map.getLayer(layerId)) return;
-  map.setPaintProperty(layerId, prop as "line-color", value as string);
+  map.setPaintProperty(layerId, prop as "line-color", value as never);
 }
 
 function setLayout(map: MapLibreMap, layerId: string, prop: string, value: string | number | unknown[]): void {
   if (!map.getLayer(layerId)) return;
-  map.setLayoutProperty(layerId, prop as "text-size", value as string);
+  map.setLayoutProperty(layerId, prop as "text-size", value as never);
 }
 
 function emphasizeWater(map: MapLibreMap, theme: MapTheme): void {

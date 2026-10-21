@@ -10,6 +10,7 @@ export {
   topoBasemap,
 } from './builtin.js';
 export {
+  carryHostStyle,
   createBasemapController,
   initialBasemapStyle,
   type BasemapController,

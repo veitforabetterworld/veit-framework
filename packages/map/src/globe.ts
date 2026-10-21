@@ -1,5 +1,5 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { bindLiveSunLight } from './sunLight.js';
+import { bindLiveSunLight, setFixedLight } from './sunLight.js';
 
 export type GlobeOptions = {
   /** Shade the globe with the real sun position (default true). */
@@ -19,4 +19,5 @@ export function applyGlobe(map: MapLibreMap, options: GlobeOptions = {}): void {
     'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 7, 0],
   });
   if (options.liveSun ?? true) bindLiveSunLight(map);
+  else setFixedLight(map);
 }

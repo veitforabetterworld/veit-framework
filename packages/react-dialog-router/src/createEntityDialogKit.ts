@@ -1,27 +1,29 @@
 import { useRef } from 'react';
 import type { NavigateOptions, URLSearchParamsInit } from 'react-router-dom';
-import { useEntityDeepLinkUrlSync } from './useEntityDeepLinkUrlSync.js';
+import { useEntityDeepLinkUrlSync, type EntityDeepLinkId, type EntityDeepLinkIdMode } from './useEntityDeepLinkUrlSync.js';
 import { useEntityDialogClose } from './useEntityDialogClose.js';
 import { useToolDeepLinkId } from './useToolDeepLinkId.js';
 
 export type EntityDialogKitOptions = {
   param: string;
   toolId: number;
-  selectedId: number | null;
+  /** Default `number` (Plenivo). `slug` lässt die Query-Zeichenkette unverändert. */
+  idMode?: EntityDeepLinkIdMode;
+  selectedId: EntityDeepLinkId | null;
   searchParams: URLSearchParams;
   setSearchParams: (
     nextInit: URLSearchParamsInit | ((prev: URLSearchParams) => URLSearchParamsInit),
     navigateOpts?: NavigateOptions,
   ) => void;
   clearUi: () => void;
-  openFromUrl: (id: number) => void;
+  openFromUrl: (id: EntityDeepLinkId) => void;
   onCrossStackClose?: () => void;
-  getEntityId?: () => number | null;
+  getEntityId?: () => EntityDeepLinkId | null;
   ready?: boolean;
   skipParamMissingClose?: boolean;
-  resolveEntity?: (id: number) => boolean;
+  resolveEntity?: (id: EntityDeepLinkId) => boolean;
   onInvalidUrlId?: () => void;
-  urlIdIsAuthoritativeForeign?: (foreignUrlId: number) => boolean;
+  urlIdIsAuthoritativeForeign?: (foreignUrlId: EntityDeepLinkId) => boolean;
 };
 
 /** Hook: bündelt Deep-Link-Hooks für Entity-Dialoge. */
@@ -32,10 +34,12 @@ export function useEntityDialogKit(opts: EntityDialogKitOptions) {
     clearUi: opts.clearUi,
     onCrossStackClose: opts.onCrossStackClose,
     getEntityId: opts.getEntityId ?? (() => opts.selectedId),
+    idMode: opts.idMode,
   });
 
   const url = useToolDeepLinkId({
     param: opts.param,
+    idMode: opts.idMode,
     selectedId: opts.selectedId,
     searchParams: opts.searchParams,
     setSearchParams: opts.setSearchParams,
@@ -45,6 +49,7 @@ export function useEntityDialogKit(opts: EntityDialogKitOptions) {
   useEntityDeepLinkUrlSync({
     ready: opts.ready ?? true,
     toolId: opts.toolId,
+    idMode: opts.idMode,
     param: opts.param,
     entityId: opts.selectedId,
     searchParams: opts.searchParams,

@@ -1,5 +1,7 @@
-import maplibregl, { type CustomLayerInterface, type Map as MapLibreMap } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+import type { CustomLayerInterface, Map as MapLibreMap } from 'maplibre-gl';
 import * as THREE from 'three';
+import { getMapConfig } from '../config.js';
 import { terrainExaggeration } from '../terrain.js';
 import {
   WORLD3D_LAYER_ID,
@@ -60,6 +62,8 @@ export class World3dController {
   private lastTraffic = 0;
   private repaintTimer: ReturnType<typeof setTimeout> | null = null;
   private visibleBound = false;
+  /** Pitch is nudged once. A later style load must not yank the camera. */
+  private cameraNudged = false;
   private readonly mercatorM = new THREE.Matrix4();
   private readonly translateM = new THREE.Matrix4();
   private readonly scaleM = new THREE.Matrix4();
@@ -89,7 +93,7 @@ export class World3dController {
       }
     }
     const raw = this.dem?.sample(lng, lat);
-    if (raw != null && Number.isFinite(raw)) return raw * terrainExaggeration();
+    if (raw != null && Number.isFinite(raw)) return raw * terrainExaggeration(map ?? undefined);
     return Number.NaN;
   };
 
@@ -117,7 +121,9 @@ export class World3dController {
       this.scene.add(ambient, sun, this.ground);
       this.dem = new DemCache();
       this.osm = new OsmTileStream(this.sampleAlt, () => this.map?.triggerRepaint());
-      this.details = new DetailLod(this.sampleAlt, () => this.map?.triggerRepaint());
+      this.details = new DetailLod(this.sampleAlt, () => this.map?.triggerRepaint(), () =>
+        getMapConfig(this.map ?? undefined).world3d.detailUrl,
+      );
       this.plugins = (this.options.plugins ?? []).map((make) => make(this.sampleAlt));
       this.ground.add(this.osm.group, this.details.group, ...this.plugins.map((plugin) => plugin.group));
       void this.syncViewport();
@@ -171,7 +177,10 @@ export class World3dController {
       } catch (err) {
         console.error('3D-Welt-Style:', err);
       }
-      if (map.getZoom() >= WORLD3D_MIN_ZOOM && map.getPitch() < 30) map.easeTo({ pitch: 55, duration: 600 });
+      if (!this.cameraNudged) {
+        this.cameraNudged = true;
+        if (map.getZoom() >= WORLD3D_MIN_ZOOM && map.getPitch() < 30) map.easeTo({ pitch: 55, duration: 600 });
+      }
       if (!this.moveBound) {
         map.on('moveend', this.onMove);
         map.on('terrain', this.onMove);
@@ -208,11 +217,13 @@ export class World3dController {
   private ensureLayer(): void {
     const map = this.map;
     if (!map) return;
-    // A style swap can drop the custom layer, so trust the map, not the flag.
-    if (map.getLayer(WORLD3D_LAYER_ID)) {
+    // A copied custom layer keeps the id and loses this implementation. Only skip when it is ours.
+    const existing = map.getLayer(WORLD3D_LAYER_ID) as { type: string; implementation?: CustomLayerInterface } | undefined;
+    if (existing?.type === 'custom' && existing.implementation === this.customLayer) {
       this.added = true;
       return;
     }
+    if (existing) map.removeLayer(WORLD3D_LAYER_ID);
     map.addLayer(this.customLayer);
     this.added = true;
     try {
@@ -240,7 +251,7 @@ export class World3dController {
   };
 
   private trafficActive(): boolean {
-    return world3dTrafficEnabled() && (this.map?.getZoom() ?? 0) >= WORLD3D_TRAFFIC_MIN_ZOOM && !document.hidden;
+    return world3dTrafficEnabled(this.map ?? undefined) && (this.map?.getZoom() ?? 0) >= WORLD3D_TRAFFIC_MIN_ZOOM && !document.hidden;
   }
 
   /** MapLibre stops drawing when the camera is idle. Traffic still needs frames, but not at 60 fps. */

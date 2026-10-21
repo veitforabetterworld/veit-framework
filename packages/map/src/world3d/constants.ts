@@ -11,7 +11,7 @@ export const WORLD3D_TRAFFIC_MIN_ZOOM = 14;
 /** ~24 fps for traffic. Camera motion still renders at the display rate. */
 export const WORLD3D_TRAFFIC_FRAME_MS = 42;
 
-export function world3dTrafficEnabled(): boolean {
-  return getMapConfig().world3d.traffic;
+export function world3dTrafficEnabled(owner?: object): boolean {
+  return getMapConfig(owner).world3d.traffic;
 }
 export const world3dAttribution = '3D-Welt © OpenStreetMap · OpenFreeMap · Terrarium DEM';

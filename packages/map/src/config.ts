@@ -37,6 +37,8 @@ const DEFAULTS: MapConfig = {
 };
 
 let current: MapConfig = DEFAULTS;
+/** One config per map. A second map does not inherit a later `configureMap` call. */
+const bound = new WeakMap<object, MapConfig>();
 
 export type MapConfigPatch = {
   terrain?: Partial<MapConfig['terrain']>;
@@ -46,17 +48,33 @@ export type MapConfigPatch = {
   topLayers?: string[];
 };
 
-/** Sets defaults once at app start. Later calls merge into the current values. */
-export function configureMap(patch: MapConfigPatch): void {
-  current = {
-    terrain: { ...current.terrain, ...patch.terrain },
-    buildings3d: patch.buildings3d ?? current.buildings3d,
-    world3d: { ...current.world3d, ...patch.world3d },
-    overlayAnchors: patch.overlayAnchors ?? current.overlayAnchors,
-    topLayers: patch.topLayers ?? current.topLayers,
+function mergeConfig(base: MapConfig, patch: MapConfigPatch): MapConfig {
+  return {
+    terrain: { ...base.terrain, ...patch.terrain },
+    buildings3d: patch.buildings3d ?? base.buildings3d,
+    world3d: { ...base.world3d, ...patch.world3d },
+    overlayAnchors: patch.overlayAnchors ?? base.overlayAnchors,
+    topLayers: patch.topLayers ?? base.topLayers,
   };
 }
 
-export function getMapConfig(): MapConfig {
+/** Sets the defaults for maps created afterwards. Does not change a map that already snapped its config. */
+export function configureMap(patch: MapConfigPatch): void {
+  current = mergeConfig(current, patch);
+}
+
+/** Snap a map to the current defaults, plus an optional override. Later `configureMap` calls leave it alone. */
+export function bindMapConfig(owner: object, patch?: MapConfigPatch): MapConfig {
+  const config = mergeConfig(current, patch ?? {});
+  bound.set(owner, config);
+  return config;
+}
+
+/** The config snapped to `owner`, or the app defaults when the owner has none. */
+export function getMapConfig(owner?: object): MapConfig {
+  if (owner) {
+    const own = bound.get(owner);
+    if (own) return own;
+  }
   return current;
 }

@@ -88,8 +88,10 @@ type OsmDetail = {
   powerLines?: { kind: 'line' | 'minor'; cables?: number; voltage?: number; line: [number, number][] }[];
 };
 
-async function fetchOsmDetail(bbox: [number, number, number, number]): Promise<OsmDetail> {
-  const detailUrl = getMapConfig().world3d.detailUrl;
+async function fetchOsmDetail(
+  bbox: [number, number, number, number],
+  detailUrl: ReturnType<typeof getMapConfig>['world3d']['detailUrl'],
+): Promise<OsmDetail> {
   if (!detailUrl) return { barriers: [], trees: [], rows: [] };
   const res = await fetch(detailUrl(bbox));
   if (!res.ok) throw new Error(`barriers ${res.status}`);
@@ -121,6 +123,8 @@ export class DetailLod {
   constructor(
     private sampleAlt: (lng: number, lat: number) => number,
     private onChange?: () => void,
+    private detailUrl: () => ReturnType<typeof getMapConfig>['world3d']['detailUrl'] = () =>
+      getMapConfig().world3d.detailUrl,
   ) {}
 
   schedule(west: number, south: number, east: number, north: number, zoom: number, world: WorldOrigin): void {
@@ -142,7 +146,7 @@ export class DetailLod {
     const seq = ++this.seq;
     this.lastKey = key;
     try {
-      const detail = await fetchOsmDetail(bbox);
+      const detail = await fetchOsmDetail(bbox, this.detailUrl());
       if (seq !== this.seq) return;
       world = this.buildWorld ?? world;
       this.retries = 0;

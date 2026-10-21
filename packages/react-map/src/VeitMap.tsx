@@ -2,15 +2,20 @@ import {
   BUILTIN_BASEMAPS,
   applyGlobe,
   applyMapTerrain,
+  bindMapConfig,
+  clearMapTerrain,
   createBasemapController,
   ensureBuildings3dLayer,
   initialBasemapStyle,
+  removeBuildings3dLayer,
   type BasemapController,
   type BasemapDefinition,
   type BasemapSwitchReason,
+  type MapConfigPatch,
   type MapTheme,
 } from '@veit/map';
-import maplibregl, { type Map as MapLibreMap, type MapOptions } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+import type { Map as MapLibreMap, MapOptions } from 'maplibre-gl';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react';
 import { VeitMapContext } from './MapContext.js';
 
@@ -37,13 +42,19 @@ export type VeitMapProps = {
   extraBasemaps?: readonly BasemapDefinition[];
   /** Camera at creation. Later changes are the host's job (`map.flyTo`, ...). */
   initialView?: VeitMapView;
+  /**
+   * Override snapped onto this map at creation. Merged over `configureMap`.
+   * A later change rebinds this map only.
+   */
+  config?: MapConfigPatch;
   projection?: 'globe' | 'mercator';
-  /** Shade the globe with the real sun position. Default true. */
+  /** Shade the globe with the real sun position. Default true. Applied again when it changes. */
   liveSun?: boolean;
-  /** Terrain from the configured DEM tiles. Default true. */
+  /** Terrain from the configured DEM tiles. Default true. Applied again when it changes. */
   terrain?: boolean;
-  /** Extruded OSM buildings. Default true. */
+  /** Extruded OSM buildings. Default true. Applied again when it changes. */
   buildings3d?: boolean;
+  /** Attached on style load and again when this value changes. */
   world3d?: VeitMapWorld3d | null;
   /** Default `compass`. */
   navigationControl?: 'compass' | 'zoom-only' | false;
@@ -69,11 +80,44 @@ export type VeitMapHandle = {
 
 const DEFAULT_CENTER: [number, number] = [10.45, 51.16];
 
+function applyScene(map: MapLibreMap, current: VeitMapProps, worldRef: { current: VeitMapWorld3d | null }): void {
+  if (typeof map.setProjection !== 'function' || !map.getStyle()) return;
+  if ((current.projection ?? 'mercator') === 'globe') {
+    applyGlobe(map, { liveSun: current.liveSun ?? true });
+  } else {
+    map.setProjection({ type: 'mercator' });
+  }
+  if (current.terrain ?? true) applyMapTerrain(map);
+  else clearMapTerrain(map);
+  if (current.buildings3d ?? true) ensureBuildings3dLayer(map);
+  else removeBuildings3dLayer(map);
+  const nextWorld = current.world3d ?? null;
+  if (worldRef.current !== nextWorld) {
+    worldRef.current?.dispose(map);
+    worldRef.current = nextWorld;
+  }
+  nextWorld?.attach(map);
+}
+
 export const VeitMap = forwardRef<VeitMapHandle, VeitMapProps>(function VeitMap(props, ref) {
-  const { basemap, theme, basemaps, extraBasemaps, className = 'h-full w-full', children } = props;
+  const {
+    basemap,
+    theme,
+    basemaps,
+    extraBasemaps,
+    className = 'h-full w-full',
+    children,
+    projection,
+    terrain,
+    buildings3d,
+    liveSun,
+    world3d,
+    config,
+  } = props;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const controllerRef = useRef<BasemapController | null>(null);
+  const worldRef = useRef<VeitMapWorld3d | null>(null);
   const propsRef = useRef(props);
   propsRef.current = props;
   const [map, setMap] = useState<MapLibreMap | null>(null);
@@ -107,7 +151,9 @@ export const VeitMap = forwardRef<VeitMapHandle, VeitMapProps>(function VeitMap(
       attributionControl: initial.mapOptions?.attributionControl ?? false,
     });
     mapRef.current = instance;
-    if (initial.devHandle) (window as unknown as Record<string, unknown>)[initial.devHandle] = instance;
+    bindMapConfig(instance, initial.config);
+    const devHandle = initial.devHandle;
+    if (devHandle) Reflect.set(window, devHandle, instance);
 
     const nav = initial.navigationControl ?? 'compass';
     if (nav) {
@@ -121,14 +167,7 @@ export const VeitMap = forwardRef<VeitMapHandle, VeitMapProps>(function VeitMap(
       theme: initial.theme,
       onStyleReady: (m, reason) => {
         const current = propsRef.current;
-        if ((current.projection ?? 'mercator') === 'globe') {
-          applyGlobe(m, { liveSun: current.liveSun ?? true });
-        } else {
-          m.setProjection({ type: 'mercator' });
-        }
-        if (current.terrain ?? true) applyMapTerrain(m);
-        if (current.buildings3d ?? true) ensureBuildings3dLayer(m);
-        current.world3d?.attach(m);
+        applyScene(m, current, worldRef);
         current.onStyleReady?.(m, reason);
         if (first) {
           first = false;
@@ -146,12 +185,21 @@ export const VeitMap = forwardRef<VeitMapHandle, VeitMapProps>(function VeitMap(
       observer.disconnect();
       controller.dispose();
       controllerRef.current = null;
-      propsRef.current.world3d?.dispose(instance);
+      worldRef.current?.dispose(instance);
+      worldRef.current = null;
       instance.remove();
       mapRef.current = null;
+      if (devHandle && Reflect.get(window, devHandle) === instance) Reflect.deleteProperty(window, devHandle);
       setMap(null);
     };
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map?.getStyle()) return;
+    if (config) bindMapConfig(map, config);
+    applyScene(map, propsRef.current, worldRef);
+  }, [projection, terrain, buildings3d, liveSun, world3d, config, map]);
 
   useEffect(() => {
     controllerRef.current?.setBasemap(basemap);

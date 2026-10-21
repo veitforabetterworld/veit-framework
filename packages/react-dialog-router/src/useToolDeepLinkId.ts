@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { NavigateOptions, URLSearchParamsInit } from 'react-router-dom';
+import {
+  entityIdFromParam,
+  isEntityDeepLinkId,
+  type EntityDeepLinkId,
+  type EntityDeepLinkIdMode,
+} from './useEntityDeepLinkUrlSync.js';
 
 function urlWithSearchParams(params: URLSearchParams): string {
   if (typeof window === 'undefined') return '';
@@ -20,21 +26,23 @@ function applySearchParamsToBrowserHistory(next: URLSearchParams, mode: 'push' |
 
 export function useToolDeepLinkId(opts: {
   param: string;
-  selectedId: number | null;
+  idMode?: EntityDeepLinkIdMode;
+  selectedId: EntityDeepLinkId | null;
   searchParams: URLSearchParams;
   setSearchParams: (
     nextInit: URLSearchParamsInit | ((prev: URLSearchParams) => URLSearchParamsInit),
     navigateOpts?: NavigateOptions,
   ) => void;
-  urlIdIsAuthoritativeForeign?: (foreignUrlId: number) => boolean;
+  urlIdIsAuthoritativeForeign?: (foreignUrlId: EntityDeepLinkId) => boolean;
 }) {
-  const { param, selectedId, searchParams, setSearchParams, urlIdIsAuthoritativeForeign } = opts;
+  const { param, idMode = 'number', selectedId, searchParams, setSearchParams, urlIdIsAuthoritativeForeign } = opts;
 
-  const pendingPushIdRef = useRef<number | null>(null);
+  const pendingPushIdRef = useRef<EntityDeepLinkId | null>(null);
   const pendingPushStartedAtRef = useRef<number | null>(null);
 
   const pushIdToUrl = useCallback(
-    (id: number, navigateOpts?: { replace?: boolean }) => {
+    (id: EntityDeepLinkId, navigateOpts?: { replace?: boolean }) => {
+      if (!isEntityDeepLinkId(id, idMode)) return;
       pendingPushIdRef.current = id;
       pendingPushStartedAtRef.current = Date.now();
       const sid = String(id);
@@ -59,7 +67,7 @@ export function useToolDeepLinkId(opts: {
         { replace: true },
       );
     },
-    [param, setSearchParams],
+    [idMode, param, setSearchParams],
   );
 
   const stripParam = useCallback(() => {
@@ -105,8 +113,8 @@ export function useToolDeepLinkId(opts: {
     if (raw === sid) return;
     if (raw == null || raw === '') return;
     if (urlIdIsAuthoritativeForeign) {
-      const urlEid = parseInt(raw, 10);
-      if (!Number.isNaN(urlEid) && urlEid > 0 && urlEid !== selectedId && urlIdIsAuthoritativeForeign(urlEid)) {
+      const urlEid = entityIdFromParam(raw, idMode);
+      if (urlEid != null && urlEid !== selectedId && urlIdIsAuthoritativeForeign(urlEid)) {
         return;
       }
     }
@@ -114,7 +122,7 @@ export function useToolDeepLinkId(opts: {
     next.set(param, sid);
     applySearchParamsToBrowserHistory(next, 'replace');
     setSearchParams(next, { replace: true });
-  }, [selectedId, param, searchParams, setSearchParams, urlIdIsAuthoritativeForeign]);
+  }, [selectedId, idMode, param, searchParams, setSearchParams, urlIdIsAuthoritativeForeign]);
 
   const isMissingParamDuringPush = useCallback((): boolean => {
     if (pendingPushIdRef.current == null) return false;

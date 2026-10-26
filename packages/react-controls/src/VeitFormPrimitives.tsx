@@ -184,7 +184,7 @@ export function VeitSelect({
       <Select.Portal>
         <Select.Content
           position="popper"
-          className="z-50 max-h-72 overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-lg"
+          className="z-[1000] max-h-72 overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-lg"
         >
           <Select.Viewport className="p-1">
             {options.map((option) => (

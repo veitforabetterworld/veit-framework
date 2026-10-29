@@ -33,7 +33,10 @@ export function LoginForm<User>({
   renderLogo,
   renderSkipToMain,
   renderFooter,
+  afterLoginPath = '/',
 }: {
+  /** Where to go after login when neither router state nor ?next= names a page. */
+  afterLoginPath?: string;
   t: TFunction;
   parseError: (error: unknown) => string;
   onSendMfaEmailCode?: (token: string) => Promise<string | null>;
@@ -60,7 +63,7 @@ export function LoginForm<User>({
   const returnPath = resolvePostLoginPath(
     (location.state as { from?: unknown })?.from,
     searchParams.get('next'),
-    '/',
+    afterLoginPath,
   );
 
   useEffect(() => {
@@ -202,7 +205,10 @@ export function RegisterForm<User>({
   renderSkipToMain,
   renderPrivacyConsent,
   renderFooter,
+  afterRegisterPath = '/',
 }: {
+  /** Where to go after registering when neither router state nor ?next= names a page. */
+  afterRegisterPath?: string;
   t: TFunction;
   parseError: (error: unknown) => string;
   onSuggestPassword?: () => Promise<string>;
@@ -219,7 +225,7 @@ export function RegisterForm<User>({
   const returnPath = resolvePostLoginPath(
     (location.state as { from?: unknown })?.from,
     searchParams.get('next'),
-    '/organizations/list',
+    afterRegisterPath,
   );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

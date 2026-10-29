@@ -1,0 +1,58 @@
+{
+  "name": "@veit/auth-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Account logic for Node servers: registration, login, sessions, MFA, password reset, account deletion.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./express": {
+      "types": "./dist/express.d.ts",
+      "import": "./dist/express.js"
+    },
+    "./pg": {
+      "types": "./dist/pg.d.ts",
+      "import": "./dist/pg.js"
+    },
+    "./smtp": {
+      "types": "./dist/smtp.d.ts",
+      "import": "./dist/smtp.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test src/*.test.ts"
+  },
+  "dependencies": {
+    "@veit/password-policy": "workspace:*",
+    "bcryptjs": "^3.0.2",
+    "otplib": "^13.4.0"
+  },
+  "peerDependencies": {
+    "express": ">=4.21",
+    "nodemailer": ">=6",
+    "pg": ">=8"
+  },
+  "peerDependenciesMeta": {
+    "express": { "optional": true },
+    "nodemailer": { "optional": true },
+    "pg": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "@types/nodemailer": "^8.0.0",
+    "@types/pg": "^8.11.10",
+    "express": "^4.21.2",
+    "nodemailer": "^8.0.4",
+    "pg": "^8.13.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

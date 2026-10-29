@@ -54,7 +54,7 @@ export function VeitAccountPasswordSection({
   hidePasswordLabel: string;
   onCurrentPasswordChange: (value: string) => void;
   onNewPasswordChange: (value: string) => void;
-  onSubmit: (e: React.SubmitEvent) => void;
+  onSubmit: (e: React.SyntheticEvent<HTMLFormElement>) => void;
 }) {
   return (
     <VeitAccountSection title={title}>
@@ -275,7 +275,7 @@ export function VeitAccountMfaSection({
   disableSubmitLabel: string;
   disablePassword: string;
   onDisablePasswordChange: (value: string) => void;
-  onDisable: (e: React.SubmitEvent) => void;
+  onDisable: (e: React.SyntheticEvent<HTMLFormElement>) => void;
   setupSlot?: React.ReactNode;
   submitting?: boolean;
   showPasswordLabel?: string;

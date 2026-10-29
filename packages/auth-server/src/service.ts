@@ -357,6 +357,12 @@ export class AuthService {
     return user;
   }
 
+  /** A session for a user the host has proven itself, e.g. a host that signs in on the e-mail confirmation link. */
+  async openSession(userId: UserId, req: RequestInfo): Promise<{ token: string; expiresAt: Date }> {
+    await this.requireUser(userId);
+    return this.newSession(userId, req);
+  }
+
   async logout(token: string | null | undefined): Promise<void> {
     if (token) await this.store.revokeSessionByToken(token);
   }

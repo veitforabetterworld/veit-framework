@@ -1,5 +1,17 @@
 # Änderungen
 
+## Plenivo zieht den Gitlink
+
+Stand 2026-10-29. Plenivo prüft die Framework-Quellen mit React-18-Typen und nutzt Teile, die vorher nur intern waren.
+
+- React-18-Typen: Formular-Handler nehmen `React.SyntheticEvent<HTMLFormElement>` statt `React.SubmitEvent`. Refs, die eine Komponente beschreibt, sind `{ current: T }` statt `RefObject<T>`.
+- `@veit/react-dialog-router`: Die Rückrufe (`openFromUrl`, `resolveEntity`, `shouldOpenFromUrl`, `urlIdIsAuthoritativeForeign`) sind Methoden. Hosts mit `idMode: 'number'` dürfen `(id: number) => …` übergeben.
+- `@veit/react-controls`: `useVeitInlineActionLayout` und `useVeitInlineActionMenu` sind wieder exportiert. Aktionen in `VeitResponsiveInlineActionBar` lesen damit, ob sie im Menü stehen und ob Labels passen. Die Mess-Helfer bleiben intern.
+- `@veit/react-dnd`: `VeitDndContext` ist wieder exportiert. `VeitSortableRegion` braucht außerhalb von `VeitNestedBoardDndShell` einen Kontext. Die Sensoren bleiben intern.
+- `@veit/map`: `buildBwWmtsKvpTileUrl` und `getCadastralPreviewUrl` sind exportiert, für Hosts, die Flurkarten-Kacheln selbst zeichnen (Plenivo mit Leaflet).
+- `@veit/auth-server`: `AuthService.openSession(userId, req)` öffnet eine Sitzung für einen Nutzer, den der Host selbst geprüft hat, etwa beim Link aus der Bestätigungsmail.
+- `VeitOptionPickerDialog`: Die Standard-Farbe ist `var(--primary)`. Vorher stand dort `rgb(var(--color-primary))`, das passt nicht zum Tailwind-4-Theme.
+
 ## Konten und API-Keys als Module
 
 Stand 2026-10-29.

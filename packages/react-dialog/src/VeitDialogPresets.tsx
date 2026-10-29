@@ -1,4 +1,4 @@
-import type { ReactNode, RefObject } from 'react';
+import type { ReactNode } from 'react';
 import {
   VeitDialog,
   VeitDialogFooter,
@@ -39,7 +39,7 @@ type VeitOverlayPresetBase = Omit<VeitDialogPresetBase, 'open' | 'onClose'>;
 export function EntityDialogDismissBridge({
   dismissRef,
 }: {
-  dismissRef: RefObject<(() => void) | null>;
+  dismissRef: { current: (() => void) | null };
 }) {
   const dismiss = useVeitDialogDismiss();
   useLayoutEffect(() => {
@@ -88,7 +88,7 @@ export function VeitOverlayDialog({ binding, unsavedChangesConfirm: unsavedOverr
 
 export type VeitEntityDialogProps = VeitDialogPresetBase & {
   /** Ref für programmatisches Schließen nach Speichern/Löschen (via `@veit/react-dialog-router`). */
-  dismissRef?: RefObject<(() => void) | null>;
+  dismissRef?: { current: (() => void) | null };
   /** Standard: `entity` (Deep-Link). Für Create-Flows ohne URL z. B. `overlay`. */
   historyMode?: 'entity' | 'overlay';
   unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
@@ -113,7 +113,7 @@ export function VeitEntityDialog({
 
 export type VeitSheetDialogProps = VeitDialogPresetBase & {
   bottomDockRoot?: HTMLElement | null;
-  dismissRef?: RefObject<(() => void) | null>;
+  dismissRef?: { current: (() => void) | null };
   unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
 };
 
@@ -186,7 +186,7 @@ export type VeitActionDialogFooterProps =
 type VeitEditActionDialogBase = VeitDialogPresetBase & {
   historyMode?: 'entity' | 'overlay' | 'sheet';
   /** Ref für programmatisches Schließen nach Speichern/Löschen. */
-  dismissRef?: RefObject<(() => void) | null>;
+  dismissRef?: { current: (() => void) | null };
   bottomDockRoot?: HTMLElement | null;
   unsavedChangesConfirm?: VeitDialogUnsavedConfirmOverride;
 };

@@ -1,5 +1,7 @@
 export {
+  buildBwWmtsKvpTileUrl,
   CADASTRAL_DISPLAY_MAX_ZOOM,
+  getCadastralPreviewUrl,
   CADASTRAL_SOURCES,
   getEffectiveCadastralTiers,
   isCadastralAvailableAt,

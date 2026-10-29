@@ -178,5 +178,9 @@ export {
 export {
   VeitInlineActionMenuOnly,
   VeitInlineActionInlineOnly,
+  useVeitInlineActionMenu,
+  type VeitInlineActionSurface,
 } from './VeitInlineActionMenuContext.js';
+/** Read side for actions inside `VeitResponsiveInlineActionBar`: labels shown or icon-only. */
+export { useVeitInlineActionLayout } from './VeitInlineActionLayoutContext.js';
 export { useVeitMediaQuery, useMediaQuery } from './useVeitMediaQuery.js';

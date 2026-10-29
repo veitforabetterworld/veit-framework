@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react';
+import { useEffect } from 'react';
 
 /** `number`: Plenivo-Ids (`>= 1`). `slug`: Zeichenkette in der Query, z. B. `?pegel=`. */
 export type EntityDeepLinkIdMode = 'number' | 'slug';
@@ -30,7 +30,7 @@ export function isEntityDeepLinkPushInFlight(opts: {
   idMode?: EntityDeepLinkIdMode;
   param: string;
   searchParams: URLSearchParams;
-  openedFromUrlRef: RefObject<string | null>;
+  openedFromUrlRef: { current: string | null };
 }): boolean {
   const { toolId, entityId, idMode = 'number', param, searchParams, openedFromUrlRef } = opts;
   if (!isEntityDeepLinkId(entityId, idMode) || Number.isNaN(toolId)) return false;
@@ -46,14 +46,15 @@ export function useEntityDeepLinkUrlSync(opts: {
   param: string;
   entityId: EntityDeepLinkId | null;
   searchParams: URLSearchParams;
-  openedFromUrlRef: RefObject<string | null>;
+  openedFromUrlRef: { current: string | null };
   isParamPushPending: () => boolean;
   resetDismissedForUrl: () => void;
-  shouldOpenFromUrl: (id: EntityDeepLinkId) => boolean;
-  openFromUrl: (id: EntityDeepLinkId) => void;
+  /** Method syntax: the id follows `idMode`, so hosts with numeric ids may take `(id: number)`. */
+  shouldOpenFromUrl(id: EntityDeepLinkId): boolean;
+  openFromUrl(id: EntityDeepLinkId): void;
   clearWhenParamMissing: () => void;
   skipParamMissingClose?: boolean;
-  resolveEntity?: (id: EntityDeepLinkId) => boolean;
+  resolveEntity?(id: EntityDeepLinkId): boolean;
   onInvalidUrlId?: () => void;
 }) {
   const {

@@ -168,7 +168,11 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
       setSession(req, res, result.session);
       res.status(201).json({
         user: await fullUser(result.user),
-        message: result.resent ? 'auth.verification_email_resent' : 'auth.verification_email_sent',
+        message: !result.mailSent
+          ? 'auth.verification_email_failed'
+          : result.resent
+            ? 'auth.verification_email_resent'
+            : 'auth.verification_email_sent',
       });
     }),
   );

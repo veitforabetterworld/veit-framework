@@ -33,6 +33,8 @@ export type AuthServiceOptions = {
   beforeDeleteUser?: (userId: UserId) => Promise<void>;
   /** Called after a user has verified the e-mail address (e.g. to grant the first admin). */
   afterEmailVerified?: (userId: UserId) => Promise<void>;
+  /** Called after a registration (e.g. to make the very first account an admin while no mail can be sent yet). */
+  afterRegister?: (userId: UserId) => Promise<void>;
   /** A suggested password for the register form; default 24 random characters. */
   suggestPassword?: () => Promise<string>;
   sessionLifetimeSec?: number;
@@ -129,9 +131,9 @@ async function mail(send: () => Promise<void>): Promise<void> {
 
 export class AuthService {
   private readonly o: Required<
-    Omit<AuthServiceOptions, 'beforeDeleteUser' | 'afterEmailVerified' | 'verifyEmailUrl' | 'resetPasswordUrl' | 'suggestPassword'>
+    Omit<AuthServiceOptions, 'beforeDeleteUser' | 'afterEmailVerified' | 'afterRegister' | 'verifyEmailUrl' | 'resetPasswordUrl' | 'suggestPassword'>
   > &
-    Pick<AuthServiceOptions, 'beforeDeleteUser' | 'afterEmailVerified' | 'suggestPassword'> & {
+    Pick<AuthServiceOptions, 'beforeDeleteUser' | 'afterEmailVerified' | 'afterRegister' | 'suggestPassword'> & {
       verifyEmailUrl: (token: string, origin: string) => string;
       resetPasswordUrl: (token: string, origin: string) => string;
     };
@@ -191,7 +193,7 @@ export class AuthService {
   async register(
     input: { email: string; password: string; firstName: string; lastName: string },
     req: RequestInfo,
-  ): Promise<{ user: AuthUserRecord; session: { token: string; expiresAt: Date }; resent: boolean }> {
+  ): Promise<{ user: AuthUserRecord; session: { token: string; expiresAt: Date }; resent: boolean; mailSent: boolean }> {
     await this.store.purgeExpired();
     const email = normalizeEmail(input.email);
     const firstName = input.firstName.trim().slice(0, 255);
@@ -227,9 +229,16 @@ export class AuthService {
         emailVerificationExpiresAt: expires,
       });
     }
-    await this.sendVerification({ email }, token, req.origin);
+    await this.o.afterRegister?.(id);
     const session = await this.newSession(id, req);
-    return { user: await this.requireUser(id), session, resent: existing !== null };
+    // The account stands even when the mail fails; the user can ask for the link again later.
+    let mailSent = true;
+    try {
+      await this.sendVerification({ email }, token, req.origin);
+    } catch {
+      mailSent = false;
+    }
+    return { user: await this.requireUser(id), session, resent: existing !== null, mailSent };
   }
 
   async verifyEmail(token: string): Promise<AuthUserRecord> {

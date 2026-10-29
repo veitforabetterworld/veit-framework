@@ -117,6 +117,16 @@ async function strongPassword(password: string): Promise<void> {
  * Account flows independent of the web framework. Every failure is an AuthError with an i18n code; the transport
  * (see '@veit/auth-server/express') turns results into cookies and JSON.
  */
+/** A mail that cannot be sent becomes 'auth.mail_unavailable' (503) instead of a bare 500. */
+async function mail(send: () => Promise<void>): Promise<void> {
+  try {
+    await send();
+  } catch (error) {
+    console.error('[auth] mail failed', error);
+    authFail('auth.mail_unavailable', 503);
+  }
+}
+
 export class AuthService {
   private readonly o: Required<
     Omit<AuthServiceOptions, 'beforeDeleteUser' | 'afterEmailVerified' | 'verifyEmailUrl' | 'resetPasswordUrl' | 'suggestPassword'>
@@ -173,7 +183,7 @@ export class AuthService {
   }
 
   private async sendVerification(user: { email: string }, token: string, origin: string): Promise<void> {
-    await this.o.mailer.sendVerification({ to: user.email, token, url: this.o.verifyEmailUrl(token, origin) });
+    await mail(() => this.o.mailer.sendVerification({ to: user.email, token, url: this.o.verifyEmailUrl(token, origin) }));
   }
 
   // ---------------------------------------------------------------- registration and login
@@ -319,7 +329,7 @@ export class AuthService {
       emailSendCount: challenge.emailSendCount + 1,
       lastEmailSentAt: new Date(),
     });
-    await this.o.mailer.sendMfaLoginCode({ to: user.email, code });
+    await mail(() => this.o.mailer.sendMfaLoginCode({ to: user.email, code }));
   }
 
   // ---------------------------------------------------------------- sessions
@@ -379,7 +389,9 @@ export class AuthService {
       requestIp: req.ip?.slice(0, 64) ?? null,
     });
     // Same answer whether the address exists or not.
-    if (user) await this.o.mailer.sendPasswordReset({ to: user.email, token, url: this.o.resetPasswordUrl(token, req.origin) });
+    if (user) {
+      await mail(() => this.o.mailer.sendPasswordReset({ to: user.email, token, url: this.o.resetPasswordUrl(token, req.origin) }));
+    }
   }
 
   /** Sets the new password, ends every session and turns MFA off (the reset proves only the mailbox). */
@@ -493,7 +505,7 @@ export class AuthService {
       mfaTotpSetupSecretEnc: null,
       mfaTotpSetupExpiresAt: null,
     });
-    await this.o.mailer.sendMfaSetupCode({ to: user.email, code });
+    await mail(() => this.o.mailer.sendMfaSetupCode({ to: user.email, code }));
   }
 
   async confirmEmailMfaSetup(userId: UserId, codeRaw: string): Promise<void> {

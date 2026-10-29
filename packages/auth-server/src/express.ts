@@ -124,6 +124,10 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
         };
 
   const attachUser: RequestHandler = (req, _res, next) => {
+    if (users.has(req)) {
+      next();
+      return;
+    }
     service
       .userForSession(readCookie(req, cookieName))
       .then((user) => {
@@ -241,6 +245,15 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
     '/auth/suggest-password',
     handle(async (_req, res) => {
       res.json({ password: await service.suggestPassword() });
+    }),
+  );
+
+  // The signed-in user or null, always 200: lets a page ask without an error for anonymous visitors.
+  router.get(
+    '/auth/session',
+    handle(async (req, res) => {
+      const user = getAuthUser(req);
+      res.json({ user: user ? await fullUser(user) : null });
     }),
   );
 

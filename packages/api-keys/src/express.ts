@@ -62,6 +62,10 @@ export function createExpressApiKeys(options: ExpressApiKeysOptions): ExpressApi
   const header = options.header ?? 'X-API-Key';
 
   const attachApiKey: RequestHandler = (req, _res, next) => {
+    if (keys.has(req)) {
+      next();
+      return;
+    }
     service
       .authenticate(req.get(header))
       .then((key) => {

@@ -16,14 +16,15 @@ export type EntityDialogKitOptions = {
     navigateOpts?: NavigateOptions,
   ) => void;
   clearUi: () => void;
-  openFromUrl: (id: EntityDeepLinkId) => void;
+  /** Method syntax: the id follows `idMode`, so hosts with numeric ids may take `(id: number)`. */
+  openFromUrl(id: EntityDeepLinkId): void;
   onCrossStackClose?: () => void;
   getEntityId?: () => EntityDeepLinkId | null;
   ready?: boolean;
   skipParamMissingClose?: boolean;
-  resolveEntity?: (id: EntityDeepLinkId) => boolean;
+  resolveEntity?(id: EntityDeepLinkId): boolean;
   onInvalidUrlId?: () => void;
-  urlIdIsAuthoritativeForeign?: (foreignUrlId: EntityDeepLinkId) => boolean;
+  urlIdIsAuthoritativeForeign?(foreignUrlId: EntityDeepLinkId): boolean;
 };
 
 /** Hook: bündelt Deep-Link-Hooks für Entity-Dialoge. */

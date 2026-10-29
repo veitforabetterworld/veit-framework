@@ -4,6 +4,8 @@ export {
   VEIT_DND_TOUCH_TOLERANCE_PX,
   VEIT_DRAG_SURFACE_TOUCH_CLASS,
 } from './constants.js';
+/** Context with the default sensors for `VeitSortableRegion` outside `VeitNestedBoardDndShell`. */
+export { VeitDndContext, type VeitDndContextProps } from './VeitDndContext.js';
 export {
   veitSortableDragBindings,
   veitSortableExcludeFromDragProps,

@@ -126,7 +126,7 @@ export function VeitAccountSettings({
     }
   }
 
-  async function savePassword(event: React.SubmitEvent) {
+  async function savePassword(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setPasswordBusy(true);
     setPasswordNote(null);
@@ -179,7 +179,7 @@ export function VeitAccountSettings({
     });
   };
 
-  const disableMfa = (event: React.SubmitEvent) => {
+  const disableMfa = (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     void runMfa(async () => {
       await client.disableMfa!(mfaDisablePassword);

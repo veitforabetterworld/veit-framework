@@ -33,7 +33,8 @@ export function useToolDeepLinkId(opts: {
     nextInit: URLSearchParamsInit | ((prev: URLSearchParams) => URLSearchParamsInit),
     navigateOpts?: NavigateOptions,
   ) => void;
-  urlIdIsAuthoritativeForeign?: (foreignUrlId: EntityDeepLinkId) => boolean;
+  /** Method syntax: the id follows `idMode`, so hosts with numeric ids may take `(id: number)`. */
+  urlIdIsAuthoritativeForeign?(foreignUrlId: EntityDeepLinkId): boolean;
 }) {
   const { param, idMode = 'number', selectedId, searchParams, setSearchParams, urlIdIsAuthoritativeForeign } = opts;
 

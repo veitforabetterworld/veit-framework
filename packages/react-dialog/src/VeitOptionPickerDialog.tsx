@@ -91,7 +91,7 @@ function OptionPickerList<T extends string | number>({
               {showSwatch ? (
                 <span
                   className={`h-9 w-9 shrink-0 border border-border shadow-sm ${shape}`}
-                  style={{ backgroundColor: it.swatchColor ?? 'rgb(var(--color-primary))' }}
+                  style={{ backgroundColor: it.swatchColor ?? 'var(--primary)' }}
                   aria-hidden
                 />
               ) : it.icon ? (

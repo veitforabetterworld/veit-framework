@@ -1,0 +1,28 @@
+{
+  "name": "@veit/react-api-keys",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API key management for the account page (pairs with @veit/api-keys).",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "peerDependencies": {
+    "@veit/react-account": "workspace:*",
+    "@veit/react-controls": "workspace:*",
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.28",
+    "@veit/react-account": "workspace:*",
+    "@veit/react-controls": "workspace:*",
+    "react": "^18.3.1",
+    "typescript": "^5.7.2"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

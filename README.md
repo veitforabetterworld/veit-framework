@@ -10,8 +10,9 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 |-------|----------------|
 | **`@veit/react-dialog`** | Popups: Presets, Confirm/Prompt, Search-Picker, **LanguagePicker**, `VeitOverlayShell` (inkl. Loading) |
 | **`@veit/react-controls`** | Controls + Form-Primitives, StatusBadge, EmptyState, PageHeader, ProgressBar/PanelCard, ListItem, ResponsiveInlineActionBar, DataTable, Password, Delete-Button, Person-Rows, **`useVeitMediaQuery`** |
-| **`@veit/react-auth`** | Login/Register/Reset + `AuthClient` / `ProtectedRoute` |
-| **`@veit/react-account`** | Account-Sections (Profil, Passwort, Sessions, MFA inkl. **TOTP/E-Mail-Setup**, Löschung) + `AccountClient` |
+| **`@veit/react-auth`** | Login/Register/Reset/E-Mail-Bestätigung + `AuthClient` / `ProtectedRoute`, `createRestAuthClient`, Texte de/en (`veitAuthT`) |
+| **`@veit/react-account`** | Fertige Kontoseite `VeitAccountSettings` (Profil, Passwort, MFA inkl. **TOTP/E-Mail-Setup**, Sitzungen, Löschung) + Einzel-Sections, `createRestAccountClient`, Texte de/en |
+| **`@veit/react-api-keys`** | `VeitApiKeysSection`: Keys mit Berechtigungen und „alle / nur ausgewählte“ Ressourcen anlegen, bearbeiten, sperren |
 | **`@veit/react-auth-group`** | Auth-Gruppen-Editor / Person-Picker |
 | **`@veit/react-field-tags`** | Tag-Editor, Picker, Filter-Bar |
 | **`@veit/react-upload`** | Image-Picker / Upload |
@@ -22,6 +23,8 @@ Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Lo
 | **`@veit/react-navigation`** | Back-Button / Navigations-Scope |
 | **`@veit/react-dialog-router`** | Deep-Link-Hooks für Entity-Dialoge |
 | **`@veit/password-policy`** | Passwort-Stärke (zxcvbn + HIBP), `assertStrongPassword` / `evaluatePasswordSecurity` / `generateSuggestedPassphrase` |
+| **`@veit/auth-server`** | Kontologik für Node: Registrierung mit E-Mail-Bestätigung, Login mit TOTP/E-Mail-Code, Cookie-Sessions, Passwort-Reset, Profil, Löschung. `AuthService` hinter `AuthStore`/`AuthMailer`; fertig: Postgres (`/pg`), SMTP (`/smtp`), Express (`/express`) |
+| **`@veit/api-keys`** | API-Keys pro Benutzer: Berechtigungen des Hosts, alle Ressourcen oder Whitelist; Postgres (`/pg`), Express (`/express`) |
 | **`@veit/node-server`** | Fastify-Bootstrap (`createApp`, Health, `listen`, `HttpError`, `publicAppOrigin`, `publicOriginFromHost`) |
 | **`@veit/db`** | Postgres-Pool + Drizzle + `rowsFromExecute` |
 

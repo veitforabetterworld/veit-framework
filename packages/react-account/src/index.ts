@@ -17,3 +17,6 @@ export {
   type VeitEmailMfaSetupPanelProps,
   type VeitMfaSetupStartActionsProps,
 } from './mfaSetup.js';
+export { VeitAccountSettings, type VeitAccountSettingsUser } from './VeitAccountSettings.js';
+export { veitAccountTexts, type VeitAccountTexts } from './texts.js';
+export { createRestAccountClient, type VeitRestAccountClient } from './rest.js';

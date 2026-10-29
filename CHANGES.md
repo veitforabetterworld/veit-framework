@@ -1,5 +1,14 @@
 # Änderungen
 
+## Konten und API-Keys als Module
+
+Stand 2026-10-29.
+
+- Neu: `@veit/auth-server` (Server-Kontologik, bisher nur in Plenivo), `@veit/api-keys` und `@veit/react-api-keys`.
+- `@veit/react-auth`: `createRestAuthClient`, `VeitApiError`/`veitFetchJson`, `VerifyEmailView`, Texte `veitAuthMessages`/`veitAuthT`/`veitAuthErrorText`.
+  **Brechend:** `RegisterForm` leitet ohne `?next=` nach `afterRegisterPath` (Standard `/`) statt fest nach `/organizations/list`; Plenivo übergibt den Pfad. `LoginForm` hat `afterLoginPath`.
+- `@veit/react-account`: `VeitAccountSettings` (ganze Kontoseite), `createRestAccountClient`, `veitAccountTexts`.
+
 ## Module statt Baukasten
 
 Stand 2026-10-21. Neue Bausteine und die gestrichenen Paket-Exporte liegen im selben Stand. Kein `@deprecated`-Re-Export. Hosts, die die alten Namen importieren, müssen vorher auf die Module umstellen. Plenivo behält seine Kartenfassade, bis dieses Repo den Gitlink zieht.

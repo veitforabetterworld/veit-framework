@@ -1,5 +1,5 @@
 import React from 'react';
-import { VeitPasswordField } from '@veit/react-controls';
+import { VeitPasswordField, veitInputClass } from '@veit/react-controls';
 import {
   VeitSettingsSection,
   VeitSettingsSubsection,
@@ -67,7 +67,7 @@ export function VeitAccountPasswordSection({
             value={currentPassword}
             onChange={(e) => onCurrentPasswordChange(e.target.value)}
             autoComplete="current-password"
-            className="input"
+            className={veitInputClass}
           />
         </div>
         <div>
@@ -78,7 +78,7 @@ export function VeitAccountPasswordSection({
             value={newPassword}
             onChange={(e) => onNewPasswordChange(e.target.value)}
             autoComplete="new-password"
-            className="input"
+            className={veitInputClass}
           />
         </div>
         {(currentPassword.length > 0 || newPassword.length > 0) && (
@@ -129,7 +129,7 @@ export function VeitAccountProfileFields({
             onChange={(e) => onFirstNameChange(e.target.value)}
             onBlur={() => onNameBlur?.()}
             disabled={disabled}
-            className="input"
+            className={veitInputClass}
             autoComplete="given-name"
           />
         </div>
@@ -144,7 +144,7 @@ export function VeitAccountProfileFields({
             onChange={(e) => onLastNameChange(e.target.value)}
             onBlur={() => onNameBlur?.()}
             disabled={disabled}
-            className="input"
+            className={veitInputClass}
             autoComplete="family-name"
           />
         </div>
@@ -177,7 +177,7 @@ export function VeitAccountEmailField({
         onChange={(e) => onChange(e.target.value)}
         onBlur={() => onBlur?.()}
         disabled={disabled}
-        className="input max-w-md"
+        className={`${veitInputClass} max-w-md`}
         autoComplete="email"
       />
     </VeitAccountSection>
@@ -302,7 +302,7 @@ export function VeitAccountMfaSection({
                 value={disablePassword}
                 onChange={(e) => onDisablePasswordChange(e.target.value)}
                 autoComplete="current-password"
-                className="input"
+                className={veitInputClass}
               />
             </div>
             <div className={VEIT_SETTINGS_ACTIONS}>

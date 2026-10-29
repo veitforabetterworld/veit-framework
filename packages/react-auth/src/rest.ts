@@ -78,7 +78,11 @@ export function createRestAuthClient<User = VeitWireUser>(
       : { needsMfa: false, passwordInsecure: wire.password_insecure, passwordSecurityReasons: wire.password_security_reasons };
 
   return {
-    getCurrentUser: async () => mapUser(await veitFetchJson<VeitWireUser>(url('/me'))),
+    getCurrentUser: async () => {
+      const { user } = await veitFetchJson<{ user: VeitWireUser | null }>(url('/auth/session'));
+      if (!user) throw new VeitApiError(401, 'auth.unauthenticated');
+      return mapUser(user);
+    },
     login: async (email, password) =>
       loginResult(await veitFetchJson<LoginWire>(url('/auth/login'), { method: 'POST', body: { email, password } })),
     completeMfaLogin: async (mfaToken, code) => {

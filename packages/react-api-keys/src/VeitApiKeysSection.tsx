@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useId, useState, type FormEvent } from 'react';
 import { VeitAccountSection } from '@veit/react-account';
-import { VEIT_SETTINGS_ACTIONS, VeitSettingsToggleRow, VeitStatusBadge } from '@veit/react-controls';
+import { VEIT_SETTINGS_ACTIONS, VeitSettingsToggleRow, VeitStatusBadge, veitInputClass } from '@veit/react-controls';
 
 /** A key as the Express adapter of '@veit/api-keys' sends it. */
 export type VeitApiKey = {
@@ -173,11 +173,14 @@ function KeyForm({
     event.preventDefault();
     onSubmit();
   };
+  const labelId = useId();
   return (
     <form className="max-w-xl space-y-4" onSubmit={submit} noValidate>
       <div>
-        <label className="label">{texts.label}</label>
-        <input className="input" value={draft.label} maxLength={120} onChange={(e) => onChange({ ...draft, label: e.target.value })} />
+        <label className="label" htmlFor={labelId}>
+          {texts.label}
+        </label>
+        <input id={labelId} className={veitInputClass} value={draft.label} maxLength={120} onChange={(e) => onChange({ ...draft, label: e.target.value })} />
       </div>
       <fieldset className="space-y-2">
         <legend className="label">{texts.permissions}</legend>

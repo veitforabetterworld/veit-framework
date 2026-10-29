@@ -1,6 +1,6 @@
 import type { FormEvent, ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { VEIT_SETTINGS_ACTIONS_ROW } from '@veit/react-controls';
+import { VEIT_SETTINGS_ACTIONS_ROW, veitInputClass } from '@veit/react-controls';
 
 export type VeitTotpSetupPanelProps = {
   otpauthUri: string;
@@ -63,7 +63,7 @@ export function VeitTotpSetupPanel({
           maxLength={6}
           value={code}
           onChange={(e) => onCodeChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          className="input font-mono tracking-widest"
+          className={`${veitInputClass} font-mono tracking-widest`}
         />
       </div>
       <div className={VEIT_SETTINGS_ACTIONS_ROW}>
@@ -113,7 +113,7 @@ export function VeitEmailMfaSetupPanel({
           maxLength={6}
           value={code}
           onChange={(e) => onCodeChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          className="input font-mono tracking-widest"
+          className={`${veitInputClass} font-mono tracking-widest`}
         />
       </div>
       <div className={VEIT_SETTINGS_ACTIONS_ROW}>

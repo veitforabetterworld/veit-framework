@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { VeitPasswordField } from '@veit/react-controls';
+import { VeitPasswordField, veitInputClass } from '@veit/react-controls';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './AuthContext.js';
 import { useRedirectIfAuthenticated } from './useRedirectIfAuthenticated.js';
@@ -16,7 +16,7 @@ type AuthFrameProps = {
 
 function AuthFrame({ children, renderLogo, renderSkipToMain, mainClassName }: AuthFrameProps) {
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
       {renderSkipToMain?.()}
       <main id="main-content" tabIndex={-1} className={mainClassName ?? 'outline-none rounded-sm w-full max-w-sm'}>
         {renderLogo && <div className="flex justify-center mb-8 text-foreground">{renderLogo()}</div>}
@@ -155,7 +155,7 @@ export function LoginForm<User>({
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="username"
-                className="input"
+                className={veitInputClass}
               />
             </div>
             <div>
@@ -169,7 +169,7 @@ export function LoginForm<User>({
                 required
                 minLength={1}
                 autoComplete="current-password"
-                className="input"
+                className={veitInputClass}
               />
             </div>
           </>
@@ -178,7 +178,7 @@ export function LoginForm<User>({
             <p className="text-sm text-muted-foreground">{t('auth.mfa_login_hint')}</p>
             <div>
               <label htmlFor="mfa-code" className="label">{t('auth.mfa_code_label')}</label>
-              <input id="mfa-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className="input tracking-widest font-mono" placeholder="000000" />
+              <input id="mfa-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className={`${veitInputClass} tracking-widest font-mono`} placeholder="000000" />
             </div>
             {mfaMethods.includes('email') && onSendMfaEmailCode && (
               <button type="button" disabled={submitting} onClick={() => void sendMfaEmailCode()} className="w-full btn-secondary py-2 text-sm">
@@ -281,9 +281,9 @@ export function RegisterForm<User>({
         <h1 className="heading-1 mb-6">{t('auth.register')}</h1>
         <form onSubmit={submit} className="space-y-4">
           {error && <div className="alert-error text-sm">{error}</div>}
-          <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" className="input" placeholder={t('account.first_name')} />
-          <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" className="input" placeholder={t('account.last_name')} />
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="input" placeholder={t('account.email')} />
+          <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" className={veitInputClass} placeholder={t('account.first_name')} />
+          <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" className={veitInputClass} placeholder={t('account.last_name')} />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className={veitInputClass} placeholder={t('account.email')} />
           <div>
             <VeitPasswordField
               showPasswordLabel={t('common.show_password')}
@@ -295,7 +295,7 @@ export function RegisterForm<User>({
               required
               minLength={10}
               autoComplete="new-password"
-              className="input"
+              className={veitInputClass}
               placeholder={t('auth.password_min_length_label')}
             />
             {onSuggestPassword && (
@@ -364,7 +364,7 @@ export function ForgotPasswordForm<User>({
       ) : (
         <form onSubmit={submit} className="space-y-4">
           {error && <div className="alert-error text-sm">{error}</div>}
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="input" />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className={veitInputClass} />
           <button type="submit" disabled={submitting} className="w-full btn-primary py-2.5">{t('auth.send_reset_link')}</button>
         </form>
       )}
@@ -428,7 +428,7 @@ export function ResetPasswordForm({
             required
             minLength={10}
             autoComplete="new-password"
-            className="input"
+            className={veitInputClass}
           />
           <button type="submit" disabled={submitting} className="w-full btn-primary py-2.5">{t('auth.set_new_password')}</button>
         </form>
@@ -495,7 +495,7 @@ export function PasswordLoginForm({
         onChange={(event) => setPassword(event.target.value)}
         disabled={submitting}
         required
-        className="input"
+        className={veitInputClass}
       />
       <button type="submit" className="btn-primary w-full" disabled={submitting || password.length === 0}>
         {submitting ? busyLabel : submitLabel}

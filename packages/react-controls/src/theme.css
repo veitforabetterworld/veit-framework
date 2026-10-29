@@ -135,6 +135,20 @@
     @apply text-sm font-medium text-foreground;
   }
 
+  /** Page titles of the auth and account pages; hosts may restyle them. */
+  .heading-1 {
+    @apply text-2xl font-bold tracking-tight text-foreground;
+  }
+
+  .heading-2 {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  /** Secondary text in account and settings sections. */
+  .muted {
+    @apply text-sm text-muted-foreground;
+  }
+
   .card {
     @apply rounded-xl border border-border bg-card p-4 text-foreground;
   }

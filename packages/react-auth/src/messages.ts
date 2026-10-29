@@ -59,6 +59,8 @@ export const veitAuthMessages = {
     'auth.session_not_found': 'Die Sitzung gibt es nicht mehr.',
     'auth.user_not_found': 'Das Konto gibt es nicht.',
     'auth.unauthenticated': 'Bitte melde dich an.',
+    'auth.mail_unavailable': 'Die E-Mail konnte nicht verschickt werden. Bitte später erneut versuchen.',
+    'auth.last_admin': 'Das letzte Adminkonto kann nicht gelöscht werden.',
     internal: 'Ein Fehler ist aufgetreten. Bitte später erneut versuchen.',
   },
   en: {
@@ -117,6 +119,8 @@ export const veitAuthMessages = {
     'auth.session_not_found': 'That session no longer exists.',
     'auth.user_not_found': 'The account does not exist.',
     'auth.unauthenticated': 'Please sign in.',
+    'auth.mail_unavailable': 'The e-mail could not be sent. Please try again later.',
+    'auth.last_admin': 'The last admin account cannot be deleted.',
     internal: 'Something went wrong. Please try again later.',
   },
 } as const;

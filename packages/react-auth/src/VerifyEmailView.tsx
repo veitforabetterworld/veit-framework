@@ -34,7 +34,7 @@ export function VerifyEmailView({
   }, [token, onVerify]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
       <main id="main-content" tabIndex={-1} className="outline-none w-full max-w-sm">
         {renderLogo && <div className="flex justify-center mb-8 text-foreground">{renderLogo()}</div>}
         <div className="card space-y-4 p-6 text-center">

@@ -295,11 +295,11 @@ export function VeitWizardDialog({
       footer={({ dismiss }) => (
         <VeitDialogFooter className="flex flex-wrap gap-2">
           {onBack != null && backLabel != null ? (
-            <button type="button" className="btn-secondary min-h-[44px]" disabled={isBusy} onClick={onBack}>
+            <button type="button" className="btn btn-secondary" disabled={isBusy} onClick={onBack}>
               {backLabel}
             </button>
           ) : null}
-          <button type="button" className="btn-secondary min-h-[44px]" disabled={isBusy} onClick={() => dismiss()}>
+          <button type="button" className="btn btn-secondary" disabled={isBusy} onClick={() => dismiss()}>
             {closeLabel}
           </button>
           {trailing}

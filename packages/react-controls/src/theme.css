@@ -73,7 +73,12 @@
 }
 
 @layer components {
-  .btn {
+  /* Every variant carries the base size, so a button looks the same with or without `.btn`. */
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-destructive,
+  .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition disabled:pointer-events-none disabled:opacity-50;
   }
 

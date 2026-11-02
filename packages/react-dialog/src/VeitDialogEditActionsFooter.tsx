@@ -103,9 +103,8 @@ function VeitDialogEditActionsFooterDeleteTrigger({
     }
   };
 
-  /** Gleiche Mindesthöhe wie `.btn-primary` / `.btn-secondary` (`min-h-[44px]`), damit die Zeile optisch fluchtet. */
-  const presetClass =
-    'inline-flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center p-0 btn-destructive';
+  /** Quadratisch in der Höhe von `.btn`, damit die Zeile mit Abbrechen und Speichern fluchtet. */
+  const presetClass = 'btn btn-destructive size-9 shrink-0 p-0';
   const btnClass = `${presetClass} ${className}`.trim();
 
   return (
@@ -196,7 +195,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
 
   if (props.dismissOnly) {
     const tone = props.dismissOnlyTone ?? 'secondary';
-    const onlyBtnClass = `${tone === 'primary' ? 'btn-primary' : 'btn-secondary'} w-auto`.trim();
+    const onlyBtnClass = `btn ${tone === 'primary' ? 'btn-primary' : 'btn-secondary'} w-auto`.trim();
     return (
       <div className={`flex flex-col gap-2 ${className}`.trim()}>
         <div className="flex flex-row flex-wrap justify-end gap-2">
@@ -247,7 +246,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
       <button
         type="submit"
         form={submitFormId}
-        className="btn-primary inline-flex w-auto items-center justify-center gap-2"
+        className="btn btn-primary w-auto"
         disabled={savePrimaryDisabled}
       >
         {busy ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden /> : null}
@@ -256,7 +255,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
     ) : (
       <button
         type="button"
-        className="btn-primary inline-flex w-auto items-center justify-center gap-2"
+        className="btn btn-primary w-auto"
         disabled={savePrimaryDisabled}
         onClick={() => void runSave()}
       >
@@ -291,7 +290,7 @@ export function VeitDialogEditActionsFooter(props: VeitDialogEditActionsFooterPr
         <div className="flex min-w-0 flex-1 flex-row flex-wrap items-center justify-end gap-2">
           <button
             type="button"
-            className="btn-secondary w-auto"
+            className="btn btn-secondary w-auto"
             disabled={busy}
             onClick={dismiss}
           >

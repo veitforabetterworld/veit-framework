@@ -10,7 +10,6 @@ import {
   VeitListItem,
   VeitSettingsToggleRow,
   VeitStatusBadge,
-  veitPasswordToggleButtonClass,
 } from '@veit/react-controls';
 import {
   VeitOverlayDialog,
@@ -196,6 +195,9 @@ const toInput = (draft: Draft): VeitApiKeyInput => ({
   resources: draft.all_resources ? [] : draft.resources,
 });
 
+/** Stands in for the secret part of a key that is not shown. */
+const HIDDEN = '•'.repeat(24);
+
 function toggle(list: string[], id: string, on: boolean): string[] {
   return on ? [...new Set([...list, id])] : list.filter((x) => x !== id);
 }
@@ -266,35 +268,28 @@ function KeyField({
           id={inputId}
           readOnly
           className="min-w-0 flex-1 font-mono"
-          value={visible && value ? value : `${apiKey.prefix}…`}
+          value={visible && value ? value : `${apiKey.prefix}${HIDDEN}`}
           onFocus={(e) => e.currentTarget.select()}
         />
-        {available && (
-          <>
-            <VeitButton
-              variant="ghost"
-              className={veitPasswordToggleButtonClass}
-              aria-label={toggleLabel}
-              title={toggleLabel}
-              aria-pressed={visible}
-              disabled={loading}
-              onClick={() => void toggleVisible()}
-            >
-              {loading ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : visible ? (
-                <EyeOff className="size-4" aria-hidden />
-              ) : (
-                <Eye className="size-4" aria-hidden />
-              )}
-            </VeitButton>
-            <VeitButton variant="secondary" className="shrink-0" disabled={loading} onClick={() => void copy()}>
-              {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
-              {copied ? texts.copied : texts.copy}
-            </VeitButton>
-          </>
-        )}
       </div>
+      {available && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          <VeitButton variant="secondary" className="shrink-0" aria-pressed={visible} disabled={loading} onClick={() => void toggleVisible()}>
+            {loading ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : visible ? (
+              <EyeOff className="size-4" aria-hidden />
+            ) : (
+              <Eye className="size-4" aria-hidden />
+            )}
+            {toggleLabel}
+          </VeitButton>
+          <VeitButton variant="secondary" className="shrink-0" disabled={loading} onClick={() => void copy()}>
+            {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+            {copied ? texts.copied : texts.copy}
+          </VeitButton>
+        </div>
+      )}
     </VeitField>
   );
 }

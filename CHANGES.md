@@ -9,7 +9,9 @@ Stand 2026-11-02.
 - `VeitDeleteButton` hat die Klasse `btn` und damit dieselbe Größe wie `VeitButton`.
 - `theme.css`: `.btn-primary`, `.btn-secondary`, `.btn-destructive` und `.btn-ghost` bringen die Grundmaße von `.btn` mit. Buttons sehen gleich aus, ob `btn` dabeisteht oder nicht. Bisher hatten zum Beispiel Abbrechen und Speichern im Dialog-Footer verschiedene Größen. Utility-Klassen wie `p-0` oder `!px-0` gelten weiter.
 - Dialog-Footer: Löschen ist ein quadratischer Button in `.btn`-Höhe statt 44 px; Schließen und Zurück in den Presets haben kein `min-h-[44px]` mehr.
-- `VeitApiKeysSection`: Ein verdeckter Key zeigt Präfix und Punkte statt `…`. „Anzeigen“ und „Kopieren“ sind beschriftete Buttons unter dem Feld.
+- Neu: `VeitSecretField` in `@veit/react-controls`. Ein Passwortfeld (auf Basis von `VeitPasswordField`) für Geheimnisse, die schon gespeichert sein können: Es zeigt eine Maske, das Auge lädt das Geheimnis über `onReveal`, ein optionaler Button kopiert es, und Tippen ersetzt es. Ohne `onChange` ist das Feld schreibgeschützt. Es löst Host-Eigenbauten wie `AdminStoredSecretField` in Plenivo ab.
+- `VeitPasswordField` nutzt ohne `className` die Klasse `veitInputClass`. Vorher war das Eingabefeld ohne Klasse ungestylt.
+- `VeitApiKeysSection` zeigt den Key in einem `VeitSecretField`.
 
 ## Plenivo zieht den Gitlink
 

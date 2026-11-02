@@ -37,6 +37,7 @@ export {
   veitPasswordToggleButtonClass,
   type VeitPasswordFieldProps,
 } from './VeitPasswordField.js';
+export { VeitSecretField, type VeitSecretFieldProps } from './VeitSecretField.js';
 export type { VeitDeleteConfirmConfig } from '@veit/react-dialog';
 export { VeitSkipToMain } from './VeitSkipToMain.js';
 export { VeitBackButton, type VeitBackButtonProps } from './VeitBackButton.js';

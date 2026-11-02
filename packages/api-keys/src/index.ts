@@ -1,9 +1,10 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
 /**
  * Per-user API keys. A key carries permissions the host defines (e.g. 'stations.write') and applies either to all
  * resources of its user, including future ones, or to a whitelist of resource ids. Resource ids must be stable
- * (not a renamable slug). Only a hash of the key is stored; the key itself is shown once.
+ * (not a renamable slug). A hash of the key authenticates it. With a `secret` the key is also stored encrypted, so
+ * its owner can show it again; without one it is shown only once.
  */
 
 export type UserId = string | number;
@@ -20,6 +21,8 @@ export type ApiKeyRecord = {
   createdAt: Date;
   lastUsedAt: Date | null;
   revokedAt: Date | null;
+  /** Stored encrypted, so reveal() can show it again. */
+  revealable: boolean;
 };
 
 export type ApiKeyInput = {
@@ -30,10 +33,12 @@ export type ApiKeyInput = {
 };
 
 export interface ApiKeyStore {
-  insert(input: ApiKeyInput & { userId: UserId; keyHash: string; prefix: string }): Promise<ApiKeyRecord>;
+  insert(input: ApiKeyInput & { userId: UserId; keyHash: string; prefix: string; keyEnc: string | null }): Promise<ApiKeyRecord>;
   list(userId: UserId): Promise<ApiKeyRecord[]>;
   /** A key of this user, revoked or not. */
   find(userId: UserId, id: string): Promise<ApiKeyRecord | null>;
+  /** The encrypted key of an active key of this user, or null. */
+  findKeyEnc?(userId: UserId, id: string): Promise<string | null>;
   /** An active key by its hash. */
   findByHash(keyHash: string): Promise<ApiKeyRecord | null>;
   update(userId: UserId, id: string, patch: Partial<ApiKeyInput>): Promise<ApiKeyRecord | null>;
@@ -64,6 +69,22 @@ export function generateApiKey(prefix: string): string {
   return `${prefix}_${randomBytes(32).toString('base64url')}`;
 }
 
+/** AES-256-GCM with a key derived from `secret`: `iv.tag.ciphertext` in base64url. */
+export function encryptApiKey(key: string, secret: string): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', createHash('sha256').update(secret, 'utf8').digest(), iv);
+  const data = Buffer.concat([cipher.update(key, 'utf8'), cipher.final()]);
+  return [iv, cipher.getAuthTag(), data].map((b) => b.toString('base64url')).join('.');
+}
+
+export function decryptApiKey(value: string, secret: string): string {
+  const [iv, tag, data] = value.split('.').map((part) => Buffer.from(part, 'base64url'));
+  if (!iv || !tag || !data) throw new ApiKeyError('api_keys.not_revealable', 404);
+  const decipher = createDecipheriv('aes-256-gcm', createHash('sha256').update(secret, 'utf8').digest(), iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+}
+
 /** Whether a key may do `permission` on `resource` (omit resource for actions not tied to one, like creating). */
 export function apiKeyAllows(key: ApiKeyRecord, permission: string, resource?: string): boolean {
   if (key.revokedAt || !key.permissions.includes(permission)) return false;
@@ -79,6 +100,9 @@ export type ApiKeyServiceOptions = {
   prefix: string;
   /** Secret mixed into the hash; read on every call. */
   pepper?: () => string;
+  /** Encrypts new keys so their owner can show them again (reveal); read on every call. Without it, or when it
+   * returns '', a key is shown only once. Changing it makes the stored keys unrevealable, not invalid. */
+  secret?: () => string;
   /** Rejects resource ids the user does not own; returns the ones that are not allowed. */
   foreignResources?: (userId: UserId, resources: string[]) => Promise<string[]>;
   maxKeysPerUser?: number;
@@ -125,11 +149,13 @@ export class ApiKeyService {
       throw new ApiKeyError('api_keys.too_many_keys', 400);
     }
     const key = generateApiKey(this.o.prefix);
+    const secret = this.o.secret?.() ?? '';
     const record = await this.o.store.insert({
       ...normalized,
       userId,
       keyHash: hashApiKey(key, this.pepper()),
       prefix: key.slice(0, this.o.prefix.length + 7),
+      keyEnc: secret && this.o.store.findKeyEnc ? encryptApiKey(key, secret) : null,
     });
     return { key, record };
   }
@@ -149,6 +175,18 @@ export class ApiKeyService {
     const updated = await this.o.store.update(userId, id, normalized);
     if (!updated) throw new ApiKeyError('api_keys.not_found', 404);
     return updated;
+  }
+
+  /** The plain key of an active, revealable key of this user. */
+  async reveal(userId: UserId, id: string): Promise<string> {
+    const secret = this.o.secret?.() ?? '';
+    const stored = secret ? await this.o.store.findKeyEnc?.(userId, id) : null;
+    if (!stored) throw new ApiKeyError('api_keys.not_revealable', 404);
+    try {
+      return decryptApiKey(stored, secret);
+    } catch {
+      throw new ApiKeyError('api_keys.not_revealable', 404);
+    }
   }
 
   async revoke(userId: UserId, id: string): Promise<void> {
@@ -191,5 +229,6 @@ export function apiKeyJson(record: ApiKeyRecord) {
     created_at: record.createdAt.toISOString(),
     last_used_at: record.lastUsedAt?.toISOString() ?? null,
     revoked_at: record.revokedAt?.toISOString() ?? null,
+    revealable: record.revealable && !record.revokedAt,
   };
 }

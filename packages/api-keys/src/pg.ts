@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS user_api_keys (
   revoked_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS user_api_keys_user ON user_api_keys (user_id);
+ALTER TABLE user_api_keys ADD COLUMN IF NOT EXISTS key_enc TEXT;
 `;
 
 type Row = {
@@ -30,10 +31,11 @@ type Row = {
   created_at: Date;
   last_used_at: Date | null;
   revoked_at: Date | null;
+  revealable: boolean;
 };
 
 const COLUMNS = `id::text, user_id::text, label, key_prefix, permissions, all_resources, resources, created_at,
-  last_used_at, revoked_at`;
+  last_used_at, revoked_at, key_enc IS NOT NULL AS revealable`;
 
 function toRecord(row: Row | undefined): ApiKeyRecord | null {
   if (!row) return null;
@@ -48,6 +50,7 @@ function toRecord(row: Row | undefined): ApiKeyRecord | null {
     createdAt: row.created_at,
     lastUsedAt: row.last_used_at,
     revokedAt: row.revoked_at,
+    revealable: row.revealable,
   };
 }
 
@@ -55,9 +58,9 @@ export function createPgApiKeyStore(pool: Pool): ApiKeyStore {
   return {
     async insert(input) {
       const result = await pool.query<Row>(
-        `INSERT INTO user_api_keys (user_id, label, key_hash, key_prefix, permissions, all_resources, resources)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING ${COLUMNS}`,
-        [input.userId, input.label, input.keyHash, input.prefix, input.permissions, input.allResources, input.resources],
+        `INSERT INTO user_api_keys (user_id, label, key_hash, key_prefix, permissions, all_resources, resources, key_enc)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING ${COLUMNS}`,
+        [input.userId, input.label, input.keyHash, input.prefix, input.permissions, input.allResources, input.resources, input.keyEnc],
       );
       return toRecord(result.rows[0])!;
     },
@@ -76,6 +79,14 @@ export function createPgApiKeyStore(pool: Pool): ApiKeyStore {
         id,
       ]);
       return toRecord(result.rows[0]);
+    },
+
+    async findKeyEnc(userId, id) {
+      const result = await pool.query<{ key_enc: string | null }>(
+        `SELECT key_enc FROM user_api_keys WHERE user_id = $1 AND id::text = $2 AND revoked_at IS NULL`,
+        [userId, id],
+      );
+      return result.rows[0]?.key_enc ?? null;
     },
 
     async findByHash(keyHash) {

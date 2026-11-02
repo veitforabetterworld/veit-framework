@@ -37,7 +37,7 @@ export function VeitDeleteButton({
   return (
     <>
       <button
-        className={`inline-flex ${sizeClass} items-center justify-center gap-2 btn-destructive ${className}`.trim()}
+        className={`${isIconOnly ? 'inline-flex items-center justify-center' : 'btn'} ${sizeClass} btn-destructive ${className}`.trim()}
         disabled={disabled}
         onClick={
           deleteConfirm

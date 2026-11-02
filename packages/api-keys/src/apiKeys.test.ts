@@ -19,6 +19,7 @@ const base: ApiKeyRecord = {
   createdAt: new Date(),
   lastUsedAt: null,
   revokedAt: null,
+  revealable: false,
 };
 
 describe('apiKeyAllows', () => {
@@ -54,6 +55,7 @@ describe('api keys over express and postgres', { skip: databaseUrl ? false : 'DA
       permissions: ['stations.write', 'observations.write', 'observations.read'],
       prefix: 'hwd',
       pepper: () => 'pepper',
+      secret: () => 'secret',
       foreignResources: async (_user, resources) => resources.filter((r) => !r.startsWith('own-')),
     });
     const keys = createExpressApiKeys({ service, userId: (req) => req.get('x-test-user') ?? null });
@@ -114,6 +116,9 @@ describe('api keys over express and postgres', { skip: databaseUrl ? false : 'DA
     assert.deepEqual((await call('/whoami', { key })).body.resources, ['own-a', 'own-b']);
 
     const id = created.body.api_key.id as string;
+    assert.equal(created.body.api_key.revealable, true);
+    assert.deepEqual((await call(`/me/api-keys/${id}/key`, { user: '1' })).body, { key });
+    assert.equal((await call(`/me/api-keys/${id}/key`, { user: '2' })).status, 404);
     assert.equal((await call(`/me/api-keys/${id}`, { method: 'PATCH', user: '2', body: { label: 'y' } })).status, 404);
     const widened = await call(`/me/api-keys/${id}`, { method: 'PATCH', user: '1', body: { all_resources: true } });
     assert.equal(widened.body.all_resources, true);
@@ -122,5 +127,6 @@ describe('api keys over express and postgres', { skip: databaseUrl ? false : 'DA
     assert.equal((await call(`/me/api-keys/${id}`, { method: 'DELETE', user: '1' })).status, 200);
     assert.equal((await call('/whoami', { key })).body, null);
     assert.equal((await call('/me/api-keys', { user: '1' })).body.keys[0].revoked_at !== null, true);
+    assert.equal((await call(`/me/api-keys/${id}/key`, { user: '1' })).status, 404);
   });
 });

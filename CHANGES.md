@@ -1,5 +1,13 @@
 # Änderungen
 
+## API-Keys wieder anzeigen, Bearbeiten im Popup
+
+Stand 2026-11-02.
+
+- `@veit/api-keys`: Neue Option `secret`. Damit speichert der Dienst neue Keys zusätzlich verschlüsselt (AES-256-GCM, Spalte `key_enc`, `API_KEYS_SCHEMA_SQL` legt sie per `ALTER TABLE … ADD COLUMN IF NOT EXISTS` an). `reveal(userId, id)` und `GET /me/api-keys/:id/key` geben den Key seinem Besitzer zurück. Die Liste meldet `revealable`. Ohne `secret` bleibt alles wie bisher, und ältere Keys bleiben nicht anzeigbar.
+- `@veit/react-api-keys`: `VeitApiKeysSection` listet die Keys als `VeitListItem`. Ein Klick öffnet ein `VeitOverlayEditDialog` mit Draft: Key anzeigen und kopieren, Bezeichnung, Rechte und Geltungsbereich ändern, Sperren über `deleteAction` mit Bestätigung statt `window.confirm`. Ein neuer Key erscheint in einem eigenen Popup. Neue Peer-Dependencies: `@veit/react-dialog` und `lucide-react`. Neue Texte: `revokeTitle`, `notRevealable`, `key`, `show`, `hide`, `close`; `revokeConfirm` und `newKeyHint` sind kürzer. `createRestApiKeysClient` hat `reveal`.
+- `VeitDeleteButton` hat die Klasse `btn` und damit dieselbe Größe wie `VeitButton`.
+
 ## Plenivo zieht den Gitlink
 
 Stand 2026-10-29. Plenivo prüft die Framework-Quellen mit React-18-Typen und nutzt Teile, die vorher nur intern waren.

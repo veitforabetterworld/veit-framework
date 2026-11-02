@@ -10,7 +10,7 @@ export type ExpressApiKeysOptions = {
 };
 
 export type ExpressApiKeys = {
-  /** /me/api-keys for the signed-in user: list, create, update, revoke. */
+  /** /me/api-keys for the signed-in user: list, create, update, revoke, and show a revealable key again. */
   router: Router;
   /** Resolves the key header on every request; read it with getApiKey(req). */
   attachApiKey: RequestHandler;
@@ -115,6 +115,14 @@ export function createExpressApiKeys(options: ExpressApiKeysOptions): ExpressApi
       const input = parseInput(req.body, true);
       if (!input) throw new ApiKeyError('api_keys.body_invalid', 400);
       res.json(apiKeyJson(await service.update(userId, String(req.params.id), input)));
+    }),
+  );
+
+  router.get(
+    '/me/api-keys/:id/key',
+    withUser(async (userId, req, res) => {
+      res.set('Cache-Control', 'no-store');
+      res.json({ key: await service.reveal(userId, String(req.params.id)) });
     }),
   );
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { VeitPasswordField, veitInputClass } from '@veit/react-controls';
+import { VeitButton, VeitInput, VeitPasswordField, veitInputClass } from '@veit/react-controls';
 import {
   VeitSettingsSection,
   VeitSettingsSubsection,
@@ -83,9 +83,9 @@ export function VeitAccountPasswordSection({
         </div>
         {(currentPassword.length > 0 || newPassword.length > 0) && (
           <div className={VEIT_SETTINGS_ACTIONS}>
-            <button type="submit" disabled={submitting} className="btn-primary btn-sm">
+            <VeitButton type="submit" disabled={submitting}>
               {saveLabel}
-            </button>
+            </VeitButton>
           </div>
         )}
       </form>
@@ -122,14 +122,13 @@ export function VeitAccountProfileFields({
           <label htmlFor="veit-account-first-name" className="label">
             {firstNameLabel}
           </label>
-          <input
+          <VeitInput
             id="veit-account-first-name"
             type="text"
             value={firstName}
             onChange={(e) => onFirstNameChange(e.target.value)}
             onBlur={() => onNameBlur?.()}
             disabled={disabled}
-            className={veitInputClass}
             autoComplete="given-name"
           />
         </div>
@@ -137,14 +136,13 @@ export function VeitAccountProfileFields({
           <label htmlFor="veit-account-last-name" className="label">
             {lastNameLabel}
           </label>
-          <input
+          <VeitInput
             id="veit-account-last-name"
             type="text"
             value={lastName}
             onChange={(e) => onLastNameChange(e.target.value)}
             onBlur={() => onNameBlur?.()}
             disabled={disabled}
-            className={veitInputClass}
             autoComplete="family-name"
           />
         </div>
@@ -170,14 +168,14 @@ export function VeitAccountEmailField({
 }) {
   return (
     <VeitAccountSection title={label} description={hint}>
-      <input
+      <VeitInput
         id="veit-account-email"
         type="email"
         value={email}
         onChange={(e) => onChange(e.target.value)}
         onBlur={() => onBlur?.()}
         disabled={disabled}
-        className={`${veitInputClass} max-w-md`}
+        className="max-w-md"
         autoComplete="email"
       />
     </VeitAccountSection>
@@ -228,14 +226,9 @@ export function VeitAccountSessionsSection({
               {s.detail ? <p className="mt-0.5 text-xs text-muted-foreground">{s.detail}</p> : null}
             </div>
             {!s.isCurrent ? (
-              <button
-                type="button"
-                className="btn-secondary btn-sm shrink-0"
-                disabled={busyId === s.id}
-                onClick={() => onRevoke(s.id)}
-              >
+              <VeitButton type="button" variant="secondary" className="shrink-0" disabled={busyId === s.id} onClick={() => onRevoke(s.id)}>
                 {revokeLabel}
-              </button>
+              </VeitButton>
             ) : null}
           </li>
         ))}
@@ -306,9 +299,9 @@ export function VeitAccountMfaSection({
               />
             </div>
             <div className={VEIT_SETTINGS_ACTIONS}>
-              <button type="submit" disabled={submitting} className="btn-destructive btn-sm">
+              <VeitButton type="submit" variant="destructive" disabled={submitting}>
                 {disableSubmitLabel}
-              </button>
+              </VeitButton>
             </div>
           </form>
         </div>
@@ -336,9 +329,9 @@ export function VeitAccountDeletionSection({
     <VeitAccountSection title={title} description={description} variant="info">
       <VeitSettingsSubsection>
         <div className={VEIT_SETTINGS_ACTIONS}>
-          <button type="button" className="btn-destructive btn-sm" disabled={busy} onClick={onRequestDeletion}>
+          <VeitButton type="button" variant="destructive" disabled={busy} onClick={onRequestDeletion}>
             {confirmLabel}
-          </button>
+          </VeitButton>
         </div>
       </VeitSettingsSubsection>
     </VeitAccountSection>

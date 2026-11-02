@@ -7,6 +7,7 @@
  *   --allow-css <rel>        weitere CSS-Datei unter src (nur Brand-Tokens)
  *   --allow-style <rel>      style= bleibt erlaubt
  *   --allow-shell <rel>      Viewport-Höhe bleibt erlaubt (AppShell ist Default)
+ *   --controls <dir>         weiteres Paket, nur auf native Formular-Elemente geprüft
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -25,6 +26,7 @@ function parseArgs(argv) {
   const allowShell = new Set(["components/AppShell.tsx"]);
   let src;
   const positionals = [];
+  const controlRoots = [];
   for (let i = 2; i < argv.length; i += 1) {
     const flag = argv[i];
     const value = argv[i + 1];
@@ -48,6 +50,9 @@ function parseArgs(argv) {
       i += 1;
     } else if (!flag.startsWith("--")) {
       positionals.push(flag);
+    } else if (flag === "--controls" && value) {
+      controlRoots.push(value);
+      i += 1;
     }
   }
   return {
@@ -57,10 +62,11 @@ function parseArgs(argv) {
     allowCss,
     allowStyle,
     allowShell,
+    controlRoots,
   };
 }
 
-const { src, sources, allowImports, allowCss, allowStyle, allowShell } = parseArgs(process.argv);
+const { src, sources, allowImports, allowCss, allowStyle, allowShell, controlRoots } = parseArgs(process.argv);
 const errors = [];
 
 const tailwind = readFileSync(join(src, "tailwind.css"), "utf8").replace(/\r\n/g, "\n");
@@ -246,6 +252,24 @@ function walk(dir) {
 
 walk(src);
 for (const rel of allowCss) assertBrandFile(rel);
+
+function walkControls(dir, root) {
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) {
+      walkControls(path, root);
+      continue;
+    }
+    if (!name.endsWith(".ts") && !name.endsWith(".tsx")) continue;
+    const text = readFileSync(path, "utf8");
+    if (/<(?:button|input|select|textarea)\b/.test(text)) {
+      const rel = relative(root, path).replaceAll("\\", "/");
+      errors.push(`${rel}: natives Formular-Element, Veit-Baustein nehmen`);
+    }
+  }
+}
+
+for (const root of controlRoots) walkControls(root, root);
 if (errors.length > 0) {
   console.error(errors.join("\n"));
   process.exit(1);

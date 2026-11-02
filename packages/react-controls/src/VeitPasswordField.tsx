@@ -1,5 +1,6 @@
 import { forwardRef, useState, type InputHTMLAttributes } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { veitInputClass } from './VeitFormPrimitives.js';
 
 export type VeitPasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
   /** Zugänglicher Name im verborgenen Zustand */
@@ -28,7 +29,7 @@ export const VeitPasswordField = forwardRef<HTMLInputElement, VeitPasswordFieldP
       onVisibleChange,
       wrapperClassName = '',
       toggleButtonClassName = '',
-      className = '',
+      className = veitInputClass,
       disabled,
       ...rest
     },

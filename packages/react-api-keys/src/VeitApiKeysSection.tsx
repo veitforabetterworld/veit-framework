@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, ChevronRight, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { VeitAccountSection } from '@veit/react-account';
 import {
   VEIT_SETTINGS_ACTIONS,
@@ -8,6 +8,7 @@ import {
   VeitInput,
   VeitList,
   VeitListItem,
+  VeitSecretField,
   VeitSettingsToggleRow,
   VeitStatusBadge,
 } from '@veit/react-controls';
@@ -195,16 +196,13 @@ const toInput = (draft: Draft): VeitApiKeyInput => ({
   resources: draft.all_resources ? [] : draft.resources,
 });
 
-/** Stands in for the secret part of a key that is not shown. */
-const HIDDEN = '•'.repeat(24);
-
 function toggle(list: string[], id: string, on: boolean): string[] {
   return on ? [...new Set([...list, id])] : list.filter((x) => x !== id);
 }
 
 /**
- * The key itself, masked until shown, with a copy button. `known` is a key the client already has (just created);
- * otherwise `reveal` fetches it. Without either only the prefix is shown.
+ * The key itself in a VeitSecretField: masked, shown with the eye, copied with the button. `known` is a key the
+ * client already has (just created); otherwise `reveal` fetches it. A key that is neither shows its prefix.
  */
 function KeyField({
   apiKey,
@@ -219,77 +217,30 @@ function KeyField({
   texts: VeitApiKeysTexts;
   errorText: (error: unknown) => string;
 }) {
-  const [value, setValue] = useState<string | null>(known ?? null);
-  const [visible, setVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const available = Boolean(known) || (Boolean(apiKey.revealable) && Boolean(reveal));
+  const revealable = Boolean(apiKey.revealable) && Boolean(reveal);
   const inputId = `api-key-${apiKey.id}`;
-
-  const load = async (): Promise<string | null> => {
-    if (value) return value;
-    if (!reveal) return null;
-    setLoading(true);
-    setError(null);
-    try {
-      const key = await reveal(apiKey.id);
-      setValue(key);
-      return key;
-    } catch (err) {
-      setError(errorText(err));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleVisible = async () => {
-    if (visible) setVisible(false);
-    else if (await load()) setVisible(true);
-  };
-
-  const copy = async () => {
-    const key = await load();
-    if (!key) return;
-    try {
-      await navigator.clipboard.writeText(key);
-      setCopied(true);
-    } catch (err) {
-      setError(errorText(err));
-    }
-  };
-
-  const toggleLabel = visible ? texts.hide : texts.show;
+  if (!known && !revealable) {
+    return (
+      <VeitField label={texts.key} htmlFor={inputId} hint={texts.notRevealable}>
+        <VeitInput id={inputId} readOnly className="font-mono" value={`${apiKey.prefix}…`} />
+      </VeitField>
+    );
+  }
   return (
-    <VeitField label={texts.key} htmlFor={inputId} hint={available ? undefined : texts.notRevealable} error={error ?? undefined}>
-      <div className="flex min-w-0 gap-2">
-        <VeitInput
-          id={inputId}
-          readOnly
-          className="min-w-0 flex-1 font-mono"
-          value={visible && value ? value : `${apiKey.prefix}${HIDDEN}`}
-          onFocus={(e) => e.currentTarget.select()}
-        />
-      </div>
-      {available && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          <VeitButton variant="secondary" className="shrink-0" aria-pressed={visible} disabled={loading} onClick={() => void toggleVisible()}>
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-            ) : visible ? (
-              <EyeOff className="size-4" aria-hidden />
-            ) : (
-              <Eye className="size-4" aria-hidden />
-            )}
-            {toggleLabel}
-          </VeitButton>
-          <VeitButton variant="secondary" className="shrink-0" disabled={loading} onClick={() => void copy()}>
-            {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
-            {copied ? texts.copied : texts.copy}
-          </VeitButton>
-        </div>
-      )}
+    <VeitField label={texts.key} htmlFor={inputId} error={error ?? undefined}>
+      <VeitSecretField
+        id={inputId}
+        value={known ?? ''}
+        stored={!known}
+        onReveal={() => reveal!(apiKey.id)}
+        onRevealError={(err) => setError(errorText(err))}
+        showLabel={texts.show}
+        hideLabel={texts.hide}
+        copyLabel={texts.copy}
+        copiedLabel={texts.copied}
+        autoComplete="off"
+      />
     </VeitField>
   );
 }

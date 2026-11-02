@@ -136,6 +136,18 @@
     @apply w-full appearance-none rounded-lg border border-border bg-background px-3 text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring;
   }
 
+  /** Input sitting inside an already framed composer. */
+  .input-plain {
+    border-width: 0;
+    background-color: transparent;
+    box-shadow: none;
+  }
+
+  .input-plain:focus-visible {
+    box-shadow: none;
+    outline: none;
+  }
+
   .label {
     @apply text-sm font-medium text-foreground;
   }
@@ -184,5 +196,16 @@
 
   .settings-page-group {
     @apply flex items-center gap-2 text-base font-semibold text-foreground;
+  }
+
+  /* Platform scrollbars keep arrow buttons, so the native bar stays hidden. */
+  .veit-scroll {
+    scrollbar-width: none;
+  }
+
+  .veit-scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 }

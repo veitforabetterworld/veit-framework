@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { VEIT_SETTINGS_ACTIONS } from '@veit/react-controls';
+import { VEIT_SETTINGS_ACTIONS, VeitButton } from '@veit/react-controls';
 import { VeitEmailMfaSetupPanel, VeitMfaSetupStartActions, VeitTotpSetupPanel } from './mfaSetup.js';
 import {
   VeitAccountDeletionSection,
@@ -264,21 +264,21 @@ export function VeitAccountSettings({
           />
           <VeitAccountEmailField email={email} label={texts.email} hint={texts.emailChangeHint} onChange={setEmail} />
           {!user.emailVerified && (
-            <p className="text-sm text-muted-foreground">
-              {texts.unverified}{' '}
+            <div className="flex flex-col items-start gap-2">
+              <p className="m-0 text-sm text-muted-foreground">{texts.unverified}</p>
               {resendVerification && (
-                <button type="button" className="btn-secondary btn-sm" onClick={() => void resend()}>
+                <VeitButton type="button" variant="secondary" onClick={() => void resend()}>
                   {texts.resendVerification}
-                </button>
+                </VeitButton>
               )}
-            </p>
+            </div>
           )}
           {profileNote && <p className={`text-sm ${profileNote.ok ? 'text-muted-foreground' : 'text-destructive'}`}>{profileNote.text}</p>}
           {profileDirty && (
             <div className={VEIT_SETTINGS_ACTIONS}>
-              <button type="submit" className="btn-primary btn-sm" disabled={profileBusy}>
+              <VeitButton type="submit" disabled={profileBusy}>
                 {texts.saveProfile}
-              </button>
+              </VeitButton>
             </div>
           )}
         </form>

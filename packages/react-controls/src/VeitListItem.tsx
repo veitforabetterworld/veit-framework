@@ -14,6 +14,8 @@ export type VeitListItemProps = {
   disabled?: boolean;
   /** BEM root prefix for host CSS (default `veit-list-item`). */
   bemPrefix?: string;
+  /** `div` when the row sits inside another list item, for example a sortable handle. */
+  as?: 'li' | 'div';
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'title' | 'children' | 'onClick' | 'disabled' | 'style'>;
 
 /**
@@ -34,6 +36,7 @@ export function VeitListItem({
   disabled,
   type = 'button',
   bemPrefix = 'veit-list-item',
+  as: Root = 'li',
   ...buttonProps
 }: VeitListItemProps) {
   const body = (
@@ -54,7 +57,7 @@ export function VeitListItem({
   );
 
   return (
-    <li className={`${bemPrefix} ${className}`.trim()} style={style}>
+    <Root className={`${bemPrefix} ${className}`.trim()} style={style}>
       {onClick ? (
         <button
           type={type}
@@ -69,7 +72,7 @@ export function VeitListItem({
         <div className={`${bemPrefix}__row flex items-start gap-2`}>{body}</div>
       )}
       {footer}
-    </li>
+    </Root>
   );
 }
 

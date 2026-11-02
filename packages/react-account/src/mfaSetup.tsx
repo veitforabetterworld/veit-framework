@@ -1,6 +1,6 @@
 import type { FormEvent, ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { VEIT_SETTINGS_ACTIONS_ROW, veitInputClass } from '@veit/react-controls';
+import { VEIT_SETTINGS_ACTIONS_ROW, VeitButton, VeitInput } from '@veit/react-controls';
 
 export type VeitTotpSetupPanelProps = {
   otpauthUri: string;
@@ -56,23 +56,23 @@ export function VeitTotpSetupPanel({
       </p>
       <div className="max-w-md">
         <label className="label">{codeLabel}</label>
-        <input
+        <VeitInput
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={6}
           value={code}
           onChange={(e) => onCodeChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          className={`${veitInputClass} font-mono tracking-widest`}
+          className="font-mono tracking-widest"
         />
       </div>
       <div className={VEIT_SETTINGS_ACTIONS_ROW}>
-        <button type="submit" disabled={submitting} className="btn-primary btn-sm">
+        <VeitButton type="submit" disabled={submitting}>
           {saveLabel}
-        </button>
-        <button type="button" onClick={onCancel} className="btn-secondary btn-sm">
+        </VeitButton>
+        <VeitButton type="button" variant="secondary" onClick={onCancel}>
           {cancelLabel}
-        </button>
+        </VeitButton>
       </div>
     </form>
   );
@@ -106,23 +106,23 @@ export function VeitEmailMfaSetupPanel({
       <p className="muted">{hint}</p>
       <div>
         <label className="label">{codeLabel}</label>
-        <input
+        <VeitInput
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={6}
           value={code}
           onChange={(e) => onCodeChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          className={`${veitInputClass} font-mono tracking-widest`}
+          className="font-mono tracking-widest"
         />
       </div>
       <div className={VEIT_SETTINGS_ACTIONS_ROW}>
-        <button type="submit" disabled={submitting} className="btn-primary btn-sm">
+        <VeitButton type="submit" disabled={submitting}>
           {saveLabel}
-        </button>
-        <button type="button" onClick={onCancel} className="btn-secondary btn-sm">
+        </VeitButton>
+        <VeitButton type="button" variant="secondary" onClick={onCancel}>
           {cancelLabel}
-        </button>
+        </VeitButton>
       </div>
     </form>
   );
@@ -147,12 +147,12 @@ export function VeitMfaSetupStartActions({
 }: VeitMfaSetupStartActionsProps) {
   return (
     <div className={VEIT_SETTINGS_ACTIONS_ROW}>
-      <button type="button" disabled={disabled} onClick={onStartTotp} className="btn-primary btn-sm">
+      <VeitButton type="button" disabled={disabled} onClick={onStartTotp}>
         {totpLabel}
-      </button>
-      <button type="button" disabled={disabled} onClick={onStartEmail} className="btn-secondary btn-sm">
+      </VeitButton>
+      <VeitButton type="button" variant="secondary" disabled={disabled} onClick={onStartEmail}>
         {emailLabel}
-      </button>
+      </VeitButton>
       {trailing}
     </div>
   );

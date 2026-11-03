@@ -1,6 +1,7 @@
 {
   "name": "@veit/react-dialog",
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "description": "Veit modal dialogs (portal, history sync, a11y) with Tailwind-oriented class names.",

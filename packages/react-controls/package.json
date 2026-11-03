@@ -1,6 +1,7 @@
 {
   "name": "@veit/react-controls",
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "description": "Veit control primitives (switch, settings row, data table, person row) with Tailwind classes.",

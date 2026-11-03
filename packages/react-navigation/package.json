@@ -1,6 +1,7 @@
 {
   "name": "@veit/react-navigation",
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "description": "Veit app back navigation (React Router) with unified shell back button UI.",

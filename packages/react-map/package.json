@@ -1,6 +1,7 @@
 {
   "name": "@veit/react-map",
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "description": "React map component on MapLibre: basemap switching (vector first), globe, terrain and host layers that survive style changes.",

@@ -1,6 +1,7 @@
 {
   "name": "@veit/react-auth",
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "description": "Headless and UI-ready auth building blocks for React apps.",

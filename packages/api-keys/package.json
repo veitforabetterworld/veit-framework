@@ -1,6 +1,7 @@
 {
   "name": "@veit/api-keys",
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "description": "Per-user API keys with permissions and an all-or-whitelist resource scope.",

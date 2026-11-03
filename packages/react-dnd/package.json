@@ -1,6 +1,7 @@
 {
   "name": "@veit/react-dnd",
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "description": "Veit helpers and wrappers for @dnd-kit (sortable surfaces, context, nested collision).",

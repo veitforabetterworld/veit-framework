@@ -83,3 +83,7 @@ Die Tailwind-3-Brücke (`veit-bridge.css`, `tailwind.config.js`) ist kein Muster
 3. **Domain bleibt im Host:** Billing, Kanban, Shop-Flows, Push/Firebase-Produktlogik usw.
 4. **SiteShell-Chrome** (App-Header mit Branding/Navigation) bleibt host-spezifisch; nur Measure/Inline-Action-Primitives liegen im Framework (`@veit/react-controls`).
 5. Hosts pinnen `origin/development`. Produkt-`deploy` rollt die jeweilige Produktion aus und ist nicht der gemeinsame Framework-Tip.
+
+## Lizenz
+
+[PolyForm Noncommercial 1.0.0](LICENSE): frei nutzbar, veränderbar und weitergebbar, aber nur nicht kommerziell. Keine Gewährleistung, keine Haftung.

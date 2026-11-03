@@ -1,6 +1,7 @@
 {
   "name": "@veit/react-api-keys",
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "description": "API key management for the account page (pairs with @veit/api-keys): list, popup editing, show and copy.",

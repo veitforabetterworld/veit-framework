@@ -1,6 +1,7 @@
 {
   "name": "@veit/tesseract-ocr",
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "description": "Shared Tesseract.js OCR for Node (image buffers, local tessdata).",

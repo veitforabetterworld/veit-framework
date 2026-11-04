@@ -11,6 +11,9 @@
       "default": "./src/index.ts"
     }
   },
+  "dependencies": {
+    "@veit/password-policy": "workspace:*"
+  },
   "peerDependencies": {
     "@veit/react-controls": "workspace:*",
     "react": ">=18",

@@ -18,3 +18,12 @@ export {
   type VeitWireUser,
 } from './rest.js';
 export { veitAuthMessages, veitAuthT, veitAuthErrorText, type VeitAuthLocale } from './messages.js';
+export {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_SECURITY_REASONS,
+  isPasswordSecurityReason,
+  passwordSecurityReasons,
+  type PasswordPolicyErrorCode,
+  type PasswordSecurityEvaluation,
+  type PasswordSecurityReason,
+} from '@veit/password-policy/types';

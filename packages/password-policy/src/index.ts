@@ -3,21 +3,12 @@ import { createHash, randomInt } from 'node:crypto';
 import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
 import { adjacencyGraphs, dictionary } from '@zxcvbn-ts/language-common';
 
-export const PASSWORD_MIN_LENGTH = 10;
+import { PASSWORD_MIN_LENGTH, type PasswordPolicyErrorCode, type PasswordSecurityEvaluation, type PasswordSecurityReason } from './types.js';
+
+export * from './types.js';
+
 const ZXCVBN_MIN_SCORE = 3;
 const HIBP_RANGE_CACHE_TTL_MS = 60 * 60 * 1000;
-
-export type PasswordSecurityReason = 'too_short' | 'too_weak' | 'pwned';
-
-export type PasswordPolicyErrorCode = PasswordSecurityReason | 'check_unavailable';
-
-export type PasswordSecurityEvaluation = {
-  safe: boolean;
-  reasons: PasswordSecurityReason[];
-  checkUnavailable: boolean;
-  zxcvbnScore: number;
-  pwnedCount: number | null;
-};
 
 export class PasswordPolicyError extends Error {
   readonly code: PasswordPolicyErrorCode;

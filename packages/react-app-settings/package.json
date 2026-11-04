@@ -1,0 +1,31 @@
+{
+  "name": "@veit/react-app-settings",
+  "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Admin settings UI (pairs with @veit/app-settings): groups with popup editing, secret fields with reveal, SMTP section.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "peerDependencies": {
+    "@veit/react-controls": "workspace:*",
+    "@veit/react-dialog": "workspace:*",
+    "lucide-react": ">=0.400.0",
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.28",
+    "@veit/react-controls": "workspace:*",
+    "@veit/react-dialog": "workspace:*",
+    "lucide-react": "^0.454.0",
+    "react": "^18.3.1",
+    "typescript": "^5.7.2"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

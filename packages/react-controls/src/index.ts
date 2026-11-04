@@ -39,6 +39,7 @@ export { VeitPanel, type VeitPanelProps } from './VeitPanel.js';
 export { VeitRange, type VeitRangeProps } from './VeitRange.js';
 export { VeitScrollArea, type VeitScrollAreaProps } from './VeitScrollArea.js';
 export { VeitSwitch, type VeitSwitchProps } from './VeitSwitch.js';
+export { VeitColorInput, VEIT_COLOR_SWATCHES, normalizeHexColor, type VeitColorInputProps } from './VeitColorInput.js';
 export { VeitTabBar, type VeitTabBarItem, type VeitTabBarProps } from './VeitTabBar.js';
 export {
   VeitCountBadge,

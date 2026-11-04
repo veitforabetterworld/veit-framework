@@ -95,6 +95,9 @@ describe('decodeLegacy', () => {
     // Ciphertext under an unknown key is not taken for plain text.
     assert.equal(looksEncrypted(AUTH_JSON), true);
     assert.throws(() => decodeLegacy(AUTH_JSON, sources));
+    // A damaged enc1: value is never taken for plain text either.
+    assert.equal(looksEncrypted('enc1:kaputt'), true);
+    assert.throws(() => decodeLegacy('enc1:kaputt', sources));
     assert.throws(() => decodeLegacy(COMPACT_RAW_HEX, sources));
     assert.throws(() => decodeLegacy(SPRACHASSISTENT_ENC1, sources));
   });

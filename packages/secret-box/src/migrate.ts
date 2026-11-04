@@ -53,9 +53,16 @@ function parseCompact(stored: string): Payload | null {
   return iv.length === 12 && tag.length === 16 ? { iv, tag, data } : null;
 }
 
-/** Whether the value has one of the encrypted layouts above (then the plaintext source refuses it). */
+/** Whether the value has one of the encrypted layouts above (then the plaintext source refuses it). Anything with the
+ * `enc1:` prefix counts, even when damaged: it was meant to be ciphertext and must fail the migration, not become a
+ * "secret". */
 export function looksEncrypted(stored: string): boolean {
-  return parseCanonical(stored) !== null || parseAuthJson(stored) !== null || parseCompact(stored) !== null;
+  return (
+    stored.startsWith(SECRET_BOX_PREFIX) ||
+    parseCanonical(stored) !== null ||
+    parseAuthJson(stored) !== null ||
+    parseCompact(stored) !== null
+  );
 }
 
 function tryOpen(key: Buffer, payload: Payload | null): string | null {

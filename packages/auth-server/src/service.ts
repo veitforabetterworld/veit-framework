@@ -164,6 +164,15 @@ export class AuthService {
     return this.o.store;
   }
 
+  /** The plain TOTP secret, or '' when the box cannot open it (wrong key, not in the enc1: format). */
+  private openSecret(stored: string): string {
+    try {
+      return this.o.secretBox.decrypt(stored);
+    } catch {
+      return '';
+    }
+  }
+
   private async requireUser(id: UserId): Promise<AuthUserRecord> {
     const user = await this.store.findUserById(id);
     if (!user) authFail('auth.user_not_found', 404);
@@ -302,7 +311,7 @@ export class AuthService {
 
     let ok = false;
     if (user.mfaMethod === 'totp') {
-      const secret = this.o.secretBox.decrypt(user.mfaTotpSecretEnc ?? '');
+      const secret = this.openSecret(user.mfaTotpSecretEnc ?? '');
       ok = secret !== '' && verifySync({ secret, token: code }).valid === true;
     } else if (user.mfaMethod === 'email') {
       if (challenge.emailOtpHash && challenge.emailOtpExpiresAt && challenge.emailOtpExpiresAt > new Date()) {
@@ -500,7 +509,7 @@ export class AuthService {
     if (!user.mfaTotpSetupSecretEnc || user.mfaEnabled || !user.mfaTotpSetupExpiresAt || user.mfaTotpSetupExpiresAt < new Date()) {
       authFail('auth.mfa_setup_expired', 400);
     }
-    const secret = this.o.secretBox.decrypt(user.mfaTotpSetupSecretEnc);
+    const secret = this.openSecret(user.mfaTotpSetupSecretEnc);
     if (!secret || verifySync({ secret, token: code }).valid !== true) authFail('auth.mfa_invalid', 400);
     await this.store.updateUser(user.id, {
       ...MFA_RESET,

@@ -10,6 +10,7 @@ Fertige Module für Node- und React-Projekte: Konten mit MFA, API-Keys, Dialoge,
 | `@veit/react-controls` | Controls und Layout: Button (mit Größen), Icon-Button, Hinweisbox (`VeitAlert`), Toasts (`VeitToastProvider`, `useVeitToast`), Seitencontainer (`VeitPage`), Input, Select, Combobox, Switch, Range, Tabs, Listen (`VeitListItem`), Datentabelle, Status-Badge, Leerzustand, Seitenkopf, Panels, Passwort- und Geheimnis-Feld, Löschen-Buttons, Personenzeilen, Handschrift-Eingabe, `AppShell`, App-Header/-Footer, ScrollArea, `useVeitMediaQuery`; Theme in `theme.css` |
 | `@veit/react-auth` | Anmelden, Registrieren, Passwort vergessen/zurücksetzen, E-Mail-Bestätigung; `createAuthProvider`, `useAuth`, `ProtectedRoute`, `createRestAuthClient`, `veitFetchJson`/`VeitApiError` (mit `detail`, `fields`, Status 0 bei Netzwerkfehler); Texte de/en (`veitAuthT`) |
 | `@veit/react-account` | Kontoseite `VeitAccountSettings`: Profil, E-Mail, Passwort, MFA (TOTP und E-Mail-Code), Sitzungen, Konto löschen; einzelne Abschnitte, `createRestAccountClient` |
+| `@veit/react-app-settings` | Admin-Einstellungen: Gruppen mit Zusammenfassung und Bearbeiten im Popup (`VeitSettingsGroups`, Felder Text, Zahl, Schalter, Auswahl, Geheimnis mit Anzeigen), SMTP-Abschnitt mit Test-Mail (`VeitSmtpSettingsSection`), REST-Client |
 | `@veit/react-api-keys` | `VeitApiKeysSection`: Keys mit Berechtigungen und Geltungsbereich anlegen, anzeigen, bearbeiten, sperren; auch ein Key pro Ressource und feste Rechte |
 | `@veit/react-auth-group` | Personengruppen: Modus, Mitglieder, Personen-Picker |
 | `@veit/react-field-tags` | Tag-Editor, -Picker und Filterleiste; Typen und Helfer aus `@veit/field-tags` |
@@ -20,8 +21,10 @@ Fertige Module für Node- und React-Projekte: Konten mit MFA, API-Keys, Dialoge,
 | `@veit/react-navigation` | Zurück-Navigation mit React Router (Button aus `@veit/react-controls`) |
 | `@veit/react-dialog-router` | Deep Links auf Dialoge |
 | `@veit/react-dnd` | Drag and Drop auf Basis von dnd-kit |
-| `@veit/auth-server` | Kontologik für Node: Registrierung mit E-Mail-Bestätigung, Login mit TOTP/E-Mail-Code, Cookie-Sessions, Passwort-Reset, Profil, Löschung; Postgres (`/pg`), SMTP (`/smtp`), Express (`/express`) |
-| `@veit/api-keys` | API-Keys pro Benutzer: Berechtigungen, alle Ressourcen oder Auswahl, optional verschlüsselt wieder anzeigbar; Postgres (`/pg`), Express (`/express`) |
+| `@veit/auth-server` | Kontologik für Node: Registrierung mit E-Mail-Bestätigung, Login mit TOTP/E-Mail-Code, Cookie-Sessions, Passwort-Reset, Profil, Löschung; Postgres (`/pg`), SMTP mit eigenem Mailversand des Hosts (`/smtp`), Express (`/express`) |
+| `@veit/api-keys` | API-Keys pro Benutzer oder Organisation: Berechtigungen, alle Ressourcen oder Auswahl, optional verschlüsselt wieder anzeigbar; Postgres mit eigener Tabelle (`/pg`), Express (`/express`), einmalige Migration (`/migrate`) |
+| `@veit/secret-box` | Das eine Format für Geheimnisse in der Datenbank (`enc1:`, AES-256-GCM); alte Formate nur für einmalige Migrationen (`/migrate`, `reencryptRows`) |
+| `@veit/app-settings` | Einstellungen in einer Schlüssel/Wert-Tabelle: Geheimnisse verschlüsselt, maskiert gelistet, für Admins anzeigbar, generierte interne Schlüssel; Express (`/express`), SMTP-Einstellungen daraus (`/smtp`) |
 | `@veit/password-policy` | Passwortstärke (zxcvbn und Have I Been Pwned), Vorschläge für Passphrasen |
 | `@veit/node-server` | Fastify-Grundgerüst: `createApp`, Health-Routen, `listen`, `HttpError`, öffentliche Origin |
 | `@veit/db` | Postgres-Pool (mit Pool-Optionen) und Drizzle, `checkDatabase` |
@@ -38,7 +41,7 @@ Die React-Pakete bauen auf den gleichnamigen Paketen ohne `react-` auf; `@veit/a
 1. Als Git-Submodul ins Host-Projekt holen, z. B. nach `veit-framework/`.
 2. `veit-framework/packages/*` in die `pnpm-workspace.yaml` des Hosts aufnehmen.
 3. Pakete in der `package.json` als `"@veit/react-dialog": "workspace:*"` usw. eintragen.
-4. Die Node-Pakete bauen: `pnpm --filter "@veit/db" --filter "@veit/auth-server" … run build` (gebaut werden address, api-keys, auth-server, db, field-tags, intl, node-server, password-policy, tesseract-ocr). Die React-Pakete werden als Quelltext eingebunden: Vite- und TS-Aliase auf `veit-framework/packages/<paket>/src/index.ts`.
+4. Die Node-Pakete bauen: `pnpm --filter "@veit/db" --filter "@veit/auth-server" … run build` (gebaut werden address, api-keys, app-settings, auth-server, db, field-tags, intl, node-server, password-policy, secret-box, tesseract-ocr). Die React-Pakete werden als Quelltext eingebunden: Vite- und TS-Aliase auf `veit-framework/packages/<paket>/src/index.ts`.
 5. React nur einmal laden: `pnpm.overrides` für `react`, `react-dom`, `react-router` und `react-router-dom`, dazu Vite `resolve.dedupe`. Sonst gibt es doppelte Router-Kontexte (`useLocation` außerhalb von `<Router>`); `scripts/check-react-singleton.mjs` prüft das im Bundle. Den Paket-Root nicht auf `index.ts` aliasen, sonst brechen Unterpfade wie `theme.css`.
 
 ## Styling

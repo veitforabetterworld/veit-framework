@@ -9,6 +9,7 @@ import {
   VeitList,
   VeitListItem,
   VeitSecretField,
+  VeitSelect,
   VeitSettingsToggleRow,
   VeitStatusBadge,
 } from '@veit/react-controls';
@@ -51,6 +52,9 @@ export type VeitApiKeysClient = {
 };
 
 type FetchJson = <T>(url: string, init?: { method?: string; body?: unknown }) => Promise<T>;
+
+/** `all-or-selection`: all resources or a chosen set (default). `single`: exactly one resource, picked in a select. */
+export type VeitApiKeysResourceMode = 'all-or-selection' | 'single';
 
 /** Client for /me/api-keys of '@veit/api-keys/express' at baseUrl; fetchJson is veitFetchJson from '@veit/react-auth'. */
 export function createRestApiKeysClient(baseUrl: string, fetchJson: FetchJson): VeitApiKeysClient {
@@ -102,6 +106,12 @@ export type VeitApiKeysTexts = {
   never: string;
   /** "{n} selected" */
   resourcesCount: (n: number) => string;
+  /** Label of the select in `resourceMode="single"`; default: resourceNoun. */
+  resource?: string;
+  /** Scope of a key whose resource is gone or not set (single mode); default "—". */
+  unassigned?: string;
+  /** While the list loads; default "…". */
+  loading?: string;
 };
 
 export const veitApiKeysTexts: Record<'de' | 'en', VeitApiKeysTexts> = {
@@ -176,25 +186,51 @@ export type VeitApiKeyResource = { id: string; label: string };
 
 type Draft = VeitApiKeyInput;
 
-const emptyDraft = (permissions: VeitApiKeyPermission[]): Draft => ({
-  label: '',
-  permissions: permissions.map((p) => p.id),
-  all_resources: true,
-  resources: [],
-});
+/** How the form treats permissions and resources; derived from the section's props. */
+type FormMode = {
+  resourceMode: VeitApiKeysResourceMode;
+  /** Set: permissions are not shown and always sent as these. */
+  fixedPermissions?: string[];
+};
 
-const toDraft = (key: VeitApiKey): Draft => ({
-  label: key.label,
-  permissions: key.permissions,
-  all_resources: key.all_resources,
-  resources: key.resources,
-});
+const emptyDraft = (permissions: VeitApiKeyPermission[], resources: VeitApiKeyResource[], mode: FormMode): Draft =>
+  mode.resourceMode === 'single'
+    ? {
+        label: '',
+        permissions: mode.fixedPermissions ?? permissions.map((p) => p.id),
+        all_resources: false,
+        resources: resources[0] ? [resources[0].id] : [],
+      }
+    : {
+        label: '',
+        permissions: mode.fixedPermissions ?? permissions.map((p) => p.id),
+        all_resources: true,
+        resources: [],
+      };
 
-const toInput = (draft: Draft): VeitApiKeyInput => ({
+const toDraft = (key: VeitApiKey, resources: VeitApiKeyResource[], mode: FormMode): Draft => {
+  if (mode.resourceMode !== 'single') {
+    return { label: key.label, permissions: mode.fixedPermissions ?? key.permissions, all_resources: key.all_resources, resources: key.resources };
+  }
+  // A key from elsewhere may have none or several; the select then starts on the first resource.
+  const own = key.resources.length === 1 && resources.some((r) => r.id === key.resources[0]) ? key.resources[0] : resources[0]?.id;
+  return { label: key.label, permissions: mode.fixedPermissions ?? key.permissions, all_resources: false, resources: own ? [own] : [] };
+};
+
+const toInput = (draft: Draft, mode: FormMode): VeitApiKeyInput => ({
   ...draft,
   label: draft.label.trim(),
-  resources: draft.all_resources ? [] : draft.resources,
+  permissions: mode.fixedPermissions ?? draft.permissions,
+  all_resources: mode.resourceMode === 'single' ? false : draft.all_resources,
+  resources: mode.resourceMode === 'single' ? draft.resources.slice(0, 1) : draft.all_resources ? [] : draft.resources,
 });
+
+/** The code of an error from veitFetchJson or a host client, if it has one. */
+function errorCode(error: unknown): string | undefined {
+  return typeof error === 'object' && error !== null && 'code' in error && typeof (error as { code: unknown }).code === 'string'
+    ? (error as { code: string }).code
+    : undefined;
+}
 
 function toggle(list: string[], id: string, on: boolean): string[] {
   return on ? [...new Set([...list, id])] : list.filter((x) => x !== id);
@@ -253,6 +289,7 @@ function KeyForm({
   resourceNoun,
   texts,
   disabled,
+  mode,
 }: {
   draft: Draft;
   onChange: (draft: Draft) => void;
@@ -261,6 +298,7 @@ function KeyForm({
   resourceNoun: string;
   texts: VeitApiKeysTexts;
   disabled: boolean;
+  mode: FormMode;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -273,59 +311,77 @@ function KeyForm({
           onChange={(e) => onChange({ ...draft, label: e.target.value })}
         />
       </VeitField>
-      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-        <legend className="label">{texts.permissions}</legend>
-        {permissions.map((p) => (
-          <VeitSettingsToggleRow
-            key={p.id}
-            variant="embed"
-            label={p.label}
-            description={p.description}
-            checked={draft.permissions.includes(p.id)}
-            disabled={disabled}
-            onCheckedChange={(on) => onChange({ ...draft, permissions: toggle(draft.permissions, p.id, on) })}
-          />
-        ))}
-      </fieldset>
-      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-        <legend className="label">
-          {texts.scope} ({resourceNoun})
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          <VeitButton
-            variant={draft.all_resources ? 'primary' : 'secondary'}
-            aria-pressed={draft.all_resources}
-            disabled={disabled}
-            onClick={() => onChange({ ...draft, all_resources: true })}
-          >
-            {texts.scopeAll}
-          </VeitButton>
-          <VeitButton
-            variant={draft.all_resources ? 'secondary' : 'primary'}
-            aria-pressed={!draft.all_resources}
-            disabled={disabled}
-            onClick={() => onChange({ ...draft, all_resources: false })}
-          >
-            {texts.scopeSome}
-          </VeitButton>
-        </div>
-        {!draft.all_resources && (
-          <div className="flex flex-col gap-2">
-            <p className="m-0 text-xs text-muted-foreground">{texts.scopeSomeHint}</p>
-            {resources.length === 0 && <p className="m-0 text-sm text-muted-foreground">{texts.noResources}</p>}
-            {resources.map((r) => (
-              <VeitSettingsToggleRow
-                key={r.id}
-                variant="embed"
-                label={r.label}
-                checked={draft.resources.includes(r.id)}
-                disabled={disabled}
-                onCheckedChange={(on) => onChange({ ...draft, resources: toggle(draft.resources, r.id, on) })}
-              />
-            ))}
+      {!mode.fixedPermissions && (
+        <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+          <legend className="label">{texts.permissions}</legend>
+          {permissions.map((p) => (
+            <VeitSettingsToggleRow
+              key={p.id}
+              variant="embed"
+              label={p.label}
+              description={p.description}
+              checked={draft.permissions.includes(p.id)}
+              disabled={disabled}
+              onCheckedChange={(on) => onChange({ ...draft, permissions: toggle(draft.permissions, p.id, on) })}
+            />
+          ))}
+        </fieldset>
+      )}
+      {mode.resourceMode === 'single' ? (
+        <VeitField label={texts.resource ?? resourceNoun} htmlFor="api-key-resource">
+          {resources.length === 0 ? (
+            <p className="m-0 text-sm text-muted-foreground">{texts.noResources}</p>
+          ) : (
+            <VeitSelect
+              id="api-key-resource"
+              value={draft.resources[0] ?? ''}
+              disabled={disabled}
+              onValueChange={(id) => onChange({ ...draft, resources: [id] })}
+              options={resources.map((r) => ({ value: r.id, label: r.label }))}
+            />
+          )}
+        </VeitField>
+      ) : (
+        <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+          <legend className="label">
+            {texts.scope} ({resourceNoun})
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            <VeitButton
+              variant={draft.all_resources ? 'primary' : 'secondary'}
+              aria-pressed={draft.all_resources}
+              disabled={disabled}
+              onClick={() => onChange({ ...draft, all_resources: true })}
+            >
+              {texts.scopeAll}
+            </VeitButton>
+            <VeitButton
+              variant={draft.all_resources ? 'secondary' : 'primary'}
+              aria-pressed={!draft.all_resources}
+              disabled={disabled}
+              onClick={() => onChange({ ...draft, all_resources: false })}
+            >
+              {texts.scopeSome}
+            </VeitButton>
           </div>
-        )}
-      </fieldset>
+          {!draft.all_resources && (
+            <div className="flex flex-col gap-2">
+              <p className="m-0 text-xs text-muted-foreground">{texts.scopeSomeHint}</p>
+              {resources.length === 0 && <p className="m-0 text-sm text-muted-foreground">{texts.noResources}</p>}
+              {resources.map((r) => (
+                <VeitSettingsToggleRow
+                  key={r.id}
+                  variant="embed"
+                  label={r.label}
+                  checked={draft.resources.includes(r.id)}
+                  disabled={disabled}
+                  onCheckedChange={(on) => onChange({ ...draft, resources: toggle(draft.resources, r.id, on) })}
+                />
+              ))}
+            </div>
+          )}
+        </fieldset>
+      )}
     </div>
   );
 }
@@ -353,7 +409,9 @@ function KeyDialog({
   resourceNoun,
   texts,
   errorText,
+  mode,
 }: DialogProps & {
+  mode: FormMode;
   editing: Editing | null;
   onClose: () => void;
   onCreated: (key: string, apiKey: VeitApiKey) => void;
@@ -362,7 +420,10 @@ function KeyDialog({
   const open = editing !== null;
   const binding = useManagedOverlayDialogBinding(open, onClose);
   const current = editing?.mode === 'edit' ? editing.key : null;
-  const initial = useMemo(() => (current ? toDraft(current) : emptyDraft(permissions)), [current, permissions]);
+  const initial = useMemo(
+    () => (current ? toDraft(current, resources, mode) : emptyDraft(permissions, resources, mode)),
+    [current, permissions, resources, mode],
+  );
   const [draft, setDraft] = useState<Draft>(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -393,10 +454,10 @@ function KeyDialog({
   const save = () =>
     run(async () => {
       if (current) {
-        await client.update(current.id, toInput(draft));
+        await client.update(current.id, toInput(draft, mode));
         onChanged();
       } else {
-        const { key, apiKey } = await client.create(toInput(draft));
+        const { key, apiKey } = await client.create(toInput(draft, mode));
         onCreated(key, apiKey);
       }
     });
@@ -415,7 +476,10 @@ function KeyDialog({
         dirty,
         formBaseline,
         saveRequiresDirty: current !== null,
-        saveDisabled: !draft.label.trim() || draft.permissions.length === 0,
+        saveDisabled:
+          !draft.label.trim() ||
+          (mode.fixedPermissions ?? draft.permissions).length === 0 ||
+          (mode.resourceMode === 'single' && !draft.resources[0]),
         cancelLabel: texts.cancel,
         saveLabel: current ? texts.save : texts.create,
         onSave: save,
@@ -448,6 +512,7 @@ function KeyDialog({
           resourceNoun={resourceNoun}
           texts={texts}
           disabled={busy}
+          mode={mode}
         />
         {error && <p className="m-0 text-sm text-destructive">{error}</p>}
       </div>
@@ -484,6 +549,19 @@ function CreatedKeyDialog({
   );
 }
 
+export type VeitApiKeysSectionProps = DialogProps & {
+  /** Formats `last_used_at`; default: medium date and short time in `locale`. */
+  formatTime?: (iso: string) => string;
+  /** BCP-47 locale for the default formatTime; default: the browser's. */
+  locale?: string;
+  /** Default `all-or-selection`. `single`: each key is bound to exactly one resource, chosen in a select. */
+  resourceMode?: VeitApiKeysResourceMode;
+  /** Permissions every key gets; the permission switches are hidden. `permissions` may then be empty. */
+  fixedPermissions?: string[];
+  /** The host's sentence for an error code (e.g. 'api_keys.one_device'); undefined falls back to errorText. */
+  errorCodeText?: (code: string) => string | undefined;
+};
+
 /**
  * Lists the user's keys; a key opens in a popup to show, copy, edit and revoke it. permissions and resources come
  * from the host (e.g. its stations); resourceNoun names them in the scope ("Stationen").
@@ -494,11 +572,40 @@ export function VeitApiKeysSection({
   resources,
   resourceNoun,
   texts,
-  errorText,
-  formatTime = (iso) => new Date(iso).toLocaleString(),
-}: DialogProps & {
-  formatTime?: (iso: string) => string;
-}) {
+  errorText: hostErrorText,
+  locale,
+  formatTime: hostFormatTime,
+  resourceMode = 'all-or-selection',
+  fixedPermissions,
+  errorCodeText,
+}: VeitApiKeysSectionProps) {
+  // Refs: hosts often pass inline functions, and the list must not reload on every render.
+  const errorTextRef = useRef({ hostErrorText, errorCodeText });
+  errorTextRef.current = { hostErrorText, errorCodeText };
+  const errorText = useCallback((err: unknown) => {
+    const { hostErrorText: fallback, errorCodeText: byCode } = errorTextRef.current;
+    const code = errorCode(err);
+    return (code !== undefined ? byCode?.(code) : undefined) ?? fallback(err);
+  }, []);
+  const formatTime = useMemo(() => {
+    if (hostFormatTime) return hostFormatTime;
+    let format: Intl.DateTimeFormat;
+    try {
+      format = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+    } catch {
+      format = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    }
+    return (iso: string) => {
+      const date = new Date(iso);
+      return Number.isNaN(date.valueOf()) ? iso : format.format(date);
+    };
+  }, [hostFormatTime, locale]);
+  // Keyed by content: a host may pass a new array with the same permissions on every render.
+  const fixedKey = fixedPermissions?.join('\n');
+  const mode = useMemo<FormMode>(
+    () => ({ resourceMode, fixedPermissions: fixedKey === undefined ? undefined : fixedKey === '' ? [] : fixedKey.split('\n') }),
+    [resourceMode, fixedKey],
+  );
   const [keys, setKeys] = useState<VeitApiKey[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
@@ -521,7 +628,11 @@ export function VeitApiKeysSection({
   const permissionLabel = (id: string) => permissions.find((p) => p.id === id)?.label ?? id;
   const resourceLabel = (id: string) => resources.find((r) => r.id === id)?.label ?? id;
   const scopeText = (key: VeitApiKey) =>
-    key.all_resources
+    resourceMode === 'single'
+      ? key.resources.length === 1 && resources.some((r) => r.id === key.resources[0])
+        ? resourceLabel(key.resources[0])
+        : (texts.unassigned ?? '—')
+      : key.all_resources
       ? texts.scopeAll
       : key.resources.length <= 3
         ? key.resources.map(resourceLabel).join(', ') || '—'
@@ -530,7 +641,7 @@ export function VeitApiKeysSection({
   return (
     <VeitAccountSection title={texts.title} description={texts.description}>
       <div className="flex flex-col gap-4">
-        {keys === null && !error && <p className="m-0 text-sm text-muted-foreground">…</p>}
+        {keys === null && !error && <p className="m-0 text-sm text-muted-foreground">{texts.loading ?? '…'}</p>}
         {keys?.length === 0 && <p className="m-0 text-sm text-muted-foreground">{texts.empty}</p>}
         {keys && keys.length > 0 && (
           <VeitList className="flex flex-col gap-1">
@@ -547,7 +658,8 @@ export function VeitApiKeysSection({
                 badge={key.revoked_at ? <VeitStatusBadge variant="neutral">{texts.revoked}</VeitStatusBadge> : undefined}
                 meta={
                   <>
-                    {key.permissions.map(permissionLabel).join(', ')} · {texts.scope}: {scopeText(key)} · {texts.lastUsed}:{' '}
+                    {fixedPermissions ? null : `${key.permissions.map(permissionLabel).join(', ')} · `}
+                    {resourceMode === 'single' ? scopeText(key) : `${texts.scope}: ${scopeText(key)}`} · {texts.lastUsed}:{' '}
                     {key.last_used_at ? formatTime(key.last_used_at) : texts.never}
                   </>
                 }
@@ -559,9 +671,17 @@ export function VeitApiKeysSection({
         )}
 
         {error && <p className="m-0 text-sm text-destructive">{error}</p>}
+        {resourceMode === 'single' && keys && resources.length === 0 && (
+          <p className="m-0 text-sm text-muted-foreground">{texts.noResources}</p>
+        )}
 
         <div className={VEIT_SETTINGS_ACTIONS}>
-          <VeitButton onClick={() => setEditing({ mode: 'create' })}>{texts.create}</VeitButton>
+          <VeitButton
+            disabled={resourceMode === 'single' && (keys === null || resources.length === 0)}
+            onClick={() => setEditing({ mode: 'create' })}
+          >
+            {texts.create}
+          </VeitButton>
         </div>
       </div>
 
@@ -583,6 +703,7 @@ export function VeitApiKeysSection({
         resourceNoun={resourceNoun}
         texts={texts}
         errorText={errorText}
+        mode={mode}
       />
       <CreatedKeyDialog created={created} onClose={() => setCreated(null)} client={client} texts={texts} errorText={errorText} />
     </VeitAccountSection>

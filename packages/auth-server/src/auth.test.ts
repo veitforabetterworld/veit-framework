@@ -20,6 +20,13 @@ describe('secret box', () => {
     assert.equal(box.decrypt(stored), 'JBSWY3DPEHPK3PXP');
     assert.equal(createAesGcmSecretBox(() => 'other', 'ctx').decrypt(stored), '');
   });
+
+  it('writes enc1: and no longer reads the layout without prefix', () => {
+    const box = createAesGcmSecretBox(() => 'material', 'ctx');
+    assert.match(box.encrypt('x'), /^enc1:/);
+    const legacy = Buffer.from(JSON.stringify({ iv: 'AAAAAAAAAAAAAAAA', tag: 'AAAAAAAAAAAAAAAAAAAAAA==', d: '' })).toString('base64');
+    assert.equal(box.decrypt(legacy), '');
+  });
 });
 
 describe('auth flows over express and postgres', { skip: databaseUrl ? false : 'DATABASE_URL is not set' }, () => {

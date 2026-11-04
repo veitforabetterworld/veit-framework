@@ -129,10 +129,10 @@ export interface AuthMailer {
   sendMfaSetupCode(input: MailTo & { code: string }): Promise<void>;
 }
 
-/** Encrypts TOTP secrets at rest; see createAesGcmSecretBox. */
+/** Encrypts TOTP secrets at rest: createSecretBox from '@veit/secret-box' (createAesGcmSecretBox is deprecated). */
 export interface SecretBox {
   encrypt(plain: string): string;
-  /** '' when the value cannot be decrypted. */
+  /** The plain value; may return '' or throw when the value cannot be decrypted. */
   decrypt(stored: string): string;
 }
 

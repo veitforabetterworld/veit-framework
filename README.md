@@ -7,25 +7,25 @@ Fertige Module für Node- und React-Projekte: Konten mit MFA, API-Keys, Dialoge,
 | Paket | Inhalt |
 |-------|--------|
 | `@veit/react-dialog` | Popups mit Verlauf und Barrierefreiheit: Bearbeiten mit Entwurf (`VeitOverlayEditDialog`, `useDialogFormBaseline`), Bestätigen/Eingabe, Such- und Auswahl-Picker, Sprachauswahl, Wizard, Sheet, Nachfrage bei ungespeicherten Änderungen |
-| `@veit/react-controls` | Controls und Layout: Button, Input, Select, Combobox, Switch, Range, Tabs, Listen (`VeitListItem`), Datentabelle, Status-Badge, Leerzustand, Seitenkopf, Panels, Passwort- und Geheimnis-Feld, Löschen-Buttons, Personenzeilen, Handschrift-Eingabe, `AppShell`, App-Header/-Footer, ScrollArea, `useVeitMediaQuery`; Theme in `theme.css` |
-| `@veit/react-auth` | Anmelden, Registrieren, Passwort vergessen/zurücksetzen, E-Mail-Bestätigung; `createAuthProvider`, `useAuth`, `ProtectedRoute`, `createRestAuthClient`; Texte de/en (`veitAuthT`) |
+| `@veit/react-controls` | Controls und Layout: Button (mit Größen), Icon-Button, Hinweisbox (`VeitAlert`), Toasts (`VeitToastProvider`, `useVeitToast`), Seitencontainer (`VeitPage`), Input, Select, Combobox, Switch, Range, Tabs, Listen (`VeitListItem`), Datentabelle, Status-Badge, Leerzustand, Seitenkopf, Panels, Passwort- und Geheimnis-Feld, Löschen-Buttons, Personenzeilen, Handschrift-Eingabe, `AppShell`, App-Header/-Footer, ScrollArea, `useVeitMediaQuery`; Theme in `theme.css` |
+| `@veit/react-auth` | Anmelden, Registrieren, Passwort vergessen/zurücksetzen, E-Mail-Bestätigung; `createAuthProvider`, `useAuth`, `ProtectedRoute`, `createRestAuthClient`, `veitFetchJson`/`VeitApiError` (mit `detail`, `fields`, Status 0 bei Netzwerkfehler); Texte de/en (`veitAuthT`) |
 | `@veit/react-account` | Kontoseite `VeitAccountSettings`: Profil, E-Mail, Passwort, MFA (TOTP und E-Mail-Code), Sitzungen, Konto löschen; einzelne Abschnitte, `createRestAccountClient` |
-| `@veit/react-api-keys` | `VeitApiKeysSection`: Keys mit Berechtigungen und Geltungsbereich anlegen, anzeigen, bearbeiten, sperren |
+| `@veit/react-api-keys` | `VeitApiKeysSection`: Keys mit Berechtigungen und Geltungsbereich anlegen, anzeigen, bearbeiten, sperren; auch ein Key pro Ressource und feste Rechte |
 | `@veit/react-auth-group` | Personengruppen: Modus, Mitglieder, Personen-Picker |
-| `@veit/react-field-tags` | Tag-Editor, -Picker und Filterleiste |
+| `@veit/react-field-tags` | Tag-Editor, -Picker und Filterleiste; Typen und Helfer aus `@veit/field-tags` |
 | `@veit/react-upload` | Bild-Auswahl und Upload |
-| `@veit/react-address` | Adressformular mit Straßen-Autovervollständigung (Nominatim) |
+| `@veit/react-address` | Adressformular mit Straßen-Autovervollständigung (Nominatim); Typen und Helfer aus `@veit/address` |
 | `@veit/react-invite` | Einladungen einlösen, auflisten, teilen |
 | `@veit/react-map` | `<VeitMap>`: MapLibre-Karte mit Hintergründen (Vektor, Amtlich, Flurkarte), Globus, Gelände; Ebenen des Hosts bleiben beim Wechsel erhalten |
-| `@veit/react-navigation` | Zurück-Navigation mit React Router |
+| `@veit/react-navigation` | Zurück-Navigation mit React Router (Button aus `@veit/react-controls`) |
 | `@veit/react-dialog-router` | Deep Links auf Dialoge |
 | `@veit/react-dnd` | Drag and Drop auf Basis von dnd-kit |
 | `@veit/auth-server` | Kontologik für Node: Registrierung mit E-Mail-Bestätigung, Login mit TOTP/E-Mail-Code, Cookie-Sessions, Passwort-Reset, Profil, Löschung; Postgres (`/pg`), SMTP (`/smtp`), Express (`/express`) |
 | `@veit/api-keys` | API-Keys pro Benutzer: Berechtigungen, alle Ressourcen oder Auswahl, optional verschlüsselt wieder anzeigbar; Postgres (`/pg`), Express (`/express`) |
 | `@veit/password-policy` | Passwortstärke (zxcvbn und Have I Been Pwned), Vorschläge für Passphrasen |
 | `@veit/node-server` | Fastify-Grundgerüst: `createApp`, Health-Routen, `listen`, `HttpError`, öffentliche Origin |
-| `@veit/db` | Postgres-Pool und Drizzle |
-| `@veit/intl` | Datum, Zahlen, Geld, Maßeinheiten und Sprachnamen formatieren |
+| `@veit/db` | Postgres-Pool (mit Pool-Optionen) und Drizzle, `checkDatabase` |
+| `@veit/intl` | Datum, relative Zeit, Dauer, Zahlen, Geld, Maßeinheiten und Sprachnamen formatieren |
 | `@veit/map` | MapLibre ohne React: Hintergründe, Flurkarten der Länder, Sonnenstand, Gelände, Höhenprofil, 3D-Welt (`/world3d`) |
 | `@veit/address` | Adress-Typen, Formatierung, Nominatim-Suche |
 | `@veit/field-tags` | Tag-Baum ohne UI |
@@ -43,7 +43,7 @@ Die React-Pakete bauen auf den gleichnamigen Paketen ohne `react-` auf; `@veit/a
 
 ## Styling
 
-`@veit/react-controls/theme.css` enthält die shadcn-Variablen und die Klassen `.btn`, `.input` und `.card`. Der Host lädt zuerst Tailwind (`@import "tailwindcss"` und `@source`), danach die Theme-Datei. Danach darf eine eigene Brand-Datei nur Custom Properties und `@font-face` setzen; `scripts/no-custom-css.mjs --allow-css <datei>` prüft das. Ohne Brand-Datei bleibt die dunkle Standard-Palette.
+`@veit/react-controls/theme.css` enthält die shadcn-Variablen und die Klassen `.btn` (mit `.btn-sm`, `.btn-lg`, `.btn-icon`), `.input` und `.card`. Der Host lädt zuerst Tailwind (`@import "tailwindcss"` und `@source`), danach die Theme-Datei. Danach darf eine eigene Brand-Datei nur Custom Properties und `@font-face` setzen; `scripts/no-custom-css.mjs --allow-css <datei>` prüft das. Ohne Brand-Datei bleibt die dunkle Standard-Palette.
 
 ## Skripte
 
@@ -56,6 +56,11 @@ Die React-Pakete bauen auf den gleichnamigen Paketen ohne `react-` auf; `@veit/a
 | `check-no-tracked-secrets.mjs` | keine versionierten Geheimnis-Dateien oder privaten Schlüssel |
 | `sync-android-web-manifest.mjs`, `sync-twa-theme.mjs` | Web-Manifest und Markenfarben in eine Android-TWA übernehmen |
 | `load-json-config.mjs`, `assert-required-config.mjs` | JSON-Konfiguration mit lokalem Override laden, Pflichtfelder prüfen |
+| `check-i18n-literals.mjs` | kein Text in Komponenten, alles aus den Sprachdateien (Wurzeln, Ignore-Marker, Ausnahmen per Flag) |
+| `check-i18n-hardcodes.mjs` | kein hartes Locale wie `de-DE`, gleiche Schlüssel in allen Sprachdateien |
+| `check-sheet-dismiss.mjs` | jedes `VeitSheetDialog` hat `dismissRef` |
+| `check-audit.mjs` | `pnpm audit`: high/critical blockieren, außer in der geprüften Allowlist |
+| `only-pnpm.cjs`, `install-git-hooks.mjs` | Installation nur mit pnpm; versionierte Git-Hooks installieren |
 
 Änderungen und brechende Umstellungen stehen in [CHANGES.md](CHANGES.md).
 

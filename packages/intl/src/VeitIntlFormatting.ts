@@ -95,6 +95,23 @@ function coerceToLocalizedDate(input: Date | string | number): Date {
   return new Date(input);
 }
 
+/** Wert und Einheit für `Intl.RelativeTimeFormat`; gerundet, damit "vor 59 Sekunden" nicht "vor 0 Minuten" wird. */
+function relativeTimeParts(diffMs: number): [number, Intl.RelativeTimeFormatUnit] {
+  const abs = Math.abs(diffMs);
+  const sign = diffMs < 0 ? -1 : 1;
+  const second = 1000;
+  const minute = 60 * second;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (abs < minute) return [sign * Math.round(abs / second), 'second'];
+  if (abs < hour) return [sign * Math.floor(abs / minute), 'minute'];
+  if (abs < day) return [sign * Math.floor(abs / hour), 'hour'];
+  if (abs < 7 * day) return [sign * Math.floor(abs / day), 'day'];
+  if (abs < 30 * day) return [sign * Math.floor(abs / (7 * day)), 'week'];
+  if (abs < 365 * day) return [sign * Math.floor(abs / (30 * day)), 'month'];
+  return [sign * Math.floor(abs / (365 * day)), 'year'];
+}
+
 /** Zentrale Formatier‑API für ein fixes aufgelöstes Intl‑Locale. Cache pro Tag. */
 export class VeitIntlFormatting {
   private static readonly instances = new Map<string, VeitIntlFormatting>();
@@ -166,6 +183,59 @@ export class VeitIntlFormatting {
     } catch {
       return dt.toISOString();
     }
+  }
+
+  /**
+   * Abstand zu `now` in Worten ("vor 5 Minuten", "in 2 Tagen"). Die Einheit wächst mit dem Abstand:
+   * Sekunden unter einer Minute, dann Minuten, Stunden, Tage, Wochen (ab 7 Tagen), Monate (ab 30), Jahre (ab 365).
+   */
+  relativeTime(input: Date | string | number, now: Date | number = Date.now(), options?: Intl.RelativeTimeFormatOptions): string {
+    const dt = coerceToLocalizedDate(input);
+    const nowMs = now instanceof Date ? now.getTime() : now;
+    if (Number.isNaN(dt.valueOf()) || !Number.isFinite(nowMs)) {
+      return typeof input === 'string' ? input : '';
+    }
+    const [value, unit] = relativeTimeParts(dt.getTime() - nowMs);
+    try {
+      return new Intl.RelativeTimeFormat(this.intlResolvedTag, options ?? { numeric: 'auto' }).format(value, unit);
+    } catch {
+      return this.localizedDateTime(dt);
+    }
+  }
+
+  /** Dauer in Millisekunden, kurz und mit bis zu zwei Einheiten: "1 Min. 21 Sek.", "2 Std. 5 Min.", "850 ms". */
+  durationMs(ms: number): string {
+    if (!Number.isFinite(ms)) return '—';
+    const sign = ms < 0 ? '-' : '';
+    const abs = Math.abs(ms);
+    if (abs < 1000) return `${sign}${this.unitShort(Math.round(abs), 'millisecond')}`;
+    const totalSeconds = Math.round(abs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const parts: string[] = [];
+    if (hours > 0) {
+      parts.push(this.unitShort(hours, 'hour'));
+      if (minutes > 0) parts.push(this.unitShort(minutes, 'minute'));
+    } else if (minutes > 0) {
+      parts.push(this.unitShort(minutes, 'minute'));
+      if (seconds > 0) parts.push(this.unitShort(seconds, 'second'));
+    } else {
+      parts.push(this.unitShort(seconds, 'second'));
+    }
+    return `${sign}${parts.join(' ')}`;
+  }
+
+  private unitShort(value: number, unit: 'millisecond' | 'second' | 'minute' | 'hour'): string {
+    if (this.unitStyleSupported) {
+      try {
+        return new Intl.NumberFormat(this.intlResolvedTag, { style: 'unit', unit, unitDisplay: 'short' }).format(value);
+      } catch {
+        /* Fallback unten */
+      }
+    }
+    const suffix = { millisecond: 'ms', second: 's', minute: 'min', hour: 'h' }[unit];
+    return `${this.decimal(value, { maximumFractionDigits: 0 })} ${suffix}`;
   }
 
   moneyFromMinorUnits(minorUnits: number, currencyRaw: string): string {
@@ -420,4 +490,22 @@ export function formatMapLengthM(meters: number, uiLocale: string, msgs: MapMeas
 
 export function formatMapAreaM2(areaM2: number, uiLocale: string, msgs: MapMeasureStrings): string {
   return VeitIntlFormatting.forUiLocale(uiLocale).formatMapAreaM2(areaM2, msgs);
+}
+
+/**
+ * Abstand zu `now` in Worten ("vor 5 Minuten", "in 2 Tagen", "gestern"). `now` ist der Vergleichszeitpunkt (Default: jetzt).
+ * Die Einheit wächst mit dem Abstand: Sekunden, Minuten, Stunden, Tage, Wochen, Monate, Jahre.
+ */
+export function formatRelativeTime(
+  input: Date | string | number,
+  now: Date | number | undefined,
+  uiLocale: string,
+  options?: Intl.RelativeTimeFormatOptions,
+): string {
+  return VeitIntlFormatting.forUiLocale(uiLocale).relativeTime(input, now ?? Date.now(), options);
+}
+
+/** Dauer in Millisekunden kurz, mit bis zu zwei Einheiten: de "1 Min. 21 Sek.", en "1 min 21 sec" (Intl‑Kurzform), unter 1 s in ms. */
+export function formatDurationMs(ms: number, uiLocale: string): string {
+  return VeitIntlFormatting.forUiLocale(uiLocale).durationMs(ms);
 }

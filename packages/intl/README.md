@@ -6,6 +6,7 @@ Gemeinsame **ECMA‑402 / `Intl`‑Formatierung** für Veit‑Apps (Browser und 
 
 - **`VeitIntlFormatting`**: gebündelte API für ein Auflösungs‑Locale (`forUiLocale(...)`, Instanz‑Caching).
 - **Freistehende Funktionen** (`formatMoneyFromMinorUnits`, `formatLocalizedDateTime`, …): gleiche Implementierung wie die Klassenmethoden, praktisch für punktuelle Aufrufe.
+- **Relative Zeit und Dauer**: `formatRelativeTime(date, now, locale)` ("vor 5 Minuten", Einheit nach Abstand) und `formatDurationMs(ms, locale)` ("1 Min. 21 Sek."); als Methoden `relativeTime` und `durationMs`.
 - **`coerceLocaleCode`**, **`resolveIntlLocale`**, **`intlStyleUnitSupported`**.
 
 ## Karten‑Länge/-Fläche

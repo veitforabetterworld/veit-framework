@@ -1,4 +1,5 @@
 import { ChevronLeft } from 'lucide-react';
+import { VeitBackButton as VeitControlsBackButton } from '@veit/react-controls';
 
 import {
   veitBackButtonIconOnlyClass,
@@ -13,25 +14,23 @@ export type VeitBackButtonProps = {
   label?: string;
 };
 
-/** Einheitliche Shell-Zurück-Taste — öffentliche API nur mit optionalem Text-Label. */
+/**
+ * Einheitliche Shell-Zurück-Taste — öffentliche API nur mit optionalem Text-Label.
+ * Rendert `VeitBackButton` aus `@veit/react-controls` mit den Shell-Tokens; Ziel und Label kommen aus dem Scope.
+ */
 export function VeitBackButton({ label }: VeitBackButtonProps) {
   const { backAriaLabel, compact, goBack } = useVeitBackNavigationScope();
   const trimmed = label?.trim() ?? '';
-  const hasLabel = trimmed.length > 0;
-  const showLabel = hasLabel && !compact;
-
-  const className = showLabel ? veitBackButtonWithLabelClass : veitBackButtonIconOnlyClass;
+  const showLabel = trimmed.length > 0 && !compact;
 
   return (
-    <button
-      type="button"
-      onClick={goBack}
-      className={className}
-      title={backAriaLabel}
-      {...(showLabel ? {} : { 'aria-label': backAriaLabel })}
-    >
-      <ChevronLeft className={veitBackNavIconClass} aria-hidden />
-      {showLabel ? <span className={veitBackLabelInnerClass}>{trimmed}</span> : null}
-    </button>
+    <VeitControlsBackButton
+      onBack={goBack}
+      ariaLabel={backAriaLabel}
+      label={showLabel ? trimmed : undefined}
+      labelClassName={veitBackLabelInnerClass}
+      icon={<ChevronLeft className={veitBackNavIconClass} aria-hidden />}
+      className={showLabel ? veitBackButtonWithLabelClass : veitBackButtonIconOnlyClass}
+    />
   );
 }

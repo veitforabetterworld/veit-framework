@@ -7,3 +7,15 @@ export {
   foldLanguageSearchText,
   uiLanguageDisplayName,
 } from './VeitLanguageDisplayName.js';
+export {
+  browserKindName,
+  clientKindFromUserAgent,
+  describeUserAgent,
+  osKindName,
+  parseUserAgent,
+  type VeitBrowserKind,
+  type VeitClientKind,
+  type VeitClientKindOptions,
+  type VeitOsKind,
+  type VeitUserAgentInfo,
+} from './userAgent.js';

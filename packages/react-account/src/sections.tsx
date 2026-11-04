@@ -5,7 +5,7 @@ import {
   VeitSettingsSubsection,
   VEIT_SETTINGS_ACTIONS,
 } from '@veit/react-controls';
-import type { AccountClient, AccountMfaStatus, AccountSession } from './types.js';
+import type { AccountClient, AccountMfaStatus } from './types.js';
 
 export function VeitAccountSection({
   title,
@@ -178,61 +178,6 @@ export function VeitAccountEmailField({
         className="max-w-md"
         autoComplete="email"
       />
-    </VeitAccountSection>
-  );
-}
-
-export function VeitAccountSessionsSection({
-  title,
-  loadingLabel,
-  emptyLabel,
-  revokeLabel,
-  currentLabel,
-  loading,
-  error,
-  sessions,
-  onRevoke,
-  busyId,
-}: {
-  title: string;
-  loadingLabel: string;
-  emptyLabel: string;
-  revokeLabel: string;
-  currentLabel: string;
-  loading: boolean;
-  error?: string | null;
-  sessions: AccountSession[];
-  onRevoke: (id: string | number) => void;
-  busyId?: string | number | null;
-}) {
-  return (
-    <VeitAccountSection title={title}>
-      {loading ? <p className="muted">{loadingLabel}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      {!loading && !error && sessions.length === 0 ? <p className="muted">{emptyLabel}</p> : null}
-      <ul className="space-y-2">
-        {sessions.map((s) => (
-          <li
-            key={String(s.id)}
-            className="flex items-start justify-between gap-3 rounded-lg border border-border/60 px-3 py-2.5"
-          >
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-foreground">
-                {s.summary}
-                {s.isCurrent ? (
-                  <span className="ml-2 text-xs text-muted-foreground">({currentLabel})</span>
-                ) : null}
-              </div>
-              {s.detail ? <p className="mt-0.5 text-xs text-muted-foreground">{s.detail}</p> : null}
-            </div>
-            {!s.isCurrent ? (
-              <VeitButton type="button" variant="secondary" className="shrink-0" disabled={busyId === s.id} onClick={() => onRevoke(s.id)}>
-                {revokeLabel}
-              </VeitButton>
-            ) : null}
-          </li>
-        ))}
-      </ul>
     </VeitAccountSection>
   );
 }

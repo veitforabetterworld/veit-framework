@@ -1,3 +1,7 @@
+import type { ReactNode } from 'react';
+import type { VeitClientKind } from '@veit/intl';
+import type { VeitStatusBadgeVariant } from '@veit/react-controls';
+
 export type AccountMfaMethod = 'totp' | 'email';
 
 export type AccountMfaStatus = {
@@ -5,11 +9,22 @@ export type AccountMfaStatus = {
   mfaMethod: AccountMfaMethod | null;
 };
 
+export type AccountSessionBadge = {
+  label: string;
+  /** Default 'primary'. */
+  variant?: VeitStatusBadgeVariant;
+  icon?: ReactNode;
+};
+
 export type AccountSession = {
   id: string | number;
   isCurrent: boolean;
   summary: string;
   detail?: string;
+  /** Icon slot: browser, the host's app, a phone or desktop system; without it no icon. */
+  clientKind?: VeitClientKind;
+  /** Small badges after the name, e.g. "Push aktiv". */
+  badges?: readonly AccountSessionBadge[];
 };
 
 export type AccountProfilePatch = {

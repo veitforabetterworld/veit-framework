@@ -2,7 +2,7 @@ import { Router, type NextFunction, type Request, type RequestHandler, type Resp
 import { isAuthError } from './errors.js';
 import type { AuthService, LoginResult } from './service.js';
 import type { AuthUserRecord, RequestInfo } from './types.js';
-import { describeUserAgent } from './userAgent.js';
+import { clientKindFromUserAgent, describeUserAgent } from './userAgent.js';
 
 export type ExpressAuthOptions = {
   service: AuthService;
@@ -12,6 +12,8 @@ export type ExpressAuthOptions = {
   /** Extra fields of GET /me and the login answers, e.g. { is_admin }. */
   extendUser?: (user: AuthUserRecord) => Promise<Record<string, unknown>> | Record<string, unknown>;
   deviceName?: (req: Request) => string | null;
+  /** Device names of the host's own apps (from `deviceName`); their sessions are listed with `client_kind: 'app'`. */
+  appDeviceNames?: readonly string[];
 };
 
 /** Wire format of a user (snake_case, like Plenivo's API). */
@@ -315,6 +317,7 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
           expires_at: s.expiresAt.toISOString(),
           ip_address: s.ipAddress,
           device: s.deviceName || describeUserAgent(s.userAgent),
+          client_kind: clientKindFromUserAgent(s.userAgent, { deviceName: s.deviceName, appDeviceNames: options.appDeviceNames }),
           is_current: s.isCurrent,
         })),
       });

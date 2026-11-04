@@ -1,88 +1,63 @@
 # veit-framework
 
-Wiederverwendbare **fertige Module** für Node-/Web-Projekte (pnpm-Workspace-Pakete unter `packages/`).
+Fertige Module für Node- und React-Projekte: Konten mit MFA, API-Keys, Dialoge, Formular-Controls, Karten, Adressen, Tags. Die Pakete liegen unter `packages/` und werden als pnpm-Workspace-Pakete eines Host-Projekts eingebunden.
 
-Apps sollen primär die React-/Server-**Module** einbinden — nicht einzelne Low-Level-Helfer.
-
-## Empfohlene Einstiegspunkte (Module)
-
-| Paket | Fertiges Modul |
-|-------|----------------|
-| **`@veit/react-dialog`** | Popups: Presets, Confirm/Prompt, Search-Picker, **LanguagePicker**, `VeitOverlayShell` (inkl. Loading) |
-| **`@veit/react-controls`** | Controls + Form-Primitives, StatusBadge, EmptyState, PageHeader, ProgressBar/PanelCard, ListItem, ResponsiveInlineActionBar, DataTable, Password, Delete-Button, Person-Rows, **`useVeitMediaQuery`** |
-| **`@veit/react-auth`** | Login/Register/Reset/E-Mail-Bestätigung + `AuthClient` / `ProtectedRoute`, `createRestAuthClient`, Texte de/en (`veitAuthT`) |
-| **`@veit/react-account`** | Fertige Kontoseite `VeitAccountSettings` (Profil, Passwort, MFA inkl. **TOTP/E-Mail-Setup**, Sitzungen, Löschung) + Einzel-Sections, `createRestAccountClient`, Texte de/en |
-| **`@veit/react-api-keys`** | `VeitApiKeysSection`: Keys mit Berechtigungen und „alle / nur ausgewählte“ Ressourcen anlegen, bearbeiten, sperren |
-| **`@veit/react-auth-group`** | Auth-Gruppen-Editor / Person-Picker |
-| **`@veit/react-field-tags`** | Tag-Editor, Picker, Filter-Bar |
-| **`@veit/react-upload`** | Image-Picker / Upload |
-| **`@veit/react-address`** | Adressformular + Autocomplete |
-| **`@veit/react-invite`** | Invite-Einlösung, Invite-Liste, Share-Link-Actions |
-| **`@veit/react-map`** | `<VeitMap>`: MapLibre-Karte mit Hintergründen (Vektor zuerst, Amtlich, Flurkarte), Globus, Gelände, Host-Ebenen bleiben beim Wechsel erhalten |
-| **`@veit/react-map`** | `<VeitMap>`: MapLibre-Karte mit Hintergründen (Vektor zuerst, Amtlich, Flurkarte), Globus, Gelände, Host-Ebenen bleiben beim Wechsel erhalten |
-| **`@veit/react-navigation`** | Back-Button / Navigations-Scope |
-| **`@veit/react-dialog-router`** | Deep-Link-Hooks für Entity-Dialoge |
-| **`@veit/password-policy`** | Passwort-Stärke (zxcvbn + HIBP), `assertStrongPassword` / `evaluatePasswordSecurity` / `generateSuggestedPassphrase` |
-| **`@veit/auth-server`** | Kontologik für Node: Registrierung mit E-Mail-Bestätigung, Login mit TOTP/E-Mail-Code, Cookie-Sessions, Passwort-Reset, Profil, Löschung. `AuthService` hinter `AuthStore`/`AuthMailer`; fertig: Postgres (`/pg`), SMTP (`/smtp`), Express (`/express`) |
-| **`@veit/api-keys`** | API-Keys pro Benutzer: Berechtigungen des Hosts, alle Ressourcen oder Whitelist; Postgres (`/pg`), Express (`/express`) |
-| **`@veit/node-server`** | Fastify-Bootstrap (`createApp`, Health, `listen`, `HttpError`, `publicAppOrigin`, `publicOriginFromHost`) |
-| **`@veit/db`** | Postgres-Pool + Drizzle + `rowsFromExecute` |
-
-## Low-Level / Server-Logik (meist nur Backend oder intern)
+## Module
 
 | Paket | Inhalt |
 |-------|--------|
-| **`@veit/address`** | Adress-Typen, Nominatim-Suche |
-| **`@veit/map`** | MapLibre ohne React: Hintergründe, Flurkarten der Länder, Live-Sonne, Gelände, Höhenprofil, 3D-Welt (`@veit/map/world3d`) |
-| **`@veit/map`** | MapLibre ohne React: Hintergründe, Flurkarten der Länder, Live-Sonne, Gelände, Höhenprofil, 3D-Welt (`@veit/map/world3d`) |
-| **`@veit/field-tags`** | Tag-Baum-Logik (ohne UI) |
-| **`@veit/intl`** | Locale-/Zahlen-/Geld-Formatierung + **Sprach-Anzeigenamen** (`uiLanguageAutonym` / `uiLanguageDisplayName`) |
-| **`@veit/tesseract-ocr`** | Tesseract.js für Node |
-| **`@veit/react-dnd`** | DnD-Kit-Abstraktionen (Primitiv-Kit) |
+| `@veit/react-dialog` | Popups mit Verlauf und Barrierefreiheit: Bearbeiten mit Entwurf (`VeitOverlayEditDialog`, `useDialogFormBaseline`), Bestätigen/Eingabe, Such- und Auswahl-Picker, Sprachauswahl, Wizard, Sheet, Nachfrage bei ungespeicherten Änderungen |
+| `@veit/react-controls` | Controls und Layout: Button, Input, Select, Combobox, Switch, Range, Tabs, Listen (`VeitListItem`), Datentabelle, Status-Badge, Leerzustand, Seitenkopf, Panels, Passwort- und Geheimnis-Feld, Löschen-Buttons, Personenzeilen, Handschrift-Eingabe, `AppShell`, App-Header/-Footer, ScrollArea, `useVeitMediaQuery`; Theme in `theme.css` |
+| `@veit/react-auth` | Anmelden, Registrieren, Passwort vergessen/zurücksetzen, E-Mail-Bestätigung; `createAuthProvider`, `useAuth`, `ProtectedRoute`, `createRestAuthClient`; Texte de/en (`veitAuthT`) |
+| `@veit/react-account` | Kontoseite `VeitAccountSettings`: Profil, E-Mail, Passwort, MFA (TOTP und E-Mail-Code), Sitzungen, Konto löschen; einzelne Abschnitte, `createRestAccountClient` |
+| `@veit/react-api-keys` | `VeitApiKeysSection`: Keys mit Berechtigungen und Geltungsbereich anlegen, anzeigen, bearbeiten, sperren |
+| `@veit/react-auth-group` | Personengruppen: Modus, Mitglieder, Personen-Picker |
+| `@veit/react-field-tags` | Tag-Editor, -Picker und Filterleiste |
+| `@veit/react-upload` | Bild-Auswahl und Upload |
+| `@veit/react-address` | Adressformular mit Straßen-Autovervollständigung (Nominatim) |
+| `@veit/react-invite` | Einladungen einlösen, auflisten, teilen |
+| `@veit/react-map` | `<VeitMap>`: MapLibre-Karte mit Hintergründen (Vektor, Amtlich, Flurkarte), Globus, Gelände; Ebenen des Hosts bleiben beim Wechsel erhalten |
+| `@veit/react-navigation` | Zurück-Navigation mit React Router |
+| `@veit/react-dialog-router` | Deep Links auf Dialoge |
+| `@veit/react-dnd` | Drag and Drop auf Basis von dnd-kit |
+| `@veit/auth-server` | Kontologik für Node: Registrierung mit E-Mail-Bestätigung, Login mit TOTP/E-Mail-Code, Cookie-Sessions, Passwort-Reset, Profil, Löschung; Postgres (`/pg`), SMTP (`/smtp`), Express (`/express`) |
+| `@veit/api-keys` | API-Keys pro Benutzer: Berechtigungen, alle Ressourcen oder Auswahl, optional verschlüsselt wieder anzeigbar; Postgres (`/pg`), Express (`/express`) |
+| `@veit/password-policy` | Passwortstärke (zxcvbn und Have I Been Pwned), Vorschläge für Passphrasen |
+| `@veit/node-server` | Fastify-Grundgerüst: `createApp`, Health-Routen, `listen`, `HttpError`, öffentliche Origin |
+| `@veit/db` | Postgres-Pool und Drizzle |
+| `@veit/intl` | Datum, Zahlen, Geld, Maßeinheiten und Sprachnamen formatieren |
+| `@veit/map` | MapLibre ohne React: Hintergründe, Flurkarten der Länder, Sonnenstand, Gelände, Höhenprofil, 3D-Welt (`/world3d`) |
+| `@veit/address` | Adress-Typen, Formatierung, Nominatim-Suche |
+| `@veit/field-tags` | Tag-Baum ohne UI |
+| `@veit/tesseract-ocr` | Texterkennung mit Tesseract.js für Node |
 
-Öffentliche Web-Apps bevorzugen `@veit/react-field-tags` statt direkter `@veit/field-tags`-Imports; `@veit/address` nur serverseitig oder hinter `@veit/react-address`.
+Die React-Pakete bauen auf den gleichnamigen Paketen ohne `react-` auf; `@veit/address` ist für den Server gedacht, im Browser über `@veit/react-address`.
 
-## Eigenes Repo entwickeln
+## Einbinden
 
-```bash
-cd veit-framework
-# im Monorepo-Root des Host-Projekts:
-pnpm install
-pnpm --filter @veit/db build
-pnpm --filter @veit/node-server build
-pnpm --filter @veit/password-policy build
-pnpm --filter @veit/intl build
-```
-
-## In anderen Repos nutzen
-
-1. Submodule oder npm/Git-Dependency auf dieses Repository.
-2. Pakete in die `pnpm-workspace.yaml` des Zielprojekts aufnehmen, z. B.  
-   `veit-framework/packages/*`.
-3. In `package.json`: `"@veit/react-dialog": "workspace:*"` (usw.).
-4. Vite/TS-Aliases auf `veit-framework/packages/*/src/index.ts` (siehe Plenivo).
-5. **React-Singleton (Pflicht bei Source-Aliases):** Host pinnt eine React-Major-Linie und eine `react-router`-Kopie — sonst entstehen doppelte Router-Contexts (`useLocation` außerhalb von `<Router>`). Empfohlen:
-   - `pnpm.overrides` für `react` / `react-dom` / `react-router` / `react-router-dom`
-   - Vite `resolve.dedupe` + absolute Aliases auf die Host-`node_modules`-Kopien
-   - Paket-Root nicht auf `index.ts` aliasen, sonst brechen Subpath-Imports wie `theme.css`
+1. Als Git-Submodul ins Host-Projekt holen, z. B. nach `veit-framework/`.
+2. `veit-framework/packages/*` in die `pnpm-workspace.yaml` des Hosts aufnehmen.
+3. Pakete in der `package.json` als `"@veit/react-dialog": "workspace:*"` usw. eintragen.
+4. Die Node-Pakete bauen: `pnpm --filter "@veit/db" --filter "@veit/auth-server" … run build` (gebaut werden address, api-keys, auth-server, db, field-tags, intl, node-server, password-policy, tesseract-ocr). Die React-Pakete werden als Quelltext eingebunden: Vite- und TS-Aliase auf `veit-framework/packages/<paket>/src/index.ts`.
+5. React nur einmal laden: `pnpm.overrides` für `react`, `react-dom`, `react-router` und `react-router-dom`, dazu Vite `resolve.dedupe`. Sonst gibt es doppelte Router-Kontexte (`useLocation` außerhalb von `<Router>`); `scripts/check-react-singleton.mjs` prüft das im Bundle. Den Paket-Root nicht auf `index.ts` aliasen, sonst brechen Unterpfade wie `theme.css`.
 
 ## Styling
 
-`@veit/react-controls/theme.css` enthält die shadcn-Variablen und die Klassen `.btn`, `.input`, `.card`. Der Host lädt Tailwind davor (`@import "tailwindcss"` plus `@source`) und importiert danach die Theme-Datei. Siehe `CHANGES.md` für brechende Umstellungen auf Radix.
+`@veit/react-controls/theme.css` enthält die shadcn-Variablen und die Klassen `.btn`, `.input` und `.card`. Der Host lädt zuerst Tailwind (`@import "tailwindcss"` und `@source`), danach die Theme-Datei. Danach darf eine eigene Brand-Datei nur Custom Properties und `@font-face` setzen; `scripts/no-custom-css.mjs --allow-css <datei>` prüft das. Ohne Brand-Datei bleibt die dunkle Standard-Palette.
 
-### Brand-Datei
+## Skripte
 
-Nach `theme.css` darf eine Host-Datei nur Custom Properties und `@font-face` setzen. `scripts/no-custom-css.mjs` prüft das für `--allow-css`. `theme.css` liefert ein dunkles `:root`; die Brand-Datei muss danach kommen, sonst bleibt die Hochwasser-Palette.
+| Skript | |
+|---|---|
+| `no-custom-css.mjs` | keine eigenen CSS-Dateien, kein `style=`, keine Arbitrary Values |
+| `check-page-loc.mjs` | Zeilenzahl von Seiten begrenzen (Wurzeln und Schwellen setzt der Host) |
+| `check-react-singleton.mjs` | nur ein React-Router-Kontext im Produktionsbundle |
+| `check-submodule-pins.mjs` | Submodul-Pin steht auf `origin/<branch>` |
+| `check-no-tracked-secrets.mjs` | keine versionierten Geheimnis-Dateien oder privaten Schlüssel |
+| `sync-android-web-manifest.mjs`, `sync-twa-theme.mjs` | Web-Manifest und Markenfarben in eine Android-TWA übernehmen |
+| `load-json-config.mjs`, `assert-required-config.mjs` | JSON-Konfiguration mit lokalem Override laden, Pflichtfelder prüfen |
 
-Die Tailwind-3-Brücke (`veit-bridge.css`, `tailwind.config.js`) ist kein Muster mehr. ScanGut und Hochwasser importieren `theme.css` direkt.
-
-## Host-Integration (Wrapper-Regel)
-
-1. **Generische UI/Server-Logik zuerst ins Framework** — nicht parallel in Plenivo und ScanGut duplizieren.
-2. **Host-Dateien sind Adapter:** i18n, Branding, Env, API-Client, `bemPrefix` / Token-CSS. Keine zweite Implementierung neben einem Framework-Export.
-3. **Domain bleibt im Host:** Billing, Kanban, Shop-Flows, Push/Firebase-Produktlogik usw.
-4. **SiteShell-Chrome** (App-Header mit Branding/Navigation) bleibt host-spezifisch; nur Measure/Inline-Action-Primitives liegen im Framework (`@veit/react-controls`).
-5. Hosts pinnen `origin/development`. Produkt-`deploy` rollt die jeweilige Produktion aus und ist nicht der gemeinsame Framework-Tip.
+Änderungen und brechende Umstellungen stehen in [CHANGES.md](CHANGES.md).
 
 ## Lizenz
 

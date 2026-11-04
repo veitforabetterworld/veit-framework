@@ -1,5 +1,39 @@
 # Änderungen
 
+## Bausteine für die Host-Migration
+
+Stand 2026-11-04. Alles ist additiv; bestehende Exporte und Props bleiben. Die Hosts stellen in einer zweiten Runde auf diese Bausteine um.
+
+- `@veit/react-controls`:
+  - Neu: `VeitAlert` (`variant` `error`/`warning`/`info`/`success`, `title`, `action`, `icon`, `plain`). Fehler und Warnungen haben `role="alert"`, der Rest `role="status"`. Ersetzt die `role="alert" … border-destructive`-Boxen; `plain` ersetzt `<p className="text-destructive">`.
+  - Neu: `VeitToastProvider` und `useVeitToast()` mit `show(kind, text, { durationMs })` und `dismiss(id)`. Portal, `aria-live="polite"`, Auto-Dismiss (Fehler 9 s, sonst 5–7 s, `0` bleibt stehen), auf dem Handy unten, ab `sm` oben (`placement`). Der Schließen-Text kommt über `texts.close`. `useVeitToastOptional()` liefert außerhalb des Providers `null`. Vorbild ist `AppMessageContext` in Plenivo.
+  - Neu: `VeitPage` (`title`, `description`, `actions`, `leading`, `width` `narrow`/`default`/`wide`/`full`): Seitencontainer `mx-auto w-full p-4 sm:p-6 gap-6` mit optionalem `VeitPageHeader`.
+  - `VeitButton` hat `size` (`sm`, `default`, `lg`, `icon`) statt `className="btn-sm"`; `veitButtonClass(variant, size)` für Elemente, die kein Button sein können.
+  - Neu: `VeitIconButton` (`label` wird `aria-label` und `title`, `icon`, `variant`, `size` `default` 44×44 px oder `sm` 36×36 px, `asChild` für Links). `VeitRoundIconButton` in `@veit/react-auth-group` rendert jetzt `VeitButton size="icon"` mit gleicher Optik.
+  - `theme.css`: `.btn-icon` und `.btn-icon-sm`; neues Token `--success` (`bg-success`, `text-success`).
+  - `AppShell` hat `variant="fixed"` (`fixed inset-0`), statt `variant="viewport"` mit `!fixed !inset-0 !h-auto` wie in Plenivos `MainLayout`.
+  - `VeitBackButton` baut auf `VeitButton` (ghost) auf und hat optional `label` und `labelClassName`. Ohne `className` sieht er aus wie bisher.
+- `@veit/react-navigation`: `VeitBackButton` rendert den `VeitBackButton` aus `@veit/react-controls` mit den Shell-Tokens; Props und Optik bleiben. **Neue Peer-Dependency** `@veit/react-controls`: Hosts mit diesem Paket brauchen ein `pnpm install` (Lockfile).
+- `@veit/intl`: `formatRelativeTime(date, now, locale)` ("vor 5 Minuten", "gestern"; Einheit nach Abstand bis Jahre) und `formatDurationMs(ms, locale)` ("1 Min. 21 Sek.", "2 Std. 5 Min.", unter 1 s in ms). Als Methoden `relativeTime` und `durationMs` auch an `VeitIntlFormatting`.
+- `@veit/react-field-tags` re-exportiert die Typen und Helfer aus `@veit/field-tags` (`FieldTag`, `FieldDef`, `TagPickerOption`, `NestedFieldTagMutations`, `buildTagPickerOptions`, `buildTagChildrenMap`, `sortFields`, `tagsForField`, `toggleTagFilterId`, `expandFilterTagIds`, `entityMatchesTagFilter`, `setTableColumnTagFilter`, `tagIdFromTableColumnFilter`, `tagPickerOptionsById`, `saveNestedFieldTagTree`, `tagColor`, `tagColorHexForIndex` u. a.). `@veit/react-address` re-exportiert aus `@veit/address` `PostalAddress`, `PostalAddressWire`, `AddressSuggestion`, `EMPTY_POSTAL_ADDRESS`, `postalAddressFromWire`, `postalAddressToWire`, `formatAddressLines`, `parseNominatimAddressRow`, `searchAddressSuggestions`, `normalizeCountryCode`. Web-Apps importieren die Basispakete damit nicht mehr direkt.
+- `@veit/db`: `createPool` nimmt `max`, `idleTimeoutMillis`, `connectionTimeoutMillis` und unter `pool` weitere `pg`-Optionen; ohne Angabe gelten die `pg`-Defaults wie bisher. Neu: `checkDatabase(pool)` (`SELECT 1`, wirft bei Fehler).
+- `@veit/react-auth`:
+  - `veitFetchJson` übernimmt `init.headers` (gewinnen gegen den JSON-Content-Type) und `init.signal`.
+  - `VeitApiError` hat optional `detail` und `fields` aus Fehlerkörpern `{ code, detail, fields }`; der Konstruktor nimmt sie als viertes Argument. Bestehende Aufrufe und Unterklassen bleiben gültig.
+  - Mit `init.networkErrorAsApiError` wird ein Netzwerkfehler zu `VeitApiError` mit `status` 0 (`VEIT_NETWORK_ERROR_STATUS`) und Code `network` (Text in `veitAuthMessages`). Ohne die Option wirft `veitFetchJson` wie bisher den `TypeError` von `fetch`. `isVeitNetworkError(err)` erkennt beides.
+- `@veit/react-api-keys` `VeitApiKeysSection`:
+  - `resourceMode="single"`: genau eine Ressource pro Key über `VeitSelect`, kein Schalter „Alle“. Anlegen ist gesperrt, solange es keine Ressource gibt. Default bleibt `all-or-selection`.
+  - `fixedPermissions`: Die Rechte werden nicht angezeigt und immer so gesendet; `permissions` darf dann leer sein.
+  - `errorCodeText(code)`: Text des Hosts für einen Fehlercode, vor `errorText` (der Name `errorText` ist schon für die bestehende Funktion vergeben).
+  - `locale`: Ohne eigenes `formatTime` formatiert die Liste „Zuletzt benutzt“ mit `Intl.DateTimeFormat(locale)` statt `toLocaleString()` ohne Locale.
+  - Optionale Texte `resource`, `unassigned`, `loading`. Damit deckt die Section Sprachassistents `KeysPage` ab (ein Key pro Chatbot, festes Recht `device.talk`).
+- Neue Skripte in `scripts/`, mit Flags statt fester Pfade (Hosts ersetzen ihre Kopien später durch Aufrufe):
+  - `check-i18n-literals.mjs` (`--src`, `--skip-dir`, `--ignore-marker`, `--t-fn`, `--code-prop`, `--allow-literal`, `--allow-geojson`, `--hint`). Die GeoJSON-Ausnahme aus Hochwasserdienst ist jetzt `--allow-geojson`; `tf` aus Sprachassistent ist Standard.
+  - `check-i18n-hardcodes.mjs` (`--src`, `--locale-dir`, `--locale`, `--forbid`, `--key-re`, `--skip-keys`); nennt fehlende Schlüssel.
+  - `check-sheet-dismiss.mjs` (`--src`, `--component`, `--prop`).
+  - `only-pnpm.cjs` (`--pm`), `install-git-hooks.mjs` (`--source`, `--hook`).
+  - `check-audit.mjs` (`--allowlist`, `--fail-on`, `--prod`); startet `pnpm` auch unter Windows.
+
 ## API-Keys wieder anzeigen, Bearbeiten im Popup
 
 Stand 2026-11-02.

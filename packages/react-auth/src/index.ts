@@ -1,5 +1,6 @@
 export { createAuthProvider, useAuth, type AuthContextValue } from './AuthContext.js';
-export { ProtectedRoute } from './ProtectedRoute.js';
+export { ProtectedRoute, veitLoginPathWithNext } from './ProtectedRoute.js';
+export { resolvePostLoginPath, safeNextParam } from './postLoginPath.js';
 export { useRedirectIfAuthenticated } from './useRedirectIfAuthenticated.js';
 export { LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm, PasswordLoginForm } from './forms.js';
 export type { PasswordLoginFormProps } from './forms.js';

@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { VeitButton } from '@veit/react-controls';
 
 export type VeitRoundIconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'type'> & {
   children: ReactNode;
@@ -6,27 +7,14 @@ export type VeitRoundIconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonEleme
   type?: 'button';
 };
 
-const variantClass: Record<NonNullable<VeitRoundIconButtonProps['variant']>, string> = {
-  secondary: 'btn-secondary',
-  primary: 'btn-primary',
-};
-
 /**
  * Quadratischer Icon-Button (z.B. User+, QR) — gleiche Optik wie bei Berechtigungsgruppen.
+ * `VeitButton` mit `size="icon"`; für neue Stellen `VeitIconButton` aus `@veit/react-controls` (mit `label`).
  */
-export function VeitRoundIconButton({
-  children,
-  variant = 'secondary',
-  type = 'button',
-  ...rest
-}: VeitRoundIconButtonProps) {
+export function VeitRoundIconButton({ children, variant = 'secondary', type = 'button', ...rest }: VeitRoundIconButtonProps) {
   return (
-    <button
-      type={type}
-      className={`${variantClass[variant]} inline-flex size-11 shrink-0 items-center justify-center rounded-xl p-0`}
-      {...rest}
-    >
+    <VeitButton variant={variant} size="icon" type={type} {...rest}>
       {children}
-    </button>
+    </VeitButton>
   );
 }

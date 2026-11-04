@@ -7,11 +7,11 @@ Fertige Module für Node- und React-Projekte: Konten mit MFA, API-Keys, Dialoge,
 | Paket | Inhalt |
 |-------|--------|
 | `@veit/react-dialog` | Popups mit Verlauf und Barrierefreiheit: Bearbeiten mit Entwurf (`VeitOverlayEditDialog`, `useDialogFormBaseline`), Bestätigen/Eingabe, Such- und Auswahl-Picker, Sprachauswahl, Wizard, Sheet, Nachfrage bei ungespeicherten Änderungen |
-| `@veit/react-controls` | Controls und Layout: Button (mit Größen), Icon-Button, Hinweisbox (`VeitAlert`), Toasts (`VeitToastProvider`, `useVeitToast`), Seitencontainer (`VeitPage`), Input, Select, Combobox, Switch, Range, Tabs, Listen (`VeitListItem`), Datentabelle, Status-Badge, Leerzustand, Seitenkopf, Panels, Passwort- und Geheimnis-Feld, Löschen-Buttons, Personenzeilen, Handschrift-Eingabe, `AppShell`, App-Header/-Footer, ScrollArea, `useVeitMediaQuery`; Theme in `theme.css` |
-| `@veit/react-auth` | Anmelden, Registrieren, Passwort vergessen/zurücksetzen, E-Mail-Bestätigung; `createAuthProvider`, `useAuth`, `ProtectedRoute`, `createRestAuthClient`, `veitFetchJson`/`VeitApiError` (mit `detail`, `fields`, Status 0 bei Netzwerkfehler); Texte de/en (`veitAuthT`) |
-| `@veit/react-account` | Kontoseite `VeitAccountSettings`: Profil, E-Mail, Passwort, MFA (TOTP und E-Mail-Code), Sitzungen, Konto löschen; einzelne Abschnitte, `createRestAccountClient` |
-| `@veit/react-app-settings` | Admin-Einstellungen: Gruppen mit Zusammenfassung und Bearbeiten im Popup (`VeitSettingsGroups`, Felder Text, Zahl, Schalter, Auswahl, Geheimnis mit Anzeigen), SMTP-Abschnitt mit Test-Mail (`VeitSmtpSettingsSection`), REST-Client |
-| `@veit/react-api-keys` | `VeitApiKeysSection`: Keys mit Berechtigungen und Geltungsbereich anlegen, anzeigen, bearbeiten, sperren; auch ein Key pro Ressource und feste Rechte |
+| `@veit/react-controls` | Controls und Layout: Button (mit Größen), Icon-Button, Hinweisbox (`VeitAlert`), Toasts (`VeitToastProvider`, `useVeitToast`), Seitencontainer (`VeitPage`), Input, Select, Combobox, Switch, Range, Tabs, Listen (`VeitListItem`), Datentabelle, Status-Badge, Farbfeld (`VeitColorInput`), Leerzustand, Seitenkopf, Panels, Passwort- und Geheimnis-Feld, Löschen-Buttons, Personenzeilen, Handschrift-Eingabe, `AppShell`, App-Header/-Footer, ScrollArea, `useVeitMediaQuery`; Theme in `theme.css` |
+| `@veit/react-auth` | Anmelden, Registrieren, Passwort vergessen/zurücksetzen, E-Mail-Bestätigung; `createAuthProvider`, `useAuth`, `ProtectedRoute`, `createRestAuthClient`, `veitFetchJson`/`VeitApiError` (mit `detail`, `fields`, `fieldErrors`, Status 0 bei Netzwerkfehler); Passwort-Gründe aus `@veit/password-policy/types`; Texte de/en (`veitAuthT`) |
+| `@veit/react-account` | Kontoseite `VeitAccountSettings`: Profil, E-Mail, Passwort, MFA (TOTP und E-Mail-Code), Sitzungen und Geräte (Icon, Badges, Nachfrage, eingebettet), Konto löschen; einzelne Abschnitte, `createRestAccountClient`, User-Agent-Parser |
+| `@veit/react-app-settings` | Admin-Einstellungen: Gruppen mit Zusammenfassung und Bearbeiten im Popup (`VeitSettingsGroups`, Felder Text, Zahl, Schalter, Auswahl, Geheimnis mit Anzeigen und Löschen, Fehler am Feld), SMTP-Abschnitt mit Test-Mail und Plenivo-Preset (`VeitSmtpSettingsSection`), REST-Client |
+| `@veit/react-api-keys` | `VeitApiKeysSection`: Keys mit Berechtigungen und Geltungsbereich anlegen, anzeigen, bearbeiten, sperren; auch ein Key pro Ressource und feste Rechte; Hinweis auf zu ersetzende Keys (`needs_rotation`) |
 | `@veit/react-auth-group` | Personengruppen: Modus, Mitglieder, Personen-Picker |
 | `@veit/react-field-tags` | Tag-Editor, -Picker und Filterleiste; Typen und Helfer aus `@veit/field-tags` |
 | `@veit/react-upload` | Bild-Auswahl und Upload |
@@ -25,10 +25,10 @@ Fertige Module für Node- und React-Projekte: Konten mit MFA, API-Keys, Dialoge,
 | `@veit/api-keys` | API-Keys pro Benutzer oder Organisation: Berechtigungen, alle Ressourcen oder Auswahl, optional verschlüsselt wieder anzeigbar; Postgres mit eigener Tabelle (`/pg`), Express (`/express`), einmalige Migration (`/migrate`) |
 | `@veit/secret-box` | Das eine Format für Geheimnisse in der Datenbank (`enc1:`, AES-256-GCM); alte Formate nur für einmalige Migrationen (`/migrate`, `reencryptRows`) |
 | `@veit/app-settings` | Einstellungen in einer Schlüssel/Wert-Tabelle: Geheimnisse verschlüsselt, maskiert gelistet, für Admins anzeigbar, generierte interne Schlüssel; Express (`/express`), SMTP-Einstellungen daraus (`/smtp`) |
-| `@veit/password-policy` | Passwortstärke (zxcvbn und Have I Been Pwned), Vorschläge für Passphrasen |
+| `@veit/password-policy` | Passwortstärke (zxcvbn und Have I Been Pwned), Vorschläge für Passphrasen; Typen ohne Node unter `/types` |
 | `@veit/node-server` | Fastify-Grundgerüst: `createApp`, Health-Routen, `listen`, `HttpError`, öffentliche Origin |
 | `@veit/db` | Postgres-Pool (mit Pool-Optionen) und Drizzle, `checkDatabase` |
-| `@veit/intl` | Datum, relative Zeit, Dauer, Zahlen, Geld, Maßeinheiten und Sprachnamen formatieren |
+| `@veit/intl` | Datum, relative Zeit, Dauer, Zahlen, Geld, Maßeinheiten und Sprachnamen formatieren; Browser und System aus dem User-Agent (`describeUserAgent`) |
 | `@veit/map` | MapLibre ohne React: Hintergründe, Flurkarten der Länder, Sonnenstand, Gelände, Höhenprofil, 3D-Welt (`/world3d`) |
 | `@veit/address` | Adress-Typen, Formatierung, Nominatim-Suche |
 | `@veit/field-tags` | Tag-Baum ohne UI |

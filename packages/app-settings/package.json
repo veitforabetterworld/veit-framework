@@ -1,0 +1,46 @@
+{
+  "name": "@veit/app-settings",
+  "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Admin settings in a key/value table: secrets encrypted with @veit/secret-box, masked lists, reveal, generated internal secrets, SMTP mapping.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./express": {
+      "types": "./dist/express.d.ts",
+      "import": "./dist/express.js"
+    },
+    "./smtp": {
+      "types": "./dist/smtp.d.ts",
+      "import": "./dist/smtp.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test src/*.test.ts"
+  },
+  "dependencies": {
+    "@veit/secret-box": "workspace:*"
+  },
+  "peerDependencies": {
+    "express": ">=4.21"
+  },
+  "peerDependenciesMeta": {
+    "express": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "@veit/auth-server": "workspace:*",
+    "express": "^4.21.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

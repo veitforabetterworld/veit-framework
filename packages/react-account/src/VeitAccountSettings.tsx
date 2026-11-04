@@ -8,8 +8,8 @@ import {
   VeitAccountPasswordSection,
   VeitAccountProfileFields,
   VeitAccountSection,
-  VeitAccountSessionsSection,
 } from './sections.js';
+import { VeitAccountSessionsSection } from './sessions.js';
 import type { VeitAccountTexts } from './texts.js';
 import type { AccountClient, AccountMfaStatus, AccountSession } from './types.js';
 

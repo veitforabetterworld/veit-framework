@@ -11,8 +11,13 @@
       "default": "./src/index.ts"
     }
   },
+  "dependencies": {
+    "@veit/intl": "workspace:*"
+  },
   "peerDependencies": {
     "@veit/react-controls": "workspace:*",
+    "@veit/react-dialog": "workspace:*",
+    "lucide-react": ">=0.400.0",
     "qrcode.react": ">=3.0.0",
     "react": ">=18"
   },
@@ -26,6 +31,8 @@
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "@veit/react-controls": "workspace:*",
+    "@veit/react-dialog": "workspace:*",
+    "lucide-react": "^0.454.0",
     "typescript": "^5.7.2"
   },
   "scripts": {

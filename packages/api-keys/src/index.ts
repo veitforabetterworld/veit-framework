@@ -1,12 +1,15 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
+import { createSecretBox, type SecretBox } from '@veit/secret-box';
 
 /**
- * Per-user API keys. A key carries permissions the host defines (e.g. 'stations.write') and applies either to all
- * resources of its user, including future ones, or to a whitelist of resource ids. Resource ids must be stable
- * (not a renamable slug). A hash of the key authenticates it. With a `secret` the key is also stored encrypted, so
- * its owner can show it again; without one it is shown only once.
+ * API keys of an owner: a user, or e.g. an organization (the "user id" is then the organization id). A key carries
+ * permissions the host defines (e.g. 'stations.write') and applies either to all resources of its owner, including
+ * future ones, or to a whitelist of resource ids. Resource ids must be stable (not a renamable slug). A hash of the key
+ * authenticates it: sha256(`${pepper}:${key}`). With a `secret` the key is also stored encrypted in the format of
+ * '@veit/secret-box', so its owner can show it again; without one it is shown only once.
  */
 
+/** The owner of a key: a user id, or any other owner id such as an organization id. */
 export type UserId = string | number;
 
 export type ApiKeyRecord = {
@@ -23,6 +26,8 @@ export type ApiKeyRecord = {
   revokedAt: Date | null;
   /** Stored encrypted, so reveal() can show it again. */
   revealable: boolean;
+  /** Still hashed with a host's former scheme (see `legacyHash`); the owner should replace the key. */
+  legacyHash?: boolean;
 };
 
 export type ApiKeyInput = {
@@ -32,8 +37,19 @@ export type ApiKeyInput = {
   resources: string[];
 };
 
+export type ApiKeyInsert = ApiKeyInput & {
+  userId: UserId;
+  keyHash: string;
+  prefix: string;
+  keyEnc: string | null;
+  /** Who created the key when the owner is not that user (a member of an organization); see create(). */
+  createdBy?: UserId;
+};
+
+/** Storage of the keys. createPgApiKeyStore from '@veit/api-keys/pg' implements it; a host may implement it itself
+ * (e.g. with Drizzle). */
 export interface ApiKeyStore {
-  insert(input: ApiKeyInput & { userId: UserId; keyHash: string; prefix: string; keyEnc: string | null }): Promise<ApiKeyRecord>;
+  insert(input: ApiKeyInsert): Promise<ApiKeyRecord>;
   list(userId: UserId): Promise<ApiKeyRecord[]>;
   /** A key of this user, revoked or not. */
   find(userId: UserId, id: string): Promise<ApiKeyRecord | null>;
@@ -41,6 +57,10 @@ export interface ApiKeyStore {
   findKeyEnc?(userId: UserId, id: string): Promise<string | null>;
   /** An active key by its hash. */
   findByHash(keyHash: string): Promise<ApiKeyRecord | null>;
+  /** Transition only (option `legacyHash`): an active key still marked with the former hash scheme. */
+  findByLegacyHash?(legacyHash: string): Promise<ApiKeyRecord | null>;
+  /** Transition only: stores the current hash of a marked key and clears the mark. */
+  upgradeHash?(id: string, keyHash: string): Promise<void>;
   update(userId: UserId, id: string, patch: Partial<ApiKeyInput>): Promise<ApiKeyRecord | null>;
   revoke(userId: UserId, id: string): Promise<boolean>;
   touch(id: string): Promise<void>;
@@ -69,21 +89,8 @@ export function generateApiKey(prefix: string): string {
   return `${prefix}_${randomBytes(32).toString('base64url')}`;
 }
 
-/** AES-256-GCM with a key derived from `secret`: `iv.tag.ciphertext` in base64url. */
-export function encryptApiKey(key: string, secret: string): string {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', createHash('sha256').update(secret, 'utf8').digest(), iv);
-  const data = Buffer.concat([cipher.update(key, 'utf8'), cipher.final()]);
-  return [iv, cipher.getAuthTag(), data].map((b) => b.toString('base64url')).join('.');
-}
-
-export function decryptApiKey(value: string, secret: string): string {
-  const [iv, tag, data] = value.split('.').map((part) => Buffer.from(part, 'base64url'));
-  if (!iv || !tag || !data) throw new ApiKeyError('api_keys.not_revealable', 404);
-  const decipher = createDecipheriv('aes-256-gcm', createHash('sha256').update(secret, 'utf8').digest(), iv);
-  decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
-}
+/** Context of the secret box that stores keys for reveal (key_enc). */
+export const API_KEYS_SECRET_CONTEXT = 'veit-api-keys';
 
 /** Whether a key may do `permission` on `resource` (omit resource for actions not tied to one, like creating). */
 export function apiKeyAllows(key: ApiKeyRecord, permission: string, resource?: string): boolean {
@@ -100,9 +107,19 @@ export type ApiKeyServiceOptions = {
   prefix: string;
   /** Secret mixed into the hash; read on every call. */
   pepper?: () => string;
-  /** Encrypts new keys so their owner can show them again (reveal); read on every call. Without it, or when it
-   * returns '', a key is shown only once. Changing it makes the stored keys unrevealable, not invalid. */
+  /** Key material for encrypting new keys, so their owner can show them again (reveal); read on every call. Without
+   * it, or when it returns '', a key is shown only once. Changing it makes the stored keys unrevealable, not invalid.
+   * key_enc has the format of '@veit/secret-box' (`enc1:`, context `secretContext`). */
   secret?: () => string;
+  /** Context of the secret box; default API_KEYS_SECRET_CONTEXT ('veit-api-keys'). */
+  secretContext?: string;
+  /**
+   * Transition after a host moved existing keys onto this service: the hash of its former scheme, e.g.
+   * legacySha256Hash from '@veit/api-keys/migrate'. A key the store marks as legacy (findByLegacyHash) is accepted
+   * and re-hashed to the current scheme on its first use (upgradeHash). Remove the option when the transition ends;
+   * keys still marked then stop working and are listed with `needs_rotation`.
+   */
+  legacyHash?: (raw: string) => string;
   /** Rejects resource ids the user does not own; returns the ones that are not allowed. */
   foreignResources?: (userId: UserId, resources: string[]) => Promise<string[]>;
   maxKeysPerUser?: number;
@@ -112,8 +129,11 @@ const TOUCH_INTERVAL_MS = 60_000;
 
 export class ApiKeyService {
   private readonly lastTouch = new Map<string, number>();
+  private readonly box: SecretBox;
 
-  constructor(private readonly o: ApiKeyServiceOptions) {}
+  constructor(private readonly o: ApiKeyServiceOptions) {
+    this.box = createSecretBox({ key: () => o.secret?.() ?? '', context: o.secretContext ?? API_KEYS_SECRET_CONTEXT });
+  }
 
   get permissions(): readonly string[] {
     return this.o.permissions;
@@ -140,8 +160,13 @@ export class ApiKeyService {
     }
   }
 
-  /** The new key in plain text, shown once, and its record. */
-  async create(userId: UserId, input: ApiKeyInput): Promise<{ key: string; record: ApiKeyRecord }> {
+  /** The new key in plain text, shown once, and its record. `createdBy` goes to the store (an organization's key
+   * created by one of its members). */
+  async create(
+    userId: UserId,
+    input: ApiKeyInput,
+    meta: { createdBy?: UserId } = {},
+  ): Promise<{ key: string; record: ApiKeyRecord }> {
     const normalized = { ...input, label: input.label.trim(), resources: input.allResources ? [] : [...new Set(input.resources)] };
     await this.check(userId, normalized);
     const max = this.o.maxKeysPerUser ?? 50;
@@ -149,13 +174,13 @@ export class ApiKeyService {
       throw new ApiKeyError('api_keys.too_many_keys', 400);
     }
     const key = generateApiKey(this.o.prefix);
-    const secret = this.o.secret?.() ?? '';
     const record = await this.o.store.insert({
       ...normalized,
       userId,
       keyHash: hashApiKey(key, this.pepper()),
       prefix: key.slice(0, this.o.prefix.length + 7),
-      keyEnc: secret && this.o.store.findKeyEnc ? encryptApiKey(key, secret) : null,
+      keyEnc: this.box.enabled() && this.o.store.findKeyEnc ? this.box.encrypt(key) : null,
+      ...(meta.createdBy !== undefined ? { createdBy: meta.createdBy } : {}),
     });
     return { key, record };
   }
@@ -179,11 +204,10 @@ export class ApiKeyService {
 
   /** The plain key of an active, revealable key of this user. */
   async reveal(userId: UserId, id: string): Promise<string> {
-    const secret = this.o.secret?.() ?? '';
-    const stored = secret ? await this.o.store.findKeyEnc?.(userId, id) : null;
+    const stored = this.box.enabled() ? await this.o.store.findKeyEnc?.(userId, id) : null;
     if (!stored) throw new ApiKeyError('api_keys.not_revealable', 404);
     try {
-      return decryptApiKey(stored, secret);
+      return this.box.decrypt(stored);
     } catch {
       throw new ApiKeyError('api_keys.not_revealable', 404);
     }
@@ -196,7 +220,15 @@ export class ApiKeyService {
   /** The active key behind a raw key, or null. Updates last_used_at at most once a minute. */
   async authenticate(raw: string | undefined | null): Promise<ApiKeyRecord | null> {
     if (!raw || !raw.startsWith(`${this.o.prefix}_`)) return null;
-    const record = await this.o.store.findByHash(hashApiKey(raw, this.pepper()));
+    const keyHash = hashApiKey(raw, this.pepper());
+    let record = await this.o.store.findByHash(keyHash);
+    if (!record && this.o.legacyHash && this.o.store.findByLegacyHash && this.o.store.upgradeHash) {
+      const legacy = await this.o.store.findByLegacyHash(this.o.legacyHash(raw));
+      if (legacy) {
+        await this.o.store.upgradeHash(legacy.id, keyHash);
+        record = { ...legacy, legacyHash: false };
+      }
+    }
     if (!record) return null;
     const now = Date.now();
     if ((this.lastTouch.get(record.id) ?? 0) < now - TOUCH_INTERVAL_MS) {
@@ -230,5 +262,7 @@ export function apiKeyJson(record: ApiKeyRecord) {
     last_used_at: record.lastUsedAt?.toISOString() ?? null,
     revoked_at: record.revokedAt?.toISOString() ?? null,
     revealable: record.revealable && !record.revokedAt,
+    /** Still hashed with the host's former scheme; the owner should replace it. */
+    needs_rotation: Boolean(record.legacyHash) && !record.revokedAt,
   };
 }

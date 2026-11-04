@@ -19,12 +19,19 @@
     "./pg": {
       "types": "./dist/pg.d.ts",
       "import": "./dist/pg.js"
+    },
+    "./migrate": {
+      "types": "./dist/migrate.d.ts",
+      "import": "./dist/migrate.js"
     }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --import tsx --test src/*.test.ts"
+  },
+  "dependencies": {
+    "@veit/secret-box": "workspace:*"
   },
   "peerDependencies": {
     "express": ">=4.21",

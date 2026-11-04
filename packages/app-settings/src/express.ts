@@ -8,38 +8,47 @@ export type AppSettingsRouterOptions = {
   /** Runs before every route, e.g. a middleware that only lets admins through. */
   guard: RequestHandler;
   /**
-   * Checks a save before anything is stored: `values` are the submitted keys (secrets '' = keep), `current` the stored
-   * values of all keys (secrets decrypted). Return an error code (sent as 400 with `key`) or null.
+   * Checks a save before anything is stored: `values` are the submitted keys (secrets '' = keep, null = delete), `current`
+   * the stored values of all keys (secrets decrypted). Return an error code (sent as 400 with `fields: { [key]: code }`)
+   * or null. A method, so hosts may keep a callback typed with `Record<string, string>`.
    */
-  validate?: (
-    values: Record<string, string>,
+  validate?(
+    values: Record<string, string | null>,
     current: Record<string, string | null>,
-  ) => Promise<{ code: string; key?: string } | null> | { code: string; key?: string } | null;
+  ): Promise<{ code: string; key?: string } | null> | { code: string; key?: string } | null;
   /** After a save, e.g. to drop a cached SMTP transport. */
   onSaved?: (keys: string[]) => void | Promise<void>;
 };
 
 function fail(res: Response, error: unknown): void {
   if (error instanceof AppSettingsError) {
-    res.status(error.status).json({ error: error.code, code: error.code, key: error.key });
+    // `fields` is what veitFetchJson of '@veit/react-auth' reads (VeitApiError.fieldErrors); `key` stays for older clients.
+    const body: Record<string, unknown> = { error: error.code, code: error.code };
+    if (error.key !== undefined) {
+      body.key = error.key;
+      body.fields = { [error.key]: error.code };
+    }
+    res.status(error.status).json(body);
     return;
   }
   console.error('[app-settings]', error);
   res.status(500).json({ error: 'internal', code: 'internal' });
 }
 
-/** Strings as they are; booleans as '1'/'0'; numbers as text. Anything else is refused. */
-function wireValue(value: unknown): string | null {
+/** Strings as they are; booleans as '1'/'0'; numbers as text; null clears. Anything else is refused (undefined). */
+function wireValue(value: unknown): string | null | undefined {
+  if (value === null) return null;
   if (typeof value === 'string') return value;
   if (typeof value === 'boolean') return value ? '1' : '0';
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  return null;
+  return undefined;
 }
 
 /**
  * Routes for the admin area, mounted by the host (e.g. under /admin/settings):
  * - GET  /             { settings: { key: value | { stored } } }
- * - PUT  /             body { key: value }; secrets: '' keeps the stored one. Answers like GET.
+ * - PUT  /             body { key: value }; secrets: '' keeps the stored one, null deletes it; null clears other keys
+ *                      too (sent as ''). Answers like GET. Errors: 400 { code, key, fields: { [key]: code } }.
  * - GET  /:key/secret  { value } of a secret, not cached.
  */
 export function createAppSettingsRouter(options: AppSettingsRouterOptions): Router {
@@ -58,12 +67,13 @@ export function createAppSettingsRouter(options: AppSettingsRouterOptions): Rout
     (async () => {
       const body: unknown = req.body;
       if (typeof body !== 'object' || body === null || Array.isArray(body)) throw new AppSettingsError('settings.body_invalid', 400);
-      const values: Record<string, string> = {};
+      const values: Record<string, string | null> = {};
       for (const [key, raw] of Object.entries(body as Record<string, unknown>)) {
         if (!keys.has(key)) throw new AppSettingsError('settings.unknown_key', 400, key);
         const value = wireValue(raw);
-        if (value === null) throw new AppSettingsError('settings.value_invalid', 400, key);
-        values[key] = settings.isSecret(key) ? value : value.trim();
+        if (value === undefined) throw new AppSettingsError('settings.value_invalid', 400, key);
+        // null reaches validate and set only for secrets (delete); a plain key is cleared with ''.
+        values[key] = settings.isSecret(key) ? value : (value ?? '').trim();
       }
       if (options.validate) {
         const problem = await options.validate(values, await settings.getMany([...keys]));

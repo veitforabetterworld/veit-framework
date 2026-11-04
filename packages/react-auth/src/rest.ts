@@ -9,6 +9,8 @@ export type VeitApiErrorExtra = {
   detail?: string;
   /** Names of the invalid fields of a validation error. */
   fields?: string[];
+  /** Error code per invalid field, from a body `fields: { name: code }` (e.g. '@veit/app-settings/express'). */
+  fieldErrors?: Record<string, string>;
   cause?: unknown;
 };
 
@@ -22,6 +24,7 @@ export class VeitApiError extends Error {
   readonly reasons: string[];
   readonly detail?: string;
   readonly fields?: string[];
+  readonly fieldErrors?: Record<string, string>;
 
   constructor(status: number, code: string, reasons: string[] = [], extra: VeitApiErrorExtra = {}) {
     super(code);
@@ -31,6 +34,7 @@ export class VeitApiError extends Error {
     this.reasons = reasons;
     if (extra.detail !== undefined) this.detail = extra.detail;
     if (extra.fields !== undefined) this.fields = extra.fields;
+    if (extra.fieldErrors !== undefined) this.fieldErrors = extra.fieldErrors;
     // Set by hand: `new Error(msg, { cause })` needs lib ES2022, and hosts compile this source with their own lib.
     if (extra.cause !== undefined) Object.defineProperty(this, 'cause', { value: extra.cause, configurable: true, writable: true });
   }
@@ -42,12 +46,15 @@ export function isVeitNetworkError(error: unknown): boolean {
   return error instanceof TypeError;
 }
 
-export type VeitFetchJsonInit = {
+/**
+ * Options of veitFetchJson. Everything of RequestInit except `body` is passed to fetch (cache, signal, keepalive,
+ * mode, priority …); `body` is JSON-encoded. `credentials` defaults to 'include'.
+ */
+export type VeitFetchJsonInit = Omit<RequestInit, 'body' | 'headers' | 'method'> & {
   method?: string;
   body?: unknown;
   /** Extra headers (e.g. a CSRF token or a tenant id); they win over the JSON content type. */
   headers?: HeadersInit;
-  signal?: AbortSignal;
   /**
    * When fetch itself fails, throw VeitApiError(0, 'network') instead of fetch's TypeError.
    * Off by default, because existing hosts check for TypeError.
@@ -62,19 +69,30 @@ function mergeHeaders(json: boolean, extra: HeadersInit | undefined): Headers | 
   return headers;
 }
 
+/** A body `fields` as a list of names or as `{ name: code }`. */
+function parseFields(raw: unknown): Pick<VeitApiErrorExtra, 'fields' | 'fieldErrors'> {
+  if (Array.isArray(raw)) return { fields: raw.map(String) };
+  if (typeof raw === 'object' && raw !== null) {
+    const fieldErrors = Object.fromEntries(Object.entries(raw as Record<string, unknown>).map(([k, v]) => [k, String(v)]));
+    return { fields: Object.keys(fieldErrors), fieldErrors };
+  }
+  return {};
+}
+
 /** JSON request with the session cookie; throws VeitApiError on a non-2xx answer. */
 export async function veitFetchJson<T>(url: string, init?: VeitFetchJsonInit): Promise<T> {
+  const { method, body: payload, headers, networkErrorAsApiError, ...requestInit } = init ?? {};
   let res: Response;
   try {
     res = await fetch(url, {
-      method: init?.method ?? 'GET',
       credentials: 'include',
-      headers: mergeHeaders(init?.body !== undefined, init?.headers),
-      body: init?.body === undefined ? undefined : JSON.stringify(init.body),
-      signal: init?.signal,
+      ...requestInit,
+      method: method ?? 'GET',
+      headers: mergeHeaders(payload !== undefined, headers),
+      body: payload === undefined ? undefined : JSON.stringify(payload),
     });
   } catch (err) {
-    if (init?.networkErrorAsApiError && !(err instanceof DOMException && err.name === 'AbortError')) {
+    if (networkErrorAsApiError && !(err instanceof DOMException && err.name === 'AbortError')) {
       throw new VeitApiError(VEIT_NETWORK_ERROR_STATUS, 'network', [], { cause: err });
     }
     throw err;
@@ -92,7 +110,7 @@ export async function veitFetchJson<T>(url: string, init?: VeitFetchJsonInit): P
     const code = typeof body?.code === 'string' ? body.code : typeof body?.error === 'string' ? body.error : `http_${res.status}`;
     throw new VeitApiError(res.status, code, Array.isArray(body?.reasons) ? (body.reasons as string[]) : [], {
       detail: typeof body?.detail === 'string' ? body.detail : undefined,
-      fields: Array.isArray(body?.fields) ? body.fields.map(String) : undefined,
+      ...parseFields(body?.fields),
     });
   }
   return body as T;

@@ -51,7 +51,8 @@ export function LoginForm<User>({
   const [submitting, setSubmitting] = useState(false);
   const [verifiedMessage, setVerifiedMessage] = useState<'success' | 'invalid' | null>(null);
   const { login, completeMfaLogin } = useAuth<User>();
-  const blockGuestPage = useRedirectIfAuthenticated<User>();
+  // Already signed in: same target as after a login (state, ?next=, afterLoginPath).
+  const blockGuestPage = useRedirectIfAuthenticated<User>(afterLoginPath);
   const [mfaStep, setMfaStep] = useState(false);
   const [mfaToken, setMfaToken] = useState('');
   const [mfaMethods, setMfaMethods] = useState<string[]>([]);
@@ -218,7 +219,7 @@ export function RegisterForm<User>({
   renderFooter?: () => React.ReactNode;
 }) {
   const { register } = useAuth<User>();
-  const blockGuestPage = useRedirectIfAuthenticated<User>();
+  const blockGuestPage = useRedirectIfAuthenticated<User>(afterRegisterPath);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();

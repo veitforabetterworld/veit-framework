@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { VeitAccountSection } from '@veit/react-account';
 import {
   VEIT_SETTINGS_ACTIONS,
+  VeitAlert,
   VeitButton,
   VeitField,
   VeitInput,
@@ -33,6 +34,8 @@ export type VeitApiKey = {
   revoked_at: string | null;
   /** Stored encrypted on the server (`secret` of '@veit/api-keys'), so `reveal` can show it again. */
   revealable?: boolean;
+  /** Still hashed with the host's former scheme (`hash_scheme`, '@veit/api-keys'); the owner should replace it. */
+  needs_rotation?: boolean;
 };
 
 export type VeitApiKeyInput = {
@@ -112,6 +115,11 @@ export type VeitApiKeysTexts = {
   unassigned?: string;
   /** While the list loads; default "…". */
   loading?: string;
+  /** Badge of a key that needs replacing; default from the built-in texts (by `locale`). */
+  needsRotation?: string;
+  /** Box above the list when a key needs replacing. */
+  needsRotationTitle?: string;
+  needsRotationHint?: string;
 };
 
 export const veitApiKeysTexts: Record<'de' | 'en', VeitApiKeysTexts> = {
@@ -146,6 +154,10 @@ export const veitApiKeysTexts: Record<'de' | 'en', VeitApiKeysTexts> = {
     lastUsed: 'Zuletzt benutzt',
     never: 'nie',
     resourcesCount: (n) => `${n} ausgewählt`,
+    needsRotation: 'ersetzen',
+    needsRotationTitle: 'Keys ersetzen',
+    needsRotationHint:
+      'Markierte Keys stammen aus dem alten System und sind schwächer gesichert. Lege für jedes Gerät einen neuen Key an und sperre danach den alten.',
   },
   en: {
     title: 'API keys',
@@ -178,6 +190,10 @@ export const veitApiKeysTexts: Record<'de' | 'en', VeitApiKeysTexts> = {
     lastUsed: 'Last used',
     never: 'never',
     resourcesCount: (n) => `${n} selected`,
+    needsRotation: 'replace',
+    needsRotationTitle: 'Replace keys',
+    needsRotationHint:
+      'Marked keys come from the old system and are less well protected. Create a new key for each device, then revoke the old one.',
   },
 };
 
@@ -625,6 +641,13 @@ export function VeitApiKeysSection({
 
   useEffect(reload, [reload]);
 
+  // Hosts with their own texts get the new ones from the built-in dictionary of their locale.
+  const builtIn = veitApiKeysTexts[locale?.toLowerCase().startsWith('en') ? 'en' : 'de'];
+  const rotationBadge = texts.needsRotation ?? builtIn.needsRotation;
+  const rotationTitle = texts.needsRotationTitle ?? builtIn.needsRotationTitle;
+  const rotationHint = texts.needsRotationHint ?? builtIn.needsRotationHint;
+  const anyNeedsRotation = keys?.some((k) => k.needs_rotation && !k.revoked_at) ?? false;
+
   const permissionLabel = (id: string) => permissions.find((p) => p.id === id)?.label ?? id;
   const resourceLabel = (id: string) => resources.find((r) => r.id === id)?.label ?? id;
   const scopeText = (key: VeitApiKey) =>
@@ -643,6 +666,11 @@ export function VeitApiKeysSection({
       <div className="flex flex-col gap-4">
         {keys === null && !error && <p className="m-0 text-sm text-muted-foreground">{texts.loading ?? '…'}</p>}
         {keys?.length === 0 && <p className="m-0 text-sm text-muted-foreground">{texts.empty}</p>}
+        {anyNeedsRotation && (
+          <VeitAlert variant="warning" title={rotationTitle}>
+            {rotationHint}
+          </VeitAlert>
+        )}
         {keys && keys.length > 0 && (
           <VeitList className="flex flex-col gap-1">
             {keys.map((key) => (
@@ -655,7 +683,13 @@ export function VeitApiKeysSection({
                     <code className="text-xs font-normal text-muted-foreground">{key.prefix}…</code>
                   </>
                 }
-                badge={key.revoked_at ? <VeitStatusBadge variant="neutral">{texts.revoked}</VeitStatusBadge> : undefined}
+                badge={
+                  key.revoked_at ? (
+                    <VeitStatusBadge variant="neutral">{texts.revoked}</VeitStatusBadge>
+                  ) : key.needs_rotation ? (
+                    <VeitStatusBadge variant="warning">{rotationBadge}</VeitStatusBadge>
+                  ) : undefined
+                }
                 meta={
                   <>
                     {fixedPermissions ? null : `${key.permissions.map(permissionLabel).join(', ')} · `}

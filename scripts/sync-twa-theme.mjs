@@ -48,11 +48,13 @@ function writeUtf8(filePath, content) {
 }
 
 function applyOrCheck(filePath, source, next, label = filePath) {
+  // Git writes CRLF on Windows checkouts; only the content counts.
+  const changed = source.replace(/\r\n/g, '\n') !== next.replace(/\r\n/g, '\n');
   if (checkOnly) {
-    if (source !== next) throw new Error(`Drift: ${path.relative(repoRoot, label)} (pnpm sync:twa)`);
+    if (changed) throw new Error(`Drift: ${path.relative(repoRoot, label)} (pnpm sync:twa)`);
     return;
   }
-  if (source !== next) {
+  if (changed) {
     writeUtf8(filePath, next);
     console.log(`Synced ${path.relative(repoRoot, filePath)}`);
   }

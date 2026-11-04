@@ -62,6 +62,7 @@ export const veitAuthMessages = {
     'auth.mail_unavailable': 'Die E-Mail konnte nicht verschickt werden. Bitte später erneut versuchen.',
     'auth.verification_email_failed': 'Konto angelegt, aber der Bestätigungslink konnte nicht verschickt werden. Du kannst ihn im Konto erneut anfordern.',
     'auth.last_admin': 'Das letzte Adminkonto kann nicht gelöscht werden.',
+    network: 'Keine Verbindung zum Server. Bitte Internetverbindung prüfen.',
     internal: 'Ein Fehler ist aufgetreten. Bitte später erneut versuchen.',
   },
   en: {
@@ -123,6 +124,7 @@ export const veitAuthMessages = {
     'auth.mail_unavailable': 'The e-mail could not be sent. Please try again later.',
     'auth.verification_email_failed': 'Account created, but the confirmation link could not be sent. You can request it again in your account.',
     'auth.last_admin': 'The last admin account cannot be deleted.',
+    network: 'No connection to the server. Please check your internet connection.',
     internal: 'Something went wrong. Please try again later.',
   },
 } as const;

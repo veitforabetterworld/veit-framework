@@ -1,28 +1,84 @@
 import type { AuthClient, AuthLoginResult, AuthRegisterInput } from './types.js';
 
-/** A failed call to the account API; code is the i18n key the server sent ('auth.invalid_credentials'). */
+/** Status of a VeitApiError when no answer arrived at all (offline, DNS, CORS, aborted). */
+export const VEIT_NETWORK_ERROR_STATUS = 0;
+
+/** Optional parts of a JSON error body `{ code, detail?, fields? }`. */
+export type VeitApiErrorExtra = {
+  /** Technical detail the server sent, for a "Details" line; never the main message. */
+  detail?: string;
+  /** Names of the invalid fields of a validation error. */
+  fields?: string[];
+  cause?: unknown;
+};
+
+/**
+ * A failed call to the account API; code is the i18n key the server sent ('auth.invalid_credentials').
+ * status is the HTTP status, or VEIT_NETWORK_ERROR_STATUS (0) when the server could not be reached.
+ */
 export class VeitApiError extends Error {
   readonly status: number;
   readonly code: string;
   readonly reasons: string[];
+  readonly detail?: string;
+  readonly fields?: string[];
 
-  constructor(status: number, code: string, reasons: string[] = []) {
+  constructor(status: number, code: string, reasons: string[] = [], extra: VeitApiErrorExtra = {}) {
     super(code);
     this.name = 'VeitApiError';
     this.status = status;
     this.code = code;
     this.reasons = reasons;
+    if (extra.detail !== undefined) this.detail = extra.detail;
+    if (extra.fields !== undefined) this.fields = extra.fields;
+    // Set by hand: `new Error(msg, { cause })` needs lib ES2022, and hosts compile this source with their own lib.
+    if (extra.cause !== undefined) Object.defineProperty(this, 'cause', { value: extra.cause, configurable: true, writable: true });
   }
 }
 
+/** True for a request that got no answer: fetch's TypeError, or a VeitApiError with status 0. */
+export function isVeitNetworkError(error: unknown): boolean {
+  if (error instanceof VeitApiError) return error.status === VEIT_NETWORK_ERROR_STATUS;
+  return error instanceof TypeError;
+}
+
+export type VeitFetchJsonInit = {
+  method?: string;
+  body?: unknown;
+  /** Extra headers (e.g. a CSRF token or a tenant id); they win over the JSON content type. */
+  headers?: HeadersInit;
+  signal?: AbortSignal;
+  /**
+   * When fetch itself fails, throw VeitApiError(0, 'network') instead of fetch's TypeError.
+   * Off by default, because existing hosts check for TypeError.
+   */
+  networkErrorAsApiError?: boolean;
+};
+
+function mergeHeaders(json: boolean, extra: HeadersInit | undefined): Headers | undefined {
+  if (!json && extra === undefined) return undefined;
+  const headers = new Headers(json ? { 'Content-Type': 'application/json' } : undefined);
+  new Headers(extra).forEach((value, key) => headers.set(key, value));
+  return headers;
+}
+
 /** JSON request with the session cookie; throws VeitApiError on a non-2xx answer. */
-export async function veitFetchJson<T>(url: string, init?: { method?: string; body?: unknown }): Promise<T> {
-  const res = await fetch(url, {
-    method: init?.method ?? 'GET',
-    credentials: 'include',
-    headers: init?.body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: init?.body === undefined ? undefined : JSON.stringify(init.body),
-  });
+export async function veitFetchJson<T>(url: string, init?: VeitFetchJsonInit): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: init?.method ?? 'GET',
+      credentials: 'include',
+      headers: mergeHeaders(init?.body !== undefined, init?.headers),
+      body: init?.body === undefined ? undefined : JSON.stringify(init.body),
+      signal: init?.signal,
+    });
+  } catch (err) {
+    if (init?.networkErrorAsApiError && !(err instanceof DOMException && err.name === 'AbortError')) {
+      throw new VeitApiError(VEIT_NETWORK_ERROR_STATUS, 'network', [], { cause: err });
+    }
+    throw err;
+  }
   const text = await res.text();
   let body: Record<string, unknown> | null = null;
   if (text) {
@@ -34,7 +90,10 @@ export async function veitFetchJson<T>(url: string, init?: { method?: string; bo
   }
   if (!res.ok) {
     const code = typeof body?.code === 'string' ? body.code : typeof body?.error === 'string' ? body.error : `http_${res.status}`;
-    throw new VeitApiError(res.status, code, Array.isArray(body?.reasons) ? (body.reasons as string[]) : []);
+    throw new VeitApiError(res.status, code, Array.isArray(body?.reasons) ? (body.reasons as string[]) : [], {
+      detail: typeof body?.detail === 'string' ? body.detail : undefined,
+      fields: Array.isArray(body?.fields) ? body.fields.map(String) : undefined,
+    });
   }
   return body as T;
 }

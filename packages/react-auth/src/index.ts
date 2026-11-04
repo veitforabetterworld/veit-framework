@@ -5,5 +5,15 @@ export { LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm, Passwor
 export type { PasswordLoginFormProps } from './forms.js';
 export type { AuthClient, AuthLoginResult, AuthRegisterInput, AuthMfaMethod } from './types.js';
 export { VerifyEmailView } from './VerifyEmailView.js';
-export { createRestAuthClient, veitFetchJson, VeitApiError, type VeitRestAuthClient, type VeitWireUser } from './rest.js';
+export {
+  createRestAuthClient,
+  isVeitNetworkError,
+  veitFetchJson,
+  VeitApiError,
+  VEIT_NETWORK_ERROR_STATUS,
+  type VeitApiErrorExtra,
+  type VeitFetchJsonInit,
+  type VeitRestAuthClient,
+  type VeitWireUser,
+} from './rest.js';
 export { veitAuthMessages, veitAuthT, veitAuthErrorText, type VeitAuthLocale } from './messages.js';

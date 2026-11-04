@@ -154,7 +154,18 @@ describe('express router', () => {
       assert.deepEqual((await call('/smtp_password/secret')).body, { value: 'pw' });
       assert.equal((await call('/smtp_host/secret')).status, 404);
       assert.equal((await call('', 'PUT', { other: 'x' })).body.code, 'settings.unknown_key');
-      assert.equal((await call('', 'PUT', { smtp_host: 'bad' })).body.code, 'settings.host_invalid');
+      const invalid = await call('', 'PUT', { smtp_host: 'bad' });
+      assert.equal(invalid.status, 400);
+      assert.deepEqual(invalid.body, {
+        error: 'settings.host_invalid',
+        code: 'settings.host_invalid',
+        key: 'smtp_host',
+        fields: { smtp_host: 'settings.host_invalid' },
+      });
+      assert.deepEqual((await call('', 'PUT', { smtp_secure: [] })).body.fields, { smtp_secure: 'settings.value_invalid' });
+      // null deletes a secret and clears a plain value.
+      const cleared = await call('', 'PUT', { smtp_password: null, smtp_secure: null });
+      assert.deepEqual(cleared.body, { settings: { smtp_host: 'mail', smtp_secure: '', smtp_password: { stored: false } } });
       admin = false;
       assert.equal((await call('/smtp_password/secret')).status, 403);
     } finally {

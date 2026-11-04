@@ -4,8 +4,8 @@ type FetchJson = <T>(url: string, init?: { method?: string; body?: unknown }) =>
 
 export type VeitAppSettingsClient = {
   list: () => Promise<VeitSettingsValues>;
-  /** Secrets: '' keeps the stored one. Answers with the new list. */
-  save: (values: Record<string, string>) => Promise<VeitSettingsValues>;
+  /** Secrets: '' keeps the stored one, null deletes it. Answers with the new list. */
+  save: (values: Record<string, string | null>) => Promise<VeitSettingsValues>;
   reveal: (key: string) => Promise<string>;
 };
 

@@ -10,7 +10,10 @@ import {
   type VeitSettingsValues,
 } from './VeitSettingsGroups.js';
 
-/** Setting keys of the fields; the defaults match DEFAULT_SMTP_SETTING_KEYS of '@veit/app-settings/smtp'. */
+/**
+ * Setting keys of the fields; the defaults match DEFAULT_SMTP_SETTING_KEYS of '@veit/app-settings/smtp'. With `url`
+ * and `tlsRejectUnauthorized` the group also edits the connection URL and the certificate check.
+ */
 export type VeitSmtpSettingKeys = {
   host: string;
   port: string;
@@ -18,6 +21,8 @@ export type VeitSmtpSettingKeys = {
   user: string;
   password: string;
   from: string;
+  url?: string;
+  tlsRejectUnauthorized?: string;
 };
 
 export const VEIT_SMTP_SETTING_KEYS: VeitSmtpSettingKeys = {
@@ -27,6 +32,18 @@ export const VEIT_SMTP_SETTING_KEYS: VeitSmtpSettingKeys = {
   user: 'smtp_user',
   password: 'smtp_password',
   from: 'smtp_from',
+};
+
+/** Plenivo's keys, as PLENIVO_SMTP_SETTING_KEYS of '@veit/app-settings/smtp' (with URL and certificate check). */
+export const VEIT_PLENIVO_SMTP_SETTING_KEYS: VeitSmtpSettingKeys = {
+  host: 'smtp_host',
+  port: 'smtp_port',
+  secure: 'smtp_secure',
+  user: 'smtp_user',
+  password: 'smtp_pass',
+  from: 'mail_from',
+  url: 'smtp_url',
+  tlsRejectUnauthorized: 'smtp_tls_reject_unauthorized',
 };
 
 export type VeitSmtpSettingsTexts = VeitSettingsGroupsTexts & {
@@ -46,6 +63,12 @@ export type VeitSmtpSettingsTexts = VeitSettingsGroupsTexts & {
   testMail: string;
   testMailSaveFirst: string;
   testMailSent: string;
+  /** Label of the URL field (keys.url); default "SMTP-URL". */
+  url?: string;
+  urlHint?: string;
+  /** Label of the certificate check (keys.tlsRejectUnauthorized). */
+  tlsRejectUnauthorized?: string;
+  tlsRejectUnauthorizedHint?: string;
 };
 
 export const veitSmtpSettingsTexts: Record<'de' | 'en', VeitSmtpSettingsTexts> = {
@@ -74,6 +97,13 @@ export const veitSmtpSettingsTexts: Record<'de' | 'en', VeitSmtpSettingsTexts> =
     testMail: 'Test-Mail senden',
     testMailSaveFirst: 'Erst speichern, dann testen.',
     testMailSent: 'Test-Mail ist raus.',
+    clearSecret: 'Löschen',
+    secretCleared: 'Wird beim Speichern gelöscht.',
+    undoClear: 'Behalten',
+    url: 'SMTP-URL',
+    urlHint: 'Statt Server, Port und Benutzer, z. B. smtps://user:passwort@mail.example.org:465',
+    tlsRejectUnauthorized: 'Zertifikat prüfen',
+    tlsRejectUnauthorizedHint: 'Nur für Server mit selbst signiertem Zertifikat ausschalten.',
   },
   en: {
     save: 'Save',
@@ -100,6 +130,13 @@ export const veitSmtpSettingsTexts: Record<'de' | 'en', VeitSmtpSettingsTexts> =
     testMail: 'Send a test mail',
     testMailSaveFirst: 'Save first, then test.',
     testMailSent: 'Test mail sent.',
+    clearSecret: 'Delete',
+    secretCleared: 'Will be deleted when you save.',
+    undoClear: 'Keep',
+    url: 'SMTP URL',
+    urlHint: 'Instead of server, port and user, e.g. smtps://user:password@mail.example.org:465',
+    tlsRejectUnauthorized: 'Check the certificate',
+    tlsRejectUnauthorizedHint: 'Turn off only for a server with a self-signed certificate.',
   },
 };
 
@@ -140,12 +177,24 @@ function TestMail({
   );
 }
 
+/** Host and port of an SMTP URL for the summary, without user and password; null when it does not parse. */
+function smtpUrlHost(raw: string): { host: string; port: string } | null {
+  if (!raw.trim()) return null;
+  try {
+    const url = new URL(raw.trim());
+    if (!url.hostname) return null;
+    return { host: url.hostname, port: url.port || (url.protocol === 'smtps:' ? '465' : '587') };
+  } catch {
+    return null;
+  }
+}
+
 /** The SMTP group for VeitSettingsGroups, e.g. next to the host's own groups. */
 export function veitSmtpSettingsGroup(
   texts: VeitSmtpSettingsTexts,
   options: {
     keys?: Partial<VeitSmtpSettingKeys>;
-    /** More fields after the standard ones (Plenivo: smtp_url, smtp_tls_reject_unauthorized). */
+    /** More fields after the standard ones; URL and certificate check come from keys (VEIT_PLENIVO_SMTP_SETTING_KEYS). */
     extraFields?: readonly VeitSettingsField[];
     /** Sends a test mail with the saved settings; adds the button. */
     onTestMail?: () => Promise<unknown>;
@@ -155,6 +204,20 @@ export function veitSmtpSettingsGroup(
 ): VeitSettingsGroup {
   const k = { ...VEIT_SMTP_SETTING_KEYS, ...options.keys };
   const onTestMail = options.onTestMail;
+  const urlFields: VeitSettingsField[] = [];
+  if (k.url) {
+    urlFields.push({ key: k.url, label: texts.url ?? 'SMTP-URL', kind: 'text', hint: texts.urlHint, autoComplete: 'off', placeholder: 'smtps://…' });
+  }
+  if (k.tlsRejectUnauthorized) {
+    urlFields.push({
+      key: k.tlsRejectUnauthorized,
+      label: texts.tlsRejectUnauthorized ?? 'TLS',
+      kind: 'toggle',
+      hint: texts.tlsRejectUnauthorizedHint,
+      // smtpSettingsFromValues checks the certificate unless the value is explicitly off.
+      defaultOn: true,
+    });
+  }
   return {
     id: options.id ?? 'smtp',
     title: texts.title,
@@ -166,12 +229,16 @@ export function veitSmtpSettingsGroup(
       { key: k.user, label: texts.user, kind: 'text', autoComplete: 'off' },
       { key: k.password, label: texts.password, kind: 'secret' },
       { key: k.from, label: texts.from, kind: 'text', hint: texts.fromHint },
-      ...(options.extraFields ?? []),
+      ...urlFields,
+      ...(options.extraFields ?? []).filter((f) => !urlFields.some((u) => u.key === f.key)),
     ],
     summary: (values: VeitSettingsValues) => {
+      const from = veitSettingText(values, k.from);
       const host = veitSettingText(values, k.host);
-      if (!host) return texts.notConfigured;
-      return texts.summary({ host, port: veitSettingText(values, k.port) || '587', from: veitSettingText(values, k.from) });
+      if (host) return texts.summary({ host, port: veitSettingText(values, k.port) || '587', from });
+      const url = k.url ? smtpUrlHost(veitSettingText(values, k.url)) : null;
+      if (url) return texts.summary({ ...url, from });
+      return texts.notConfigured;
     },
     extra: onTestMail
       ? ({ dirty, busy }) => (

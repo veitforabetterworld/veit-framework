@@ -87,7 +87,8 @@ export function VeitColorInput({
     if (step === 0 || palette.length === 0) return;
     event.preventDefault();
     const next = (index + step + palette.length) % palette.length;
-    pick(palette[next]);
+    const hex = palette[next];
+    if (hex) pick(hex);
     buttons.current[next]?.focus();
   };
 

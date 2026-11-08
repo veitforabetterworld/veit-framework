@@ -1,5 +1,12 @@
 # Änderungen
 
+## VeitPage kompakt, VeitColorInput streng typisiert
+
+Stand 2026-11-08. Additiv.
+
+- `VeitPage`: Breite `compact` (`max-w-xl`) und `padded={false}` für Layouts, die den Inhalt schon einrücken. Ersetzt `!max-w-xl` und `!p-0` in Plenivo.
+- `VeitColorInput`: kein ungeprüfter Indexzugriff mehr; Hosts mit `noUncheckedIndexedAccess` können die Quellen wieder mitprüfen.
+
 ## Lücken aus der Host-Migration
 
 Stand 2026-11-04. Was beim Umstellen von Plenivo, Scangut, Hochwasserdienst und Sprachassistent gefehlt hat. Additiv, bis auf die Optik von `VeitBackButton` in `@veit/react-navigation`. Hosts brauchen ein `pnpm install` (neue Abhängigkeiten zwischen Framework-Paketen). Wer `@veit/auth-server`, `@veit/react-auth` oder `@veit/react-account` nutzt, braucht `@veit/intl` und `@veit/password-policy` in `build:deps` (bei Sprachassistent, Plenivo, Scangut und Hochwasserdienst schon drin).

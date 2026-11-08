@@ -2,9 +2,10 @@ import type { ReactNode } from 'react';
 
 import { VeitPageHeader } from './VeitPageHeader.js';
 
-export type VeitPageWidth = 'narrow' | 'default' | 'wide' | 'full';
+export type VeitPageWidth = 'compact' | 'narrow' | 'default' | 'wide' | 'full';
 
 const WIDTH: Record<VeitPageWidth, string> = {
+  compact: 'max-w-xl',
   narrow: 'max-w-3xl',
   default: 'max-w-6xl',
   wide: 'max-w-7xl',
@@ -20,14 +21,16 @@ export type VeitPageProps = {
   /** In front of the title, e.g. a back button. */
   leading?: ReactNode;
   width?: VeitPageWidth;
+  /** false: no own padding, when the surrounding layout already insets the content. */
+  padded?: boolean;
   className?: string;
   children?: ReactNode;
 };
 
 /** Page container: centred column with the usual padding and gaps, optionally with a header. */
-export function VeitPage({ title, description, actions, leading, width = 'default', className = '', children }: VeitPageProps) {
+export function VeitPage({ title, description, actions, leading, width = 'default', padded = true, className = '', children }: VeitPageProps) {
   return (
-    <div className={`mx-auto flex w-full min-w-0 flex-col gap-6 p-4 sm:p-6 ${WIDTH[width]} ${className}`.trim()}>
+    <div className={`mx-auto flex w-full min-w-0 flex-col gap-6 ${padded ? 'p-4 sm:p-6' : ''} ${WIDTH[width]} ${className}`.trim()}>
       {title ? <VeitPageHeader title={title} subtitle={description} leading={leading} trailing={actions} /> : null}
       {children}
     </div>

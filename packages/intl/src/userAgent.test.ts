@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { clientKindFromUserAgent, describeUserAgent, parseUserAgent } from './userAgent.js';
+import { clientKindFromUserAgent, describeUserAgent, parseUserAgent, sessionClientFromUserAgent } from './userAgent.js';
 
 const UA = {
   firefoxWindows: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0',
@@ -37,5 +37,12 @@ describe('user agent', () => {
     assert.equal(clientKindFromUserAgent(UA.okhttpAndroid), 'android');
     assert.equal(clientKindFromUserAgent(UA.curl), 'unknown');
     assert.equal(clientKindFromUserAgent(UA.chromeMac, { deviceName: ' Plenivo-App ', appDeviceNames: ['Plenivo-App'] }), 'app');
+  });
+
+  it('names the browser for its logo', () => {
+    assert.deepEqual(sessionClientFromUserAgent(UA.edgeWindows), { clientKind: 'browser', browser: 'edge' });
+    assert.deepEqual(sessionClientFromUserAgent(UA.samsungAndroid), { clientKind: 'browser', browser: 'samsung' });
+    assert.deepEqual(sessionClientFromUserAgent(UA.okhttpAndroid), { clientKind: 'android' });
+    assert.deepEqual(sessionClientFromUserAgent(UA.chromeMac, { deviceName: 'X-App', appDeviceNames: ['X-App'] }), { clientKind: 'app' });
   });
 });

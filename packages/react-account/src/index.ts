@@ -28,6 +28,7 @@ export {
   VeitAccountSessionsSection,
   VeitSessionClientIcon,
   type VeitAccountSessionsSectionProps,
+  type VeitSessionClientIconProps,
 } from './sessions.js';
 /** UA parsing shared with '@veit/auth-server' (lives in '@veit/intl'), for host device lists. */
 export {
@@ -36,11 +37,14 @@ export {
   describeUserAgent,
   osKindName,
   parseUserAgent,
+  sessionClientFromUserAgent,
   type VeitBrowserKind,
   type VeitClientKind,
   type VeitClientKindOptions,
   type VeitOsKind,
+  type VeitSessionClient,
   type VeitUserAgentInfo,
 } from '@veit/intl';
+export { VEIT_BROWSER_BRAND_ICONS, type VeitBrowserBrandIcon } from './browserBrandIcons.js';
 export { veitAccountTexts, type VeitAccountTexts } from './texts.js';
 export { createRestAccountClient, type VeitRestAccountClient } from './rest.js';

@@ -1,5 +1,15 @@
 # Änderungen
 
+## Browser-Logos in Sitzungslisten, App-Icons aus einem Logo
+
+Stand 2026-11-08. Additiv. Hosts brauchen ein `pnpm install` (neues Paket `@veit/app-icons` mit `@resvg/resvg-js`).
+
+- `@veit/react-account`: `VeitSessionClientIcon` zeigt für Browser das Markenlogo in Markenfarbe auf weißer Kachel (Chrome, Chromium, Firefox, Edge, Opera, Safari, Brave, Vivaldi, Tor, Samsung Internet, Internet Explorer; SVG-Pfade aus Simple Icons, Tabler und Font Awesome, kein Icon-Paket). `AccountSession.browser` sagt, welcher Browser. Für die eigene App (`clientKind: 'app'`) zeigt es `appIconSrc` (Prop an `VeitAccountSessionsSection`, `VeitAccountSettings` und `VeitSessionClientIcon`). Für Markenlogos braucht kein Host mehr ein eigenes `renderClientIcon`.
+- `@veit/intl`: `sessionClientFromUserAgent(ua, options)` gibt `{ clientKind, browser? }`, zum Spreaden in eine `AccountSession`.
+- `@veit/auth-server/express`: `GET /me/sessions` sendet zusätzlich `browser`; `createRestAccountClient` liest es.
+- `@veit/app-icons` (neu): `veit-app-icons` erzeugt alle Icons aus `branding/logo.svg` nach `branding/app-icons.json`. Ein Element mit `id="background"` ist der Hintergrund, der Rest die Marke; ohne Hintergrund braucht die Konfiguration `background`. Maskable- und Adaptive-Icons halten die Marke in der Safe Zone (Kreis mit 40 % bzw. 33/108 dp Radius), Monochrom entsteht aus dem Alpha-Kanal (oder mit `luminance` aus der Helligkeit). Die Ausgaben sind Build-Artefakte und nicht versioniert.
+- `scripts/sync-twa-theme.mjs`: `maskableIconUrl` zeigt auf `/icon-512-maskable.png` statt auf das nicht maskierbare `/icon-512.png`.
+
 ## Sicherung vor jeder Migration, react-router 7
 
 Stand 2026-11-08. Additiv.

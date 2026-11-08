@@ -135,3 +135,17 @@ export function clientKindFromUserAgent(userAgent: string | null | undefined, op
   if (os === 'windows' || os === 'macos' || os === 'linux' || os === 'chromeos') return 'desktop';
   return 'unknown';
 }
+
+/** Icon slot and, for a browser, which one: what a session or device row needs for its icon. */
+export type VeitSessionClient = {
+  clientKind: VeitClientKind;
+  /** Only for `browser`, and only when it is known. */
+  browser?: VeitBrowserKind;
+};
+
+/** {@link clientKindFromUserAgent} plus the browser for its logo, e.g. `{ clientKind: 'browser', browser: 'firefox' }`. */
+export function sessionClientFromUserAgent(userAgent: string | null | undefined, options: VeitClientKindOptions = {}): VeitSessionClient {
+  const clientKind = clientKindFromUserAgent(userAgent, options);
+  if (clientKind !== 'browser') return { clientKind };
+  return { clientKind, browser: parseUserAgent(userAgent).browser };
+}

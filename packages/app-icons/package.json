@@ -1,0 +1,23 @@
+{
+  "name": "@veit/app-icons",
+  "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "All app icons of a host (favicon, PWA, Apple, Android launcher, splash, notification, store) from one logo SVG.",
+  "bin": {
+    "veit-app-icons": "./src/cli.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs"
+    }
+  },
+  "scripts": {
+    "test": "node --test src/*.test.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}

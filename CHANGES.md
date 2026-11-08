@@ -1,5 +1,12 @@
 # Änderungen
 
+## Sicherung vor jeder Migration, react-router 7
+
+Stand 2026-11-08. Additiv.
+
+- `scripts/deploy/backup-before-migrate.sh`: Alle Hosts rufen es im Runtime-Reload direkt vor den Migrationen auf. Es sichert die ganze Datenbank (`pg_dump -Fc`, geprüft) und die Schlüssel-Dateien nach `/var/backups/veit/<name>/`. Scheitert es, bricht der Deploy ab. Siehe `docs/deploy-backup.md`.
+- devDependencies `react-router-dom` auf `^7.18.0`; alle Hosts nutzen v7.
+
 ## VeitPage kompakt, VeitColorInput streng typisiert
 
 Stand 2026-11-08. Additiv.

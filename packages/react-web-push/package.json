@@ -1,0 +1,32 @@
+{
+  "name": "@veit/react-web-push",
+  "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Web Push in the browser (pairs with @veit/web-push): service worker, subscription per device, switch, test notification; account section with texts de/en.",
+  "bin": {
+    "veit-web-push-sw": "./sw/cli.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "peerDependencies": {
+    "@veit/react-account": "workspace:*",
+    "@veit/react-controls": "workspace:*",
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.28",
+    "@veit/react-account": "workspace:*",
+    "@veit/react-controls": "workspace:*",
+    "react": "^18.3.1",
+    "typescript": "^5.7.2"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

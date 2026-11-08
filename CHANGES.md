@@ -1,5 +1,12 @@
 # Änderungen
 
+## Web Push (VAPID) als Module
+
+Stand 2026-11-08. Additiv, neue Pakete (`pnpm install`; `@veit/web-push` bringt die Bibliothek `web-push` mit).
+
+- `@veit/web-push` (neu, Node): `WebPushService` mit Abo je Browser/Gerät und Schalter je Konto, Versand an alle Abos eines Nutzers, entfernt abgelaufene Abos (404/410). `WEB_PUSH_SCHEMA_SQL` und `createPgWebPushStore` (`/pg`, Tabellen `web_push_subscriptions` und `web_push_preferences`, `user_id` auf `users(id)`), Express-Routen `/me/push` (`/express`: Status, Schalter, Abo anlegen/löschen, Test-Benachrichtigung). `generateVapidKeys()`.
+- `@veit/react-web-push` (neu): `createRestWebPushClient`, `useVeitWebPush`, `VeitWebPushSection` (Kontoseite, Texte de/en in `veitWebPushTexts`), `registerVeitServiceWorker`, `useVeitWebPushOpen` (Klick auf eine Nachricht bei offener App im SPA-Router öffnen). CLI `veit-web-push-sw --out public --api /api/v1` erzeugt den Service Worker (`sw.js`, nicht versioniert, wie die App-Icons). Im Android-TWA zeigt Chrome die Nachrichten über die Notification Delegation der App an.
+
 ## Browser-Logos in Sitzungslisten, App-Icons aus einem Logo
 
 Stand 2026-11-08. Additiv. Hosts brauchen ein `pnpm install` (neues Paket `@veit/app-icons` mit `@resvg/resvg-js`).

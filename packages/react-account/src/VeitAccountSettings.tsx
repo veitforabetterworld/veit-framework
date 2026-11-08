@@ -32,6 +32,7 @@ export function VeitAccountSettings({
   onUserChanged,
   onDeleted,
   resendVerification,
+  appIconSrc,
   children,
 }: {
   client: AccountClient;
@@ -43,6 +44,8 @@ export function VeitAccountSettings({
   onUserChanged: () => void | Promise<void>;
   onDeleted: () => void;
   resendVerification?: () => Promise<void>;
+  /** The host's app icon for sessions of its own app (see VeitAccountSessionsSection). */
+  appIconSrc?: string;
   children?: React.ReactNode;
 }) {
   const [firstName, setFirstName] = useState(user.firstName);
@@ -334,6 +337,7 @@ export function VeitAccountSettings({
         sessions={sessions}
         onRevoke={(id) => void revoke(id)}
         busyId={revoking}
+        appIconSrc={appIconSrc}
       />
 
       {client.requestDeletion && (

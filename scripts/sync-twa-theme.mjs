@@ -89,7 +89,8 @@ function syncTwaManifest(filePath) {
     navigationDividerColor: NAV_CHROME_HEX,
     navigationDividerColorDark: NAV_CHROME_HEX,
     iconUrl: `${baseUrl}/icon-512.png`,
-    maskableIconUrl: `${baseUrl}/icon-512.png`,
+    // Written by @veit/app-icons (veit-app-icons).
+    maskableIconUrl: `${baseUrl}/icon-512-maskable.png`,
     webManifestUrl: `${baseUrl}/manifest.webmanifest`,
     fullScopeUrl: `${baseUrl}/`,
     // Bubblewrap-Feld appVersion = Anzeigename; immer aus appVersionName ableiten

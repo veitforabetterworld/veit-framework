@@ -3,6 +3,9 @@ export {
   clientKindFromUserAgent,
   describeUserAgent,
   parseUserAgent,
+  sessionClientFromUserAgent,
+  type VeitBrowserKind,
   type VeitClientKind,
+  type VeitSessionClient,
   type VeitUserAgentInfo,
 } from '@veit/intl';

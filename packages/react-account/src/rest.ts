@@ -1,4 +1,4 @@
-import type { VeitClientKind } from '@veit/intl';
+import type { VeitBrowserKind, VeitClientKind } from '@veit/intl';
 import type { AccountClient, AccountSession } from './types.js';
 
 type FetchJson = <T>(url: string, init?: { method?: string; body?: unknown }) => Promise<T>;
@@ -11,6 +11,8 @@ type WireSession = {
   device: string;
   /** Since '@veit/auth-server' sends it; older servers do not. */
   client_kind?: VeitClientKind;
+  /** The browser for its logo; older servers do not send it. */
+  browser?: VeitBrowserKind;
   is_current: boolean;
 };
 
@@ -50,6 +52,7 @@ export function createRestAccountClient(
           summary: s.device || s.ip_address || '—',
           detail: [formatTime(s.last_used_at), s.ip_address].filter(Boolean).join(' · '),
           ...(s.client_kind ? { clientKind: s.client_kind } : {}),
+          ...(s.browser ? { browser: s.browser } : {}),
         }),
       );
     },

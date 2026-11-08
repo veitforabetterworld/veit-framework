@@ -13,9 +13,11 @@ export {
   describeUserAgent,
   osKindName,
   parseUserAgent,
+  sessionClientFromUserAgent,
   type VeitBrowserKind,
   type VeitClientKind,
   type VeitClientKindOptions,
   type VeitOsKind,
+  type VeitSessionClient,
   type VeitUserAgentInfo,
 } from './userAgent.js';

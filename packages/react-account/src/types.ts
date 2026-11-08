@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { VeitClientKind } from '@veit/intl';
+import type { VeitBrowserKind, VeitClientKind } from '@veit/intl';
 import type { VeitStatusBadgeVariant } from '@veit/react-controls';
 
 export type AccountMfaMethod = 'totp' | 'email';
@@ -23,6 +23,8 @@ export type AccountSession = {
   detail?: string;
   /** Icon slot: browser, the host's app, a phone or desktop system; without it no icon. */
   clientKind?: VeitClientKind;
+  /** With clientKind `browser`: which one, for its logo (see sessionClientFromUserAgent); without it a globe. */
+  browser?: VeitBrowserKind;
   /** Small badges after the name, e.g. "Push aktiv". */
   badges?: readonly AccountSessionBadge[];
 };

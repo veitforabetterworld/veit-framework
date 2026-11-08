@@ -2,7 +2,8 @@ import React, { useRef, useState } from 'react';
 import { AppWindow, Globe, HelpCircle, Monitor, Smartphone, TabletSmartphone } from 'lucide-react';
 import { VeitAlert, VeitButton, VeitStatusBadge, VeitSettingsSection } from '@veit/react-controls';
 import { VeitConfirmDialog, type VeitDeleteConfirmConfig } from '@veit/react-dialog';
-import type { VeitClientKind } from '@veit/intl';
+import type { VeitBrowserKind, VeitClientKind } from '@veit/intl';
+import { VEIT_BROWSER_BRAND_ICONS } from './browserBrandIcons.js';
 import type { AccountSession } from './types.js';
 
 const CLIENT_ICONS: Record<VeitClientKind, React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>> = {
@@ -14,14 +15,54 @@ const CLIENT_ICONS: Record<VeitClientKind, React.ComponentType<{ className?: str
   unknown: HelpCircle,
 };
 
-/** Icon of a session or device row by its client kind; decorative (the row text names the device). */
-export function VeitSessionClientIcon({ kind, className = '' }: { kind: VeitClientKind; className?: string }) {
+const TILE = 'inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg';
+
+export type VeitSessionClientIconProps = {
+  kind: VeitClientKind;
+  /** With kind `browser`: its logo in the brand colour; unknown browsers get a globe. */
+  browser?: VeitBrowserKind;
+  /** With kind `app`: the host's app icon (e.g. '/apple-touch-icon.png' from @veit/app-icons), else a neutral icon. */
+  appIconSrc?: string;
+  className?: string;
+};
+
+/**
+ * Icon of a session or device row: browser logo, the host's app icon or a neutral icon by client kind. Decorative
+ * (the row text names the device). Browser logos sit on a white tile, as brand logos are made for white; the same
+ * tile in dark mode keeps them recognisable.
+ */
+export function VeitSessionClientIcon({ kind, browser, appIconSrc, className = '' }: VeitSessionClientIconProps) {
+  if (kind === 'app' && appIconSrc) {
+    return (
+      <span className={`${TILE} ring-1 ring-border ${className}`.trim()} aria-hidden>
+        <img src={appIconSrc} alt="" className="size-full object-cover" />
+      </span>
+    );
+  }
+  const brand = kind === 'browser' && browser ? VEIT_BROWSER_BRAND_ICONS[browser] : undefined;
+  if (brand) {
+    return (
+      <span className={`${TILE} bg-white ring-1 ring-border ${className}`.trim()} aria-hidden>
+        <svg
+          viewBox={brand.viewBox}
+          className="size-5"
+          fill={brand.stroke ? 'none' : brand.color}
+          stroke={brand.stroke ? brand.color : undefined}
+          strokeWidth={brand.stroke ? 2 : undefined}
+          strokeLinecap={brand.stroke ? 'round' : undefined}
+          strokeLinejoin={brand.stroke ? 'round' : undefined}
+          aria-hidden
+        >
+          {brand.paths.map((d) => (
+            <path key={d} d={d} />
+          ))}
+        </svg>
+      </span>
+    );
+  }
   const Icon = CLIENT_ICONS[kind] ?? HelpCircle;
   return (
-    <span
-      className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground ${className}`.trim()}
-      aria-hidden
-    >
+    <span className={`${TILE} bg-muted text-muted-foreground ${className}`.trim()} aria-hidden>
       <Icon className="size-4" aria-hidden />
     </span>
   );
@@ -44,7 +85,9 @@ export type VeitAccountSessionsSectionProps = {
   confirmRemove?: VeitDeleteConfirmConfig | ((session: AccountSession) => VeitDeleteConfirmConfig);
   /** Only the list, without the section card, e.g. inside a dialog or another section. */
   embedded?: boolean;
-  /** Overrides the icon by `clientKind` (e.g. brand icons of the host); null hides it. */
+  /** The host's app icon for sessions of its own app (clientKind `app`), e.g. '/apple-touch-icon.png'. */
+  appIconSrc?: string;
+  /** Overrides the icon by `clientKind`; null hides it. */
   renderClientIcon?: (session: AccountSession) => React.ReactNode;
 };
 
@@ -65,6 +108,7 @@ export function VeitAccountSessionsSection({
   busyId,
   confirmRemove,
   embedded = false,
+  appIconSrc,
   renderClientIcon,
 }: VeitAccountSessionsSectionProps) {
   const [confirming, setConfirming] = useState<AccountSession | null>(null);
@@ -74,7 +118,7 @@ export function VeitAccountSessionsSection({
 
   const icon = (s: AccountSession): React.ReactNode => {
     if (renderClientIcon) return renderClientIcon(s);
-    return s.clientKind ? <VeitSessionClientIcon kind={s.clientKind} /> : null;
+    return s.clientKind ? <VeitSessionClientIcon kind={s.clientKind} browser={s.browser} appIconSrc={appIconSrc} /> : null;
   };
 
   const content = (

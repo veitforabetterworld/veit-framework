@@ -2,7 +2,7 @@ import { Router, type NextFunction, type Request, type RequestHandler, type Resp
 import { isAuthError } from './errors.js';
 import type { AuthService, LoginResult } from './service.js';
 import type { AuthUserRecord, RequestInfo } from './types.js';
-import { clientKindFromUserAgent, describeUserAgent } from './userAgent.js';
+import { describeUserAgent, sessionClientFromUserAgent } from './userAgent.js';
 
 export type ExpressAuthOptions = {
   service: AuthService;
@@ -310,16 +310,20 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
     handle(async (req, res) => {
       const sessions = await service.listSessions(me(req).id, readCookie(req, cookieName));
       res.json({
-        sessions: sessions.map((s) => ({
-          id: s.id,
-          login_time: s.loginTime.toISOString(),
-          last_used_at: (s.lastUsedAt ?? s.loginTime).toISOString(),
-          expires_at: s.expiresAt.toISOString(),
-          ip_address: s.ipAddress,
-          device: s.deviceName || describeUserAgent(s.userAgent),
-          client_kind: clientKindFromUserAgent(s.userAgent, { deviceName: s.deviceName, appDeviceNames: options.appDeviceNames }),
-          is_current: s.isCurrent,
-        })),
+        sessions: sessions.map((s) => {
+          const client = sessionClientFromUserAgent(s.userAgent, { deviceName: s.deviceName, appDeviceNames: options.appDeviceNames });
+          return {
+            id: s.id,
+            login_time: s.loginTime.toISOString(),
+            last_used_at: (s.lastUsedAt ?? s.loginTime).toISOString(),
+            expires_at: s.expiresAt.toISOString(),
+            ip_address: s.ipAddress,
+            device: s.deviceName || describeUserAgent(s.userAgent),
+            client_kind: client.clientKind,
+            ...(client.browser ? { browser: client.browser } : {}),
+            is_current: s.isCurrent,
+          };
+        }),
       });
     }),
   );

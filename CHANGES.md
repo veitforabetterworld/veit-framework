@@ -1,5 +1,12 @@
 # Änderungen
 
+## Kartendaten exportieren (KML, GPX, GeoJSON)
+
+Stand 2026-11-09. Additiv, ohne neue Abhängigkeiten.
+
+- `@veit/map/export` (neu): neutrales Modell `VeitExportDocument` aus Punkten, Linien, Flächen und Verläufen (Punkte mit Zeit und Höhe, in Segmente geteilt), Schreiber `toKml`, `toGpx`, `toGeoJson`, `exportDocument(doc, format)`, `VEIT_EXPORT_FORMATS` (Endung, MIME-Typ), `exportFileName` und `downloadExport` (Browser). KML: Ordner nach `folder`, Stil je Farbe, Verläufe als Linie plus Punkte mit `TimeStamp` (Zeitschieber in Google Earth). GPX 1.1: Wegpunkte und Tracks mit `ele`/`time`. GeoJSON: Verläufe als `LineString`/`MultiLineString` mit `properties.coordTimes`.
+- `@veit/react-map`: `VeitExportButtons` (ein Knopf je Format; der Host liefert das Dokument beim Klick, darf dafür nachladen).
+
 ## Web Push (VAPID) als Module
 
 Stand 2026-11-08. Additiv, neue Pakete (`pnpm install`; `@veit/web-push` bringt die Bibliothek `web-push` mit).

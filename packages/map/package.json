@@ -13,6 +13,10 @@
     "./world3d": {
       "types": "./src/world3d/index.ts",
       "default": "./src/world3d/index.ts"
+    },
+    "./export": {
+      "types": "./src/export/index.ts",
+      "default": "./src/export/index.ts"
     }
   },
   "scripts": {

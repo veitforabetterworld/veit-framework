@@ -21,3 +21,4 @@ export {
   type VeitPathProps,
   type VeitPopupProps,
 } from './VeitShapes.js';
+export { VeitExportButtons, type VeitExportButtonsProps } from './VeitExportButtons.js';

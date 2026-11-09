@@ -18,7 +18,7 @@ Fertige Module für Node- und React-Projekte: Konten mit MFA, API-Keys, Dialoge,
 | `@veit/react-upload` | Bild-Auswahl und Upload |
 | `@veit/react-address` | Adressformular mit Straßen-Autovervollständigung (Nominatim); Typen und Helfer aus `@veit/address` |
 | `@veit/react-invite` | Einladungen einlösen, auflisten, teilen |
-| `@veit/react-map` | `<VeitMap>`: MapLibre-Karte mit Hintergründen (Vektor, Amtlich, Flurkarte), Globus, Gelände; Ebenen des Hosts bleiben beim Wechsel erhalten |
+| `@veit/react-map` | `<VeitMap>`: MapLibre-Karte mit Hintergründen (Vektor, Amtlich, Flurkarte), Globus, Gelände; Ebenen des Hosts bleiben beim Wechsel erhalten; `VeitExportButtons` (Download als KML, GPX, GeoJSON) |
 | `@veit/react-navigation` | Zurück-Navigation mit React Router (Button aus `@veit/react-controls`) |
 | `@veit/react-dialog-router` | Deep Links auf Dialoge |
 | `@veit/react-dnd` | Drag and Drop auf Basis von dnd-kit |
@@ -32,7 +32,7 @@ Fertige Module für Node- und React-Projekte: Konten mit MFA, API-Keys, Dialoge,
 | `@veit/db` | Postgres-Pool (mit Pool-Optionen) und Drizzle, `checkDatabase` |
 | `@veit/intl` | Datum, relative Zeit, Dauer, Zahlen, Geld, Maßeinheiten und Sprachnamen formatieren; Browser und System aus dem User-Agent (`describeUserAgent`, `sessionClientFromUserAgent`) |
 | `@veit/app-icons` | Alle App-Icons aus einem Logo-SVG (`branding/logo.svg`, Ziele in `branding/app-icons.json`): Favicon (SVG, ICO), PWA any und maskable, apple-touch-icon, Android Adaptive Icon (Vordergrund, Hintergrund, Monochrom), Legacy-Launcher, Splash, Benachrichtigung, Store-Icon; CLI `veit-app-icons`, `webManifestIcons` fürs Manifest. Siehe Kopf von `src/index.mjs` |
-| `@veit/map` | MapLibre ohne React: Hintergründe, Flurkarten der Länder, Sonnenstand, Gelände, Höhenprofil, 3D-Welt (`/world3d`) |
+| `@veit/map` | MapLibre ohne React: Hintergründe, Flurkarten der Länder, Sonnenstand, Gelände, Höhenprofil, 3D-Welt (`/world3d`), Export nach KML, GPX und GeoJSON aus einem neutralen Modell (`/export`) |
 | `@veit/address` | Adress-Typen, Formatierung, Nominatim-Suche |
 | `@veit/field-tags` | Tag-Baum ohne UI |
 | `@veit/tesseract-ocr` | Texterkennung mit Tesseract.js für Node |

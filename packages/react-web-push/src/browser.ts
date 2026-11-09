@@ -84,3 +84,49 @@ export async function subscribeVeitPush(publicKey: string, url = VEIT_WEB_PUSH_S
   }
   return registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
 }
+
+/**
+ * Was ensureVeitWebPush erreicht hat:
+ * - subscribed: dieses Gerät ist jetzt angemeldet; already: war es schon
+ * - denied: der Nutzer oder der Browser blockiert Benachrichtigungen
+ * - unsupported, insecure, ios-install: siehe VeitWebPushSupport
+ * - not-configured: der Server hat keine VAPID-Schlüssel
+ * - failed: Anmeldung beim Push-Dienst oder Server schlug fehl
+ */
+export type VeitWebPushEnsureResult =
+  | 'subscribed'
+  | 'already'
+  | 'denied'
+  | 'unsupported'
+  | 'insecure'
+  | 'ios-install'
+  | 'not-configured'
+  | 'failed';
+
+/**
+ * Fragt nach der Erlaubnis und meldet dieses Gerät an, falls es noch kein Abo hat (aus einem Klick aufrufen, z. B.
+ * beim Anlegen von etwas, das Benachrichtigungen schickt). Wirft nie; das Ergebnis sagt, was der Host anzeigen soll.
+ * In der installierten PWA und im Android-TWA (Notification Delegation) gleich.
+ */
+export async function ensureVeitWebPush(
+  client: Pick<import('./client.js').VeitWebPushClient, 'status' | 'subscribe' | 'setEnabled'>,
+  url = VEIT_WEB_PUSH_SW_URL,
+): Promise<VeitWebPushEnsureResult> {
+  const support = veitWebPushSupport();
+  if (support !== 'supported') return support;
+  if (veitNotificationPermission() === 'denied') return 'denied';
+  try {
+    // Die Erlaubnis zuerst, solange der Klick noch als Nutzeraktion gilt.
+    const permission = veitNotificationPermission() === 'granted' ? 'granted' : await Notification.requestPermission();
+    if (permission !== 'granted') return 'denied';
+    const status = await client.status();
+    if (!status.configured || !status.public_key) return 'not-configured';
+    const existing = await currentVeitPushSubscription(url);
+    const subscription = await subscribeVeitPush(status.public_key, url);
+    await client.subscribe(subscription.toJSON());
+    if (!status.enabled) await client.setEnabled(true);
+    return existing && existing.endpoint === subscription.endpoint && status.devices > 0 ? 'already' : 'subscribed';
+  } catch {
+    return veitNotificationPermission() === 'denied' ? 'denied' : 'failed';
+  }
+}

@@ -9,11 +9,23 @@ function pointBody(p: VeitExportPoint): string {
   return `${ele}${when ? `<time>${when}</time>` : ''}`;
 }
 
+/** Gültiger XML-Elementname (ohne Namensraum), sonst wird die Eigenschaft weggelassen. */
+const XML_NAME = /^[A-Za-z_][A-Za-z0-9_.-]*$/;
+
+/** Eigenschaften als <extensions> mit einem Element je Schlüssel (GPX hat dafür keinen Standard-Namensraum). */
+function extensions(properties: VeitExportFeature['properties']): string {
+  const rows = Object.entries(properties ?? {})
+    .filter(([key]) => XML_NAME.test(key) && !/^xml/i.test(key))
+    .map(([key, value]) => `<${key}>${escapeXml(String(value))}</${key}>`);
+  return rows.length ? `<extensions>${rows.join('')}</extensions>` : '';
+}
+
+/** name, desc, type und extensions in der von GPX 1.1 verlangten Reihenfolge. */
 function describe(f: VeitExportFeature): string {
   const name = f.name?.trim() ? `<name>${escapeXml(f.name.trim())}</name>` : '';
   const desc = f.description?.trim() ? `<desc>${escapeXml(f.description.trim())}</desc>` : '';
   const type = f.folder ? `<type>${escapeXml(f.folder)}</type>` : '';
-  return `${name}${desc}${type}`;
+  return `${name}${desc}${type}${extensions(f.properties)}`;
 }
 
 function trkpts(points: VeitExportPoint[]): string {
@@ -31,7 +43,7 @@ ${segs.map((s) => `    <trkseg>\n${trkpts(s)}\n    </trkseg>`).join('\n')}
 /**
  * GPX 1.1: Punkte als Wegpunkte (wpt), Verläufe als Tracks mit Zeit und Höhe (trk), Linien und Flächen ebenfalls als
  * Track (ohne Zeit; Flächen als geschlossener Ring), wie es Navigations- und Sport-Apps erwarten.
- * Eigene Eigenschaften (properties) haben in GPX keinen Standardplatz und bleiben weg.
+ * Eigene Eigenschaften (properties) stehen als <extensions> am Wegpunkt bzw. Track (je Schlüssel ein Element).
  */
 export function toGpx(doc: VeitExportDocument): string {
   const wpts: string[] = [];

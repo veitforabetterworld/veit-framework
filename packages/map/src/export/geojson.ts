@@ -11,7 +11,14 @@ function properties(f: VeitExportFeature): Record<string, unknown> {
   const props: Record<string, unknown> = { ...(f.properties ?? {}) };
   if (f.name) props.name = f.name;
   if (f.description) props.description = f.description;
+  // simplestyle-spec: von geojson.io, GitHub und vielen Viewern verstanden
   if (f.color) props.stroke = f.color;
+  if (f.lineWidth !== undefined) props['stroke-width'] = f.lineWidth;
+  if (f.kind === 'polygon') {
+    if (f.color) props.fill = f.color;
+    if (f.fillOpacity !== undefined) props['fill-opacity'] = f.fillOpacity;
+  }
+  if (f.kind === 'point' && f.color) props['marker-color'] = f.color;
   if (f.folder) props.folder = f.folder;
   return props;
 }

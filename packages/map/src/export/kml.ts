@@ -37,17 +37,33 @@ function extendedData(properties: VeitExportFeature['properties']): string {
 }
 
 type Styles = Map<string, string>;
+type PointIcon = VeitExportDocument['kmlPointIcon'];
 
-/** Stil-ID für eine Farbe; legt den Stil (Punkt, Linie, Fläche) beim ersten Mal an. */
-function styleFor(styles: Styles, color: string | undefined): string {
-  const id = `veit_${hex6(color)}`;
+const DEFAULT_LINE_WIDTH = 3;
+const DEFAULT_FILL_OPACITY = 0.4;
+
+/** Deckkraft 0..1 als zweistelliges KML-Alpha. */
+function alphaHex(opacity: number): string {
+  const a = Math.round(Math.min(1, Math.max(0, opacity)) * 255);
+  return a.toString(16).padStart(2, '0');
+}
+
+/** Stil-ID für Farbe, Linienbreite und Deckkraft; legt den Stil (Punkt, Linie, Fläche) beim ersten Mal an. */
+function styleFor(styles: Styles, f: VeitExportFeature, icon: PointIcon): string {
+  const width = f.lineWidth !== undefined && f.lineWidth > 0 ? f.lineWidth : DEFAULT_LINE_WIDTH;
+  const alpha = alphaHex(f.fillOpacity ?? DEFAULT_FILL_OPACITY);
+  const id = `veit_${hex6(f.color)}_${Math.round(width * 100)}_${alpha}`;
   if (!styles.has(id)) {
+    const iconXml = icon
+      ? `<scale>${num(icon.scale ?? 1, 2)}</scale><Icon><href>${escapeXml(icon.href)}</href></Icon>` +
+        '<hotSpot x="0.5" xunits="fraction" y="0.5" yunits="fraction"/>'
+      : '';
     styles.set(
       id,
       `    <Style id="${id}">
-      <IconStyle><color>${kmlColor(color)}</color></IconStyle>
-      <LineStyle><color>${kmlColor(color)}</color><width>3</width></LineStyle>
-      <PolyStyle><color>${kmlColor(color, '66')}</color></PolyStyle>
+      <IconStyle><color>${kmlColor(f.color)}</color>${iconXml}</IconStyle>
+      <LineStyle><color>${kmlColor(f.color)}</color><width>${num(width, 2)}</width></LineStyle>
+      <PolyStyle><color>${kmlColor(f.color, alpha)}</color></PolyStyle>
     </Style>`,
     );
   }
@@ -62,8 +78,8 @@ function placemark(f: VeitExportFeature, style: string, geometry: string, extra 
       </Placemark>`;
 }
 
-function featureToKml(f: VeitExportFeature, styles: Styles): string {
-  const style = styleFor(styles, f.color);
+function featureToKml(f: VeitExportFeature, styles: Styles, icon: PointIcon): string {
+  const style = styleFor(styles, f, icon);
   switch (f.kind) {
     case 'point': {
       const when = isoTime(f.point.time);
@@ -121,7 +137,7 @@ export function toKml(doc: VeitExportDocument): string {
   const loose: string[] = [];
   const folders = new Map<string, string[]>();
   for (const f of doc.features) {
-    const xml = featureToKml(f, styles);
+    const xml = featureToKml(f, styles, doc.kmlPointIcon);
     if (!xml) continue;
     if (f.folder) {
       const list = folders.get(f.folder) ?? [];

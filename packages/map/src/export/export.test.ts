@@ -72,8 +72,45 @@ describe('toGpx', () => {
     assert.match(gpx, /<trkpt lat="49\.568" lon="10\.885"><ele>301\.5<\/ele><time>2026-11-09T10:15:00Z<\/time><\/trkpt>/);
     assert.match(gpx, /<trkpt lat="49\.571" lon="10\.891"><\/trkpt>/);
   });
-  it('writes points as waypoints', () => {
-    assert.match(gpx, /<wpt lat="49\.5" lon="10\.8"><name>Start<\/name><type>Ebene 1<\/type><\/wpt>/);
+  it('writes points as waypoints with properties as extensions', () => {
+    assert.match(
+      gpx,
+      /<wpt lat="49\.5" lon="10\.8"><name>Start<\/name><type>Ebene 1<\/type><extensions><counter>7<\/counter><\/extensions><\/wpt>/,
+    );
+  });
+  it('drops property keys that are no XML names', () => {
+    const out = toGpx({
+      name: 'x',
+      features: [{ kind: 'point', point: { lat: 1, lon: 2 }, properties: { 'a b': 1, '1x': 2, xmlFoo: 3, ok_key: 'a<b' } }],
+    });
+    assert.match(out, /<extensions><ok_key>a&lt;b<\/ok_key><\/extensions>/);
+    assertBalanced(out);
+  });
+});
+
+describe('styles', () => {
+  const styled: VeitExportDocument = {
+    name: 's',
+    kmlPointIcon: { href: 'data:image/png;base64,AAAA', scale: 14 },
+    features: [
+      { kind: 'polygon', color: '#00ff00', lineWidth: 2.5, fillOpacity: 0.74, ring: [{ lat: 0, lon: 0 }, { lat: 0, lon: 1 }, { lat: 1, lon: 1 }] },
+      { kind: 'line', color: '#00ff00', lineWidth: 6, points: [{ lat: 0, lon: 0 }, { lat: 1, lon: 1 }] },
+      { kind: 'point', color: '#0000ff', point: { lat: 0, lon: 0 } },
+    ],
+  };
+  it('writes one KML style per colour, width and opacity, with the point icon', () => {
+    const kml = toKml(styled);
+    assertBalanced(kml);
+    assert.match(kml, /<width>2\.5<\/width>/);
+    assert.match(kml, /<width>6<\/width>/);
+    assert.match(kml, /<PolyStyle><color>bd00ff00<\/color><\/PolyStyle>/);   // 0,74 → bd
+    assert.match(kml, /<scale>14<\/scale><Icon><href>data:image\/png;base64,AAAA<\/href><\/Icon>/);
+    assert.equal(kml.match(/<Style id=/g)?.length, 3);
+  });
+  it('writes simplestyle properties to GeoJSON', () => {
+    const geo = JSON.parse(toGeoJson(styled)) as { features: Array<{ properties: Record<string, unknown> }> };
+    assert.deepEqual(geo.features[0].properties, { stroke: '#00ff00', 'stroke-width': 2.5, fill: '#00ff00', 'fill-opacity': 0.74 });
+    assert.equal(geo.features[2].properties['marker-color'], '#0000ff');
   });
 });
 

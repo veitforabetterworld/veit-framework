@@ -18,6 +18,10 @@ type VeitExportFeatureBase = {
   description?: string;
   /** Farbe als #rrggbb oder #rgb; Standard grau. */
   color?: string;
+  /** Linienbreite in Pixeln (KML LineStyle, GeoJSON stroke-width); Standard 3. */
+  lineWidth?: number;
+  /** Deckkraft der Flächenfüllung 0..1 (KML PolyStyle, GeoJSON fill-opacity); Standard 0,4. */
+  fillOpacity?: number;
   /** Gruppierung (KML-Ordner, GPX/GeoJSON-Eigenschaft `folder`), z. B. eine Kartenebene. */
   folder?: string;
   /** Zusätzliche Eigenschaften: KML ExtendedData, GPX extensions, GeoJSON properties. */
@@ -38,6 +42,11 @@ export type VeitExportDocument = {
   description?: string;
   /** Erzeugende Anwendung (GPX creator). */
   creator?: string;
+  /**
+   * Eigenes Punkt-Icon in KML statt der Stecknadel des Programms, z. B. ein 1×1-Bild als Data-URI, das IconStyle
+   * einfärbt und `scale` vergrößert.
+   */
+  kmlPointIcon?: { href: string; scale?: number };
   features: VeitExportFeature[];
 };
 

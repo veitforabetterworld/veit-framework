@@ -7,6 +7,13 @@ Stand 2026-11-09. Additiv, ohne neue Abhängigkeiten.
 - `@veit/map/export` (neu): neutrales Modell `VeitExportDocument` aus Punkten, Linien, Flächen und Verläufen (Punkte mit Zeit und Höhe, in Segmente geteilt), Schreiber `toKml`, `toGpx`, `toGeoJson`, `exportDocument(doc, format)`, `VEIT_EXPORT_FORMATS` (Endung, MIME-Typ), `exportFileName` und `downloadExport` (Browser). KML: Ordner nach `folder`, Stil je Farbe/Linienbreite/Deckkraft, Eigenschaften als `ExtendedData`, Verläufe als Linie plus Punkte mit `TimeStamp` (Zeitschieber in Google Earth), optional eigenes Punkt-Icon (`kmlPointIcon`). GPX 1.1: Wegpunkte und Tracks mit `ele`/`time`, Eigenschaften als `extensions`. GeoJSON: Verläufe als `LineString`/`MultiLineString` mit `properties.coordTimes`, `stroke`/`stroke-width`/`fill-opacity` nach simplestyle.
 - `@veit/react-map`: `VeitExportButtons` (ein Knopf je Format; der Host liefert das Dokument beim Klick, darf dafür nachladen).
 
+## Web Push (VAPID) als Module
+
+Stand 2026-11-08. Additiv, neue Pakete (`pnpm install`; `@veit/web-push` bringt die Bibliothek `web-push` mit).
+
+- `@veit/web-push` (neu, Node): `WebPushService` mit Abo je Browser/Gerät und Schalter je Konto, Versand an alle Abos eines Nutzers, entfernt abgelaufene Abos (404/410). `WEB_PUSH_SCHEMA_SQL` und `createPgWebPushStore` (`/pg`, Tabellen `web_push_subscriptions` und `web_push_preferences`, `user_id` auf `users(id)`), Express-Routen `/me/push` (`/express`: Status, Schalter, Abo anlegen/löschen, Test-Benachrichtigung). `generateVapidKeys()`.
+- `@veit/react-web-push` (neu): `createRestWebPushClient`, `useVeitWebPush`, `VeitWebPushSection` (Kontoseite, Texte de/en in `veitWebPushTexts`), `registerVeitServiceWorker`, `useVeitWebPushOpen` (Klick auf eine Nachricht bei offener App im SPA-Router öffnen), `ensureVeitWebPush` (aus einem Klick: Erlaubnis anfragen und dieses Gerät anmelden, falls nötig; liefert ein Ergebnis für den Hinweis statt zu werfen). CLI `veit-web-push-sw --out public --api /api/v1` erzeugt den Service Worker (`sw.js`, nicht versioniert, wie die App-Icons). Im Android-TWA zeigt Chrome die Nachrichten über die Notification Delegation der App an.
+
 ## Browser-Logos in Sitzungslisten, App-Icons aus einem Logo
 
 Stand 2026-11-08. Additiv. Hosts brauchen ein `pnpm install` (neues Paket `@veit/app-icons` mit `@resvg/resvg-js`).

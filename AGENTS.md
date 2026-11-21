@@ -9,3 +9,4 @@ Für Mitentwickler und KI-Agenten. Die README beschreibt das Framework, diese Da
 - **App-Header mit Branding und Navigation bleibt im Host;** nur Mess- und Inline-Action-Bausteine liegen im Framework (`@veit/react-controls`).
 - **Branches:** Hosts pinnen `origin/development`. `deploy` ist ein älterer, in Produktion ausgerollter Stand von `development`, nicht der gemeinsame Framework-Tip.
 - Brechende Änderungen kommen in `CHANGES.md`.
+- **Commits ohne KI-Mitautoren:** keine `Co-Authored-By:`/`Co-authored-by:`- oder `Made-with:`-Zeilen für Claude, Cursor oder andere Agenten.
